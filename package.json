@@ -1,0 +1,28 @@
+{
+  "name": "OSASG",
+  "version": "0.0.1",
+  "private": true,
+  "description": "I am planing on developing a website with many abstract stratagy games available.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://djmclaugh@github.com/djmclaugh/OSASG.git"
+  },
+  "author": "David McLaughlin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/djmclaugh/OSASG/issues"
+  },
+  "homepage": "https://github.com/djmclaugh/OSASG",
+  "dependencies": {
+    "express": "^4.9.5",
+    "mongoose": "^3.8.17",
+    "socket.io": "^1.1.0",
+    "ejs": "^1.0.0",
+    "node-uuid": "^1.4.1",
+    "client-sessions": "^0.7.0"
+  }
+}
