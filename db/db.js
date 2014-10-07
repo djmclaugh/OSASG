@@ -10,5 +10,4 @@ var RegisteredUser = new Schema({
 });
 
 mongoose.model('RegisteredUser', RegisteredUser);
-mongoose.model('GuestUser', GuestUser);
 mongoose.connect('mongodb://localhost/OSASG');
