@@ -1,12 +1,6 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var GuestUser = new Schema({
-	username:String,
-	sessionID:String,
-	sessionStart:Date
-});
-
 var RegisteredUser = new Schema({
 	username:String,
 	password:String,
