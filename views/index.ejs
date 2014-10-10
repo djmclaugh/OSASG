@@ -3,6 +3,8 @@
 
   <head>
 <%- include header.ejs %>
+    <script src="games/connect6.js"></script>
+    <script src="guis/connect6_gui.js"></script>
   </head>
 
   <body>
@@ -12,6 +14,28 @@
       <p>This website is still under construction.</p>
       <p>View progress on <a href="https://github.com/djmclaugh/OSASG">GitHub</a>.</p>
     </div>
+    <script>
+      var canvas, ctx, game;
+      
+      window.onload = function main() {
+        canvas = document.createElement("canvas");
+	      canvas.width = canvas.height = 500;
+	      ctx = canvas.getContext("2d");
+        document.body.appendChild(canvas);
+        init();
+        tick();
+      }
+
+      function init() {
+      	game = new GameGUI(new Game({}), canvas, 0, 0);
+      }
+
+      function tick() {
+	      window.requestAnimationFrame(tick);
+      	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	      game.draw();
+      }
+    </script>
   </body>
   
 </html>
