@@ -220,7 +220,7 @@ GameGUI.prototype.commit = function() {
     move = {p1: this.preset[0], p2: this.preset[1]};
   }
   this.game.makeMove(move);
-  console.log(move);
+  this.game_status = this.game.getStatusAfterLastMove();
   this.preset = [];
   this.socket.emit("play", move);
 };

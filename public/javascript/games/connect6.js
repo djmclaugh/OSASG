@@ -218,8 +218,8 @@ Connect6.prototype.getLongestLine = function(position) {
     if (this.getColourAt({x:curX, y:curY}) != colour) {
       break;
     }
-    bestX1 = curX;
-    bestY1 = curY;
+    bestX2 = curX;
+    bestY2 = curY;
     length += 1;
   }
   if (length > maxLength) {
@@ -246,8 +246,8 @@ Connect6.prototype.getLongestLine = function(position) {
     if (this.getColourAt({x:curX, y:curY}) != colour) {
       break;
     }
-    bestX1 = curX;
-    bestY1 = curY;
+    bestX2 = curX;
+    bestY2 = curY;
     length += 1;
   }
   if (length > maxLength) {
@@ -274,8 +274,8 @@ Connect6.prototype.getLongestLine = function(position) {
     if (this.getColourAt({x:curX, y:curY}) != colour) {
       break;
     }
-    bestX1 = curX;
-    bestY1 = curY;
+    bestX2 = curX;
+    bestY2 = curY;
     length += 1;
   }
   if (length > maxLength) {
@@ -302,8 +302,8 @@ Connect6.prototype.getLongestLine = function(position) {
     if (this.getColourAt({x:curX, y:curY}) != colour) {
       break;
     }
-    bestX1 = curX;
-    bestY1 = curY;
+    bestX2 = curX;
+    bestY2 = curY;
     length += 1;
   }
   if (length > maxLength) {
