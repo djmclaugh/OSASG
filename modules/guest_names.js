@@ -1,5 +1,4 @@
 var path = require("path");
-var uuid = require("node-uuid");
 
 const DAY = 24 * 60 * 60 * 1000;
 const WEEK = 7 * DAY;
@@ -20,7 +19,7 @@ for (var i = 0; i < lines.length; ++i) {
   originalNames.push(line);
   var username = line + "Guest";
   freeNames.push(username);
-  nameMap[username] = {start: BEGINING_OF_TIMES, id: ""};
+  nameMap[username] = {start: BEGINING_OF_TIMES};
 }
 
 setInterval(freeExpiredNames, DAY);
@@ -31,7 +30,7 @@ function ensureFreeName() {
   }
   var username = originalNames[overflowData.index] + "Guest_" + overflowData.pass;
   freeNames.push(username);
-  nameMap[username] = {start: BEGINING_OF_TIMES, id: ""};
+  nameMap[username] = {start: BEGINING_OF_TIMES};
   overflowData.index += 1;
   if (overflowData.index >= originalNames.length) {
     overflowData.index = 0;
@@ -50,27 +49,23 @@ function isNameExpired(username) {
 }
 
 function isDateExpired(date) {
-  return (new Date() - date.getTime() > WEEK);
+  return (new Date() - date.getTime() > DAY);
 }
 
-exports.assignGuestNameAndSessionID = function() {
+exports.assignGuestName = function() {
   ensureFreeName();
   var randIndex = Math.floor(Math.random() * freeNames.length);
   var username = freeNames[randIndex];
   freeNames.splice(randIndex, 1);
   usedNames.push(username);
   var now = new Date();
-  var id = uuid();
-  nameMap[username] = {start: now, id: id};
-  return {username: username, uuid: id};
-}
+  nameMap[username] = {start: now};
+  return username;
+};
 
-exports.isValidPair = function(username, id) {
+exports.isValidName = function(username) {
   var data = nameMap[username];
   if (!data) {
-    return false;
-  }
-  if (data.id != id) {
     return false;
   }
   if (isDateExpired(data.start)) {
