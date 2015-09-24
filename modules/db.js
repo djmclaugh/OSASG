@@ -1,13 +1,9 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-var RegisteredUser = new Schema({
-	username:String,
-	password:String,
-	sessionID:String,
-	sessionStart:Date,
-	email:String
+var SessionSchema = new Schema({
+  session: Object
 });
 
-mongoose.model('RegisteredUser', RegisteredUser);
+exports.Session = mongoose.model('Session', SessionSchema);
 mongoose.connect('mongodb://localhost/OSASG');

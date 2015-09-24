@@ -108,27 +108,12 @@ function GameGUI(socket, canvas) {
 }
 
 GameGUI.prototype.receiveInitData = function(data) {
+  console.log(data);
   this.names = data.names;
   this.settings = data.setting;
-  if (data.view == "BLACK" || data.view == "WHITE") {
-    this.startAs(data.view);
-  }
-  if (data.view == "SPECTATOR") {
-    this.spectate(data.gameData);
-  }
-};
-
-GameGUI.prototype.startAs = function(colour) {
-  this.view = colour;
+  this.view = data.view;
   this.game = new Connect6(this.settings);
-  this.socket.removeAllListeners("init");
-  this.socket.on("play", this.receiveMove.bind(this));
-};
-
-GameGUI.prototype.spectate = function(gameData) {
-  this.view = "SPECTATOR";
-  this.game = new Connect6(this.settings);
-  this.game.init(gameData);
+  this.game.init(data.gameData);
   this.socket.removeAllListeners("init");
   this.socket.on("play", this.receiveMove.bind(this));
 };
@@ -223,7 +208,6 @@ GameGUI.prototype.commit = function() {
 };
 
 GameGUI.prototype.isReadyToCommit = function() {
-  console.log(this.game.moves);
   if (this.game.moves.length == 0) {
     return this.preset.length == 1;
   }
@@ -354,7 +338,6 @@ GameGUI.prototype.drawStone = function(position, image) {
 };
 
 GameGUI.prototype.isMyTurn = function() {
-  console.log(this.game);
   if (!this.game || this.game.status != this.game.STATUS_ENUM.UNDECIDED) {
     return false;
   }
