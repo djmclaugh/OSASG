@@ -100,8 +100,6 @@ function GameGUI(socket, canvas) {
   this.mouseTarget = {type:"NULL"};
   this.preset = [];
   
-  this.game_status = {result: "NOTHING", win: [{x:-1, y:-1}, {x:-1, y:-1}]};
-  
   this.socket.on("init", this.receiveInitData.bind(this));
   
   canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
@@ -166,11 +164,11 @@ GameGUI.prototype.moveOnBoard = function(x, y) {
     return;
   }
   var p = {x: Math.round(x / 25) - 1, y: Math.round(y / 25) - 1};
-  if (!this.game.isEmptyAt(p)) {
+  if (!this.game.isPositionOnBoard(p) || this.game.getColourAt(p) != this.game.COLOUR_ENUM.EMPTY) {
     return;
   }
-  if (this.getPresetPosition(p) >= 0) {
-    this.mouseTarget = {type: "PRESET", index: this.getPresetPosition(p)};
+  if (this.getPresetIndex(p) >= 0) {
+    this.mouseTarget = {type: "PRESET", index: this.getPresetIndex(p)};
   } else if (!this.isReadyToCommit()) {
     this.mouseTarget = {type: "BOARD", position: p};
   }
@@ -201,15 +199,15 @@ GameGUI.prototype.onMouseClick = function(event) {
 
 GameGUI.prototype.localCommit = function() {
   if (this.preset.length == 1) {
-    this.performMove({p1: this.preset[0]});
+    this.game.makeMove({p1: this.preset[0]});
   } else {
-    this.performMove({p1: this.preset[0], p2: this.preset[1]});
+    this.game.makeMove({p1: this.preset[0], p2: this.preset[1]});
   }
   this.preset = [];
 };
 
 GameGUI.prototype.receiveMove = function(move) {
-  this.performMove(move);
+  this.game.makeMove(move);
 };
 
 GameGUI.prototype.commit = function() {
@@ -220,24 +218,19 @@ GameGUI.prototype.commit = function() {
     move = {p1: this.preset[0], p2: this.preset[1]};
   }
   this.game.makeMove(move);
-  this.game_status = this.game.getStatusAfterLastMove();
   this.preset = [];
   this.socket.emit("play", move);
 };
 
-GameGUI.prototype.performMove = function(move) {
-  this.game.makeMove(move);
-  this.game_status = this.game.getStatusAfterLastMove();
-};
-
 GameGUI.prototype.isReadyToCommit = function() {
-  if (this.game.turnNumber === 0) {
+  console.log(this.game.moves);
+  if (this.game.moves.length == 0) {
     return this.preset.length == 1;
   }
   return this.preset.length == 2;
 };
 
-GameGUI.prototype.getPresetPosition = function(position) {
+GameGUI.prototype.getPresetIndex = function(position) {
   for (var i = 0; i < this.preset.length; ++i) {
     if (isSamePosition(this.preset[i], position)) {
       return i;
@@ -253,52 +246,54 @@ GameGUI.prototype.draw = function() {
     this.drawMarkup();
     this.drawPresetStones();
     this.drawMouse();
+    if (this.game.status == this.game.STATUS_ENUM.BLACK_WIN) {
+      this.drawWin(this.game.getWinLine(), "white");
+    } else if (this.game.status == this.game.STATUS_ENUM.WHITE_WIN) {
+      this.drawWin(this.game.getWinLine(), "black");
+    }
   }
   this.drawCP();
 };
 
-GameGUI.prototype.drawWin = function(win_line) {
+GameGUI.prototype.drawWin = function(win_line, colour) {
+  this.context.save();
   this.context.lineWidth = 2;
-  this.context.strokeStyle = "black";
+  this.context.strokeStyle = colour;
   this.context.lineCap = "round";
   this.context.beginPath();
-  this.context.moveTo(25.5 + (25 * win_line[0].x), 25.5 + (25 * win_line[0].y));
-  this.context.lineTo(25.5 + (25 * win_line[1].x), 25.5 + (25 * win_line[1].y));
-  this.context.stroke();    
+  this.context.moveTo(25.5 + (25 * win_line.c1.x), 25.5 + (25 * win_line.c1.y));
+  this.context.lineTo(25.5 + (25 * win_line.c2.x), 25.5 + (25 * win_line.c2.y));
+  this.context.stroke();
+  this.context.restore();
 };
 
 GameGUI.prototype.drawCP = function() {
+  this.context.save();
   this.context.fillStyle = "black";
   this.context.font = "bold 16px Arial";
   if (this.view === "") {
     this.context.fillText("Waiting to be matched!", 570, 200);
-  } else if (this.game_status.result == "WIN") {
-    if (this.game.turnNumber % 2 === 0) {
-      this.context.fillText("Game over!\nWHITE wins!", 570, 200);
-    } else {
-      this.context.fillText("Game over!\nBLACK wins!", 570, 200);
-    }
-    this.drawWin(this.game_status.win);
-  } else if (this.game_status.result == "RESIGN") {
-    if (this.game_status.who == "BLACK") {
-      this.context.fillText("BLACK resigned!\nWHITE wins!", 570, 200);
-    } else {
-      this.context.fillText("WHITE resigned!\nBLACK wins!", 570, 200);
-    }
+  } else if (this.game.status == this.game.STATUS_ENUM.BLACK_WIN) {
+    this.context.fillText("Game over!\nBLACK wins!", 570, 200);
+  } else if (this.game.status == this.game.STATUS_ENUM.WHITE_WIN) {
+    this.context.fillText("Game over!\nWHITE wins!", 570, 200);
+  } else if (this.game.status == this.game.STATUS_ENUM.DRAW) {
+    this.context.fillText("Game over!\nDRAW!", 570, 200);
   } else {
     this.context.drawImage(GameGUI.BLACK, 600, 100);
     this.context.fillText(this.names[0], 630, 120);
     this.context.drawImage(GameGUI.WHITE, 600, 200);
     this.context.fillText(this.names[1], 630, 220);
   }
+  this.context.restore();
 };
 
 GameGUI.prototype.drawPlacedStones = function() {
   for (var i = 0; i < this.game.board.length; ++i) {
     for (var j = 0; j < this.game.board.length; ++j) {
-      if (this.game.board[i][j] == this.game.BLACK) {
+      if (this.game.board[i][j] == this.game.COLOUR_ENUM.BLACK) {
         this.drawStone({x: i, y: j}, GameGUI.BLACK);
-      } else if (this.game.board[i][j] == this.game.WHITE) {
+      } else if (this.game.board[i][j] == this.game.COLOUR_ENUM.WHITE) {
         this.drawStone({x: i, y: j}, GameGUI.WHITE);
       }
     }
@@ -336,7 +331,7 @@ GameGUI.prototype.drawMarkup = function() {
     return;
   }
   var markup;
-  if (this.game.turn == this.game.BLACK) {
+  if (this.game.moves.length % 2 == 0) {
     markup = GameGUI.WHITE_LM;
   } else {
     markup = GameGUI.BLACK_LM;
@@ -348,7 +343,7 @@ GameGUI.prototype.drawMarkup = function() {
 };
 
 GameGUI.prototype.getCurrentStone = function() {
-  if (this.game.turn == this.game.BLACK) {
+  if (this.game.moves.length % 2 == 0) {
     return GameGUI.BLACK;
   }
   return GameGUI.WHITE;
@@ -359,16 +354,17 @@ GameGUI.prototype.drawStone = function(position, image) {
 };
 
 GameGUI.prototype.isMyTurn = function() {
-  if (this.game_status.result != "NOTHING") {
+  console.log(this.game);
+  if (!this.game || this.game.status != this.game.STATUS_ENUM.UNDECIDED) {
     return false;
   }
   if (this.view == "LOCAL") {
     return true;
   }
-  if (this.view == "BLACK" && this.game.turn == this.game.BLACK) {
+  if (this.view == "BLACK" && this.game.moves.length % 2 == 0) {
     return true;
   }
-  if (this.view == "WHITE" && this.game.turn == this.game.WHITE) {
+  if (this.view == "WHITE" && this.game.moves.length % 2 == 1) {
     return true;
   }
   return false;

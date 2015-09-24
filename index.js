@@ -49,7 +49,10 @@ function receiveBlackMove(move) {
   if (game.turnNumber % 2 == 1) {
     return;
   }
-  if (!game.isLegalMove(move)) {
+  var error = game.validateMove(move);
+  if (error) {
+    console.log(error);
+    players[1].emit("error", error);
     return;
   }
   game.makeMove(move);
@@ -60,7 +63,10 @@ function receiveWhiteMove(move) {
   if (game.turnNumber % 2 === 0) {
     return;
   }
-  if (!game.isLegalMove(move)) {
+  var error = game.validateMove(move);
+  if (error) {
+    console.log(error);
+    players[0].emit("error", error);
     return;
   }
   game.makeMove(move);

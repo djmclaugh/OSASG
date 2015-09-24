@@ -1,20 +1,52 @@
 (function(exports){
 
-const BLACK = 1;
-const WHITE = -1;
-const EMPTY = 0;
+// Colours
+const BLACK = "BLACK";
+const WHITE = "WHITE";
+const EMPTY = "EMPTY";
 
+// Status results
+const UNDECIDED = "UNDECIDED";
+const BLACK_WIN = "BLACK_WIN";
+const WHITE_WIN = "WHITE_WIN";
+const DRAW = "DRAW";
+
+
+// Line Class
+function Line(c1, c2) {
+  this.c1 = c1;
+  this.c2 = c2;
+}
+
+Line.prototype.length = function() {
+  var xDiff = Math.abs(this.c1.x - this.c2.x);
+  var yDiff = Math.abs(this.c1.y - this.c2.y);
+  return Math.max(xDiff, yDiff) + 1;
+}
+
+// Connect6 CLASS
 function Connect6(settings) {
   this.width = 19;
   this.height = 19;
-  this.turnNumber = 0;
-  this.turn = BLACK;
-  this.BLACK = BLACK;
-  this.WHITE = WHITE;
-  this.EMPTY = EMPTY;
+  
+  this.COLOUR_ENUM = {
+    BLACK: BLACK,
+    WHITE: WHITE,
+    EMPTY: EMPTY
+  }
+  
+  this.STATUS_ENUM = {
+    UNDECIDED: UNDECIDED,
+    BLACK_WIN: BLACK_WIN,
+    WHITE_WIN: WHITE_WIN,
+    DRAW: DRAW
+  }
+    
   this.moves = [];
   this.board = [];
+  this.status = UNDECIDED;
   this.settings = settings;
+  
   for (var i = 0; i < this.width; ++i) {
     this.board[i] = [];
     for (var j = 0; j < this.height; ++j) {
@@ -24,58 +56,34 @@ function Connect6(settings) {
 }
 
 Connect6.prototype.init = function(gameData) {
-  this.turnNumber = gameData.turnNumber;
-  this.turn = gameData.turn;
   this.moves = gameData.moves;
   this.board = gameData.board;
+  this.status = gameData.status;
   this.settings = gameData.settings;
 };
 
 Connect6.prototype.makeGameData = function() {
   var gameData = {};
-  gameData.turnNumber = this.turnNumber;
-  gameData.turn = this.turn;
   gameData.moves = this.moves;
   gameData.board = this.board;
+  gameData.status = this.status;
   gameData.settings = this.settings;
   return gameData;
 };
 
+Connect6.prototype.getColourToPlay = function() {
+  return this.moves.length % 2 == 0 ? BLACK : WHITE;
+}
+
 Connect6.prototype.getColourAt = function(position) {
-  if (!this.isPositionInBoard(position)) {
-    return EMPTY;
-  }
   return this.board[position.x][position.y];
 };
 
-Connect6.prototype.isEmptyAt = function(position) {
-  return this.isPositionInBoard(position) && this.board[position.x][position.y] == EMPTY;
-};
-
 Connect6.prototype.setColourAt = function(position, colour) {
-  if (!this.isPositionInBoard(position)) {
-    return;
-  }
   this.board[position.x][position.y] = colour;
 };
 
-Connect6.prototype.isValidMove = function(move) {
-  if (!move) {
-    return false;
-  }
-  if (!move.p1) {
-    return false;
-  }
-  if (typeof move.p1.x != "number" || typeof move.p1.y != "number") {
-    return false;
-  }
-  if (move.p2 && (typeof move.p2.x != "number" || typeof move.p2.y != "number")) {
-    return false;
-  }
-  return true;
-};
-
-Connect6.prototype.isPositionInBoard = function(position) {
+Connect6.prototype.isPositionOnBoard = function(position) {
   if (position.x < 0 || position.x >= this.width) {
     return false;
   }
@@ -85,37 +93,99 @@ Connect6.prototype.isPositionInBoard = function(position) {
   return true;
 };
 
-Connect6.prototype.isLegalMove = function(move) {
-  if (!this.isValidMove(move)) {
-    return false;
+// Checks if the move is valid.
+// This is necessary since we might not know the origin of the move object.
+// Returns an error if the move is not valid.
+// Returns null if the move is valid.
+Connect6.prototype.validateMove = function(move) {
+  var error;
+  error = this.validateFormatOfMove(move);
+  if (error) {
+    return error;
   }
-  if (!move.p1 || !this.isPositionInBoard(move.p1) ||
-      this.getColourAt(move.p1) != EMPTY) {
-    return false;
+  error = this.validateLegalityOfMove(move);
+  if (error) {
+    return error;
   }
-  if (!move.p2 && this.turnNumber > 0) {
-    return false;
-  }
-  if (move.p2 && (!this.isPositionInBoard(move.p2) ||
-      this.getColourAt(move.p2) != EMPTY)) {
-    return false;
-  }
-  return true;
+  return null;
 };
 
-Connect6.prototype.makeMove = function(move) {
-  if (!this.isLegalMove(move)) {
-    return false;
+// We check if the move object follows the proper format.
+// {p1:{x, y}, p2:{x, y}} or {p1:{x, y}} where all x and y are natural numbers.
+Connect6.prototype.validateFormatOfMove = function(move) {
+  var format = "'move' should follow the format {p1:{x, y}, p2:{x, y}} or {p1:{x, y}} where all x and y are natural numbers.";
+  if (typeof move != "object") {
+    return new Error("'move'= " + move + " is not an object.\n" + format);
   }
-  this.setColourAt(move.p1, this.turn);
+  if (typeof move.p1 != "object") {
+    return new Error("'move.p1'= " + move.p1 + " is not an object.\n" + format);
+  }
+  if (typeof move.p1.x != "number" || move.p1.x < 0 || move.p1.x % 1 != 0) {
+    return new Error("'move.p1.x'= " + move.p1.x + " is not natural number.\n" + format);
+  }
+  if (typeof move.p1.y != "number" || move.p1.y < 0 || move.p1.y % 1 != 0) {
+    return new Error("'move.p1.y'= " + move.p1.y + " is not natural number.\n" + format);
+  }
+  if (typeof move.p2 == "object") {
+    if (typeof move.p2.x != "number" || move.p2.x < 0 || move.p2.x % 1 != 0) {
+      return new Error("'move.p2.x'= " + move.p2.x + " is not natural number.\n" + format);
+    }
+    if (typeof move.p2.y != "number" || move.p2.y < 0 || move.p2.y % 1 != 0) {
+      return new Error("'move.p2.y'= " + move.p2.y + " is not natural number.\n" + format);
+    }
+  } else if (typeof move.p2 != "null" && typeof move.p2 != "undefined") {
+    return new Error("'move.p2'= " + move.p2 + " is not an object, null, or undefined.\n" + format);
+  }
+  return null;
+};
+
+// We assume that the move object has the proper format.
+Connect6.prototype.validateLegalityOfMove = function(move) {
+  if (this.status != UNDECIDED) {
+    return new Error("No moves are legal since the game is already over.");
+  }
+  if (!this.isPositionOnBoard(move.p1)) {
+    return new Error("'move.p1'= " + move.p1 + " is not a position on the " + this.width + " by " + this.height + " board.");
+  }
+  if (this.getColourAt(move.p1) != EMPTY) {
+    return new Error("'move.p1'= " + move.p1 + " is an already occupied position.");
+  }
   if (move.p2) {
-    this.setColourAt(move.p2, this.turn);
+    if (this.moves.length == 0) {
+      return new Error("On the first turn, you can only place a single stone.");
+    }
+    if (!this.isPositionOnBoard(move.p2)) {
+      return new Error("'move.p2'= " + move.p2 + " is not a position on the " + this.width + " by " + this.height + " board.");
+    }
+    if (this.getColourAt(move.p2) != EMPTY) {
+      return new Error("'move.p2'= " + move.p2 + " is an already occupied position.");
+    }
+  } else {
+    if (this.moves.length > 0) {
+      return new Error("You must place two stones since this is not the first turn.");
+    }
+  }
+  return null;
+};
+
+// Performs the given move.
+// Returns an error if the move is not valid for any reason.
+// Retruns null if the move was performed successfully.
+Connect6.prototype.makeMove = function(move) {
+  var error = this.validateMove(move);
+  if (error) {
+    return error;
+  }
+  this.setColourAt(move.p1, this.getColourToPlay());
+  if (move.p2) {
+    this.setColourAt(move.p2, this.getColourToPlay());
   }
   this.moves.push(move);
-  this.nextTurn();
-  return true;
+  this.status = this.getStatus();
+  return null;
 };
 
+// Returns the undone move.
 Connect6.prototype.undoMove = function() {
   if (this.moves.length === 0) {
     return;
@@ -125,196 +195,87 @@ Connect6.prototype.undoMove = function() {
   if (move.p2) {
     this.setColourAt(move.p2, EMPTY);
   }
-  this.prevTurn();
+  this.status = UNDECIDED;
+  return move;
 };
 
-Connect6.prototype.nextTurn = function() {
-  this.turn *= -1;
-  this.turnNumber += 1;
+Connect6.prototype.getStatus = function() {
+  if (this.getWinLine()) {
+    return this.moves.length % 2 == 0 ? WHITE_WIN : BLACK_WIN;
+  }
+  if (2 * this.turnNumber - 1 >= this.width * this.height) {
+    return DRAW;
+  }
+  return UNDECIDED;
 };
 
-Connect6.prototype.prevTurn = function() {
-  this.turn *= -1;
-  this.turnNumber -= 1;
-};
-
-Connect6.prototype.whoWins = function() {
-  var currentColour = -1 * this.turn;
-  for (var i = this.moves.length - 1; i >= 5; ++i) {
-    if (this.isPartOfWin(this.moves[i].p1) ||
-        this.isPartOfWin(this.moves[i].p2)) {
-      return currentColour;
+Connect6.prototype.getWinLine = function() {
+  for (var i = this.moves.length - 1; i > 1; --i) {
+    var line = this.getLongestLineAtPosition(this.moves[i].p1);
+    if (line.length() >= 6) {
+      return line;
     }
-    currentColour *= -1;
+    line = this.getLongestLineAtPosition(this.moves[i].p2);
+    if (line.length() >= 6) {
+      return line;
+    }
   }
-  return 0;
-};
-
-Connect6.prototype.getStatusAfterLastMove = function() {
-  var status = {};
-  status.result = "NOTHING";
-  if (this.turnNumber < 5) {
-    return status;
-  }
-  var lastMove = this.moves[this.moves.length - 1];
-  var line = this.getLongestLine(lastMove.p1);
-  if (line1Norm(line) >= 5) {
-    status.result = "WIN";
-    status.line = line;
-    return status;
-  }
-  line = this.getLongestLine(lastMove.p2);
-  if (line1Norm(line) >= 5) {
-    status.result = "WIN";
-    status.line = line;
-    return status;
-  }
-  if (2 * this.turnNumber - 1 > this.width * this.height) {
-    status.result = "DRAW";
-    return status;
-  }
-  return status;
-};
-
-function line1Norm(line) {
-  return Math.max(line[0].x - line[1].x, line[1].x - line[0].x,
-      line[0].y - line[1].y, line[1].y - line[0].y);
+  return null;
 }
 
-Connect6.prototype.getLongestLine = function(position) {
-  var x = position.x;
-  var y = position.y;
+Connect6.prototype.getLongestLineAtPosition = function(position) {
+  var self = this;
   var colour = this.getColourAt(position);
+  
   if (colour == EMPTY) {
-    return {x: -1, y: -1};
+    return null;
   }
-  var length;
-  var maxLength = 1;
-  var p1 = {x: x, y: y};
-  var p2 = {x: x, y: y};
-  var curX;
-  var curY;
-  var bestX1;
-  var bestX2;
-  var bestY1;
-  var bestY2;
-  var i;
+  
+  function lineEnd(start, direction) {
+    var nextPosition = {x: start.x + direction.x, y: start.y + direction.y};
+    while (self.isPositionOnBoard(nextPosition) && self.getColourAt(nextPosition) == colour) {
+      nextPosition.x += direction.x;
+      nextPosition.y += direction.y;
+    }
+    return {x: nextPosition.x - direction.x, y: nextPosition.y - direction.y};
+  }
+  
+  function getLine(position, direction) {
+    var start = lineEnd(position, {x: -direction.x, y: -direction.y});
+    var end = lineEnd(position, direction);
+    return new Line(start, end);
+  }
+  
+  var line;
+  var longestLine = new Line(position, position);
   
   // Horizontal check
-  length = 1;
-  for (i = 1; i > 0; ++i) {
-    curX = x + i;
-    curY = y;
-    if (this.getColourAt({x:curX, y:curY}) != colour) {
-      break;
-    }
-    bestX1 = curX;
-    bestY1 = curY;
-    length += 1;
-  }
-  for (i = 1; i > 0; ++i) {
-    curX = x - i;
-    curY = y;
-    if (this.getColourAt({x:curX, y:curY}) != colour) {
-      break;
-    }
-    bestX2 = curX;
-    bestY2 = curY;
-    length += 1;
-  }
-  if (length > maxLength) {
-    p1 = {x: bestX1, y: bestY1};
-    p2 = {x: bestX2, y: bestY2};
-    maxLength = length;
+  line = getLine(position, {x: 1, y: 0});
+  if (line.length() > longestLine.length()) {
+    longestLine = line;
   }
   
   // Vertical check
-  length = 1;
-  for (i = 1; i > 0; ++i) {
-    curX = x;
-    curY = y + i;
-    if (this.getColourAt({x:curX, y:curY}) != colour) {
-      break;
-    }
-    bestX1 = curX;
-    bestY1 = curY;
-    length += 1;
-  }
-  for (i = 1; i > 0; ++i) {
-    curX = x;
-    curY = y - i;
-    if (this.getColourAt({x:curX, y:curY}) != colour) {
-      break;
-    }
-    bestX2 = curX;
-    bestY2 = curY;
-    length += 1;
-  }
-  if (length > maxLength) {
-    p1 = {x: bestX1, y: bestY1};
-    p2 = {x: bestX2, y: bestY2};
-    maxLength = length;
+  line = getLine(position, {x: 0, y: 1});
+  if (line.length() > longestLine.length()) {
+    longestLine = line;
   }
   
-  // x=y check
-  length = 1;
-  for (i = 1; i > 0; ++i) {
-    curX = x + i;
-    curY = y + i;
-    if (this.getColourAt({x:curX, y:curY}) != colour) {
-      break;
-    }
-    bestX1 = curX;
-    bestY1 = curY;
-    length += 1;
-  }
-  for (i = 1; i > 0; ++i) {
-    curX = x - i;
-    curY = y - i;
-    if (this.getColourAt({x:curX, y:curY}) != colour) {
-      break;
-    }
-    bestX2 = curX;
-    bestY2 = curY;
-    length += 1;
-  }
-  if (length > maxLength) {
-    p1 = {x: bestX1, y: bestY1};
-    p2 = {x: bestX2, y: bestY2};
-    maxLength = length;
+  // x = y check
+  line = getLine(position, {x: 1, y: 1});
+  if (line.length() > longestLine.length()) {
+    longestLine = line;
   }
   
-  // x=-y check
-  length = 1;
-  for (i = 1; i > 0; ++i) {
-    curX = x + i;
-    curY = y - i;
-    if (this.getColourAt({x:curX, y:curY}) != colour) {
-      break;
-    }
-    bestX1 = curX;
-    bestY1 = curY;
-    length += 1;
-  }
-  for (i = 1; i > 0; ++i) {
-    curX = x - i;
-    curY = y + i;
-    if (this.getColourAt({x:curX, y:curY}) != colour) {
-      break;
-    }
-    bestX2 = curX;
-    bestY2 = curY;
-    length += 1;
-  }
-  if (length > maxLength) {
-    p1 = {x: bestX1, y: bestY1};
-    p2 = {x: bestX2, y: bestY2};
-    maxLength = length;
+  // x = -y check
+  line = getLine(position, {x: 1, y: -1});
+  if (line.length() > longestLine.length()) {
+    longestLine = line;
   }
   
-  return [p1, p2];
+  return longestLine;
 };
 
 exports.Connect6 = Connect6;
 
-})(typeof exports === 'undefined'? this['OSASG'] : exports);
+})(typeof exports == 'undefined' ? this['OSASG'] : exports);
