@@ -15,7 +15,6 @@ Sessions.find({}, function(error, sessions) {
       names.splice(index, 1);
     }
   }
-  console.log(sessions);
 });
 
 exports.getGuestName = function() {

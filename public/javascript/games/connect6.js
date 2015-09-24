@@ -115,74 +115,65 @@ Connect6.prototype.validateMove = function(move) {
 Connect6.prototype.validateFormatOfMove = function(move) {
   var format = "'move' should follow the format {p1:{x, y}, p2:{x, y}} or {p1:{x, y}} where all x and y are natural numbers.";
   if (typeof move != "object") {
-    return new Error("'move'= " + move + " is not an object.\n" + format);
+    throw new Error("'move'= " + JSON.stringify(move) + " is not an object.\n" + format);
   }
   if (typeof move.p1 != "object") {
-    return new Error("'move.p1'= " + move.p1 + " is not an object.\n" + format);
+    throw new Error("'move.p1'= " + JSON.stringify(move.p1) + " is not an object.\n" + format);
   }
   if (typeof move.p1.x != "number" || move.p1.x < 0 || move.p1.x % 1 != 0) {
-    return new Error("'move.p1.x'= " + move.p1.x + " is not natural number.\n" + format);
+    throw new Error("'move.p1.x'= " + JSON.stringify(move.p1.x) + " is not natural number.\n" + format);
   }
   if (typeof move.p1.y != "number" || move.p1.y < 0 || move.p1.y % 1 != 0) {
-    return new Error("'move.p1.y'= " + move.p1.y + " is not natural number.\n" + format);
+    throw new Error("'move.p1.y'= " + JSON.stringify(move.p1.y) + " is not natural number.\n" + format);
   }
   if (typeof move.p2 == "object") {
     if (typeof move.p2.x != "number" || move.p2.x < 0 || move.p2.x % 1 != 0) {
-      return new Error("'move.p2.x'= " + move.p2.x + " is not natural number.\n" + format);
+      throw new Error("'move.p2.x'= " + JSON.stringify(move.p2.x) + " is not natural number.\n" + format);
     }
     if (typeof move.p2.y != "number" || move.p2.y < 0 || move.p2.y % 1 != 0) {
-      return new Error("'move.p2.y'= " + move.p2.y + " is not natural number.\n" + format);
+      throw new Error("'move.p2.y'= " + JSON.stringify(move.p2.y) + " is not natural number.\n" + format);
     }
   } else if (typeof move.p2 != "null" && typeof move.p2 != "undefined") {
-    return new Error("'move.p2'= " + move.p2 + " is not an object, null, or undefined.\n" + format);
+    throw new Error("'move.p2'= " + JSON.stringify(move.p2) + " is not an object, null, or undefined.\n" + format);
   }
-  return null;
 };
 
 // We assume that the move object has the proper format.
 Connect6.prototype.validateLegalityOfMove = function(move) {
   if (this.status != UNDECIDED) {
-    return new Error("No moves are legal since the game is already over.");
+    throw new Error("No moves are legal since the game is already over.");
   }
   if (!this.isPositionOnBoard(move.p1)) {
-    return new Error("'move.p1'= " + move.p1 + " is not a position on the " + this.width + " by " + this.height + " board.");
+    throw new Error("'move.p1'= " + JSON.stringify(move.p1) + " is not a position on the " + this.width + " by " + this.height + " board.");
   }
   if (this.getColourAt(move.p1) != EMPTY) {
-    return new Error("'move.p1'= " + move.p1 + " is an already occupied position.");
+    throw new Error("'move.p1'= " + JSON.stringify(move.p1) + " is an already occupied position.");
   }
   if (move.p2) {
     if (this.moves.length == 0) {
-      return new Error("On the first turn, you can only place a single stone.");
+      throw new Error("On the first turn, you can only place a single stone.");
     }
     if (!this.isPositionOnBoard(move.p2)) {
-      return new Error("'move.p2'= " + move.p2 + " is not a position on the " + this.width + " by " + this.height + " board.");
+      throw new Error("'move.p2'= " + JSON.stringify(move.p2) + " is not a position on the " + this.width + " by " + this.height + " board.");
     }
     if (this.getColourAt(move.p2) != EMPTY) {
-      return new Error("'move.p2'= " + move.p2 + " is an already occupied position.");
+      throw new Error("'move.p2'= " + JSON.stringify(move.p2) + " is an already occupied position.");
     }
   } else {
     if (this.moves.length > 0) {
-      return new Error("You must place two stones since this is not the first turn.");
+      throw new Error("You must place two stones since this is not the first turn.");
     }
   }
-  return null;
 };
 
-// Performs the given move.
-// Returns an error if the move is not valid for any reason.
-// Retruns null if the move was performed successfully.
 Connect6.prototype.makeMove = function(move) {
-  var error = this.validateMove(move);
-  if (error) {
-    return error;
-  }
+  this.validateMove(move);
   this.setColourAt(move.p1, this.getColourToPlay());
   if (move.p2) {
     this.setColourAt(move.p2, this.getColourToPlay());
   }
   this.moves.push(move);
   this.status = this.getStatus();
-  return null;
 };
 
 // Returns the undone move.

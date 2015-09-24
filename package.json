@@ -5,7 +5,7 @@
   "description": "I am planing on developing a website with many abstract stratagy games available.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/mocha/bin/mocha"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,7 @@
     "ejs": "^1.0.0",
     "express": "^4.9.5",
     "express-session": "^1.11.3",
+    "mocha": "^2.3.3",
     "mongoose": "3.8.23",
     "node-uuid": "^1.4.1",
     "socket.io": "^1.1.0"
