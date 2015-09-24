@@ -108,7 +108,6 @@ function GameGUI(socket, canvas) {
 }
 
 GameGUI.prototype.receiveInitData = function(data) {
-  console.log(data);
   this.names = data.names;
   this.settings = data.setting;
   this.view = data.view;
@@ -230,9 +229,10 @@ GameGUI.prototype.draw = function() {
     this.drawMarkup();
     this.drawPresetStones();
     this.drawMouse();
-    if (this.game.status == this.game.STATUS_ENUM.BLACK_WIN) {
+    var status = this.game.getStatus();
+    if (status == this.game.STATUS_ENUM.P1_WIN) {
       this.drawWin(this.game.getWinLine(), "white");
-    } else if (this.game.status == this.game.STATUS_ENUM.WHITE_WIN) {
+    } else if (this.status == this.game.STATUS_ENUM.P2_WIN) {
       this.drawWin(this.game.getWinLine(), "black");
     }
   }
@@ -255,13 +255,17 @@ GameGUI.prototype.drawCP = function() {
   this.context.save();
   this.context.fillStyle = "black";
   this.context.font = "bold 16px Arial";
-  if (this.view === "") {
+  var status = "";
+  if (this.game) {
+    status = this.game.getStatus();
+  }
+  if (status === "") {
     this.context.fillText("Waiting to be matched!", 570, 200);
-  } else if (this.game.status == this.game.STATUS_ENUM.BLACK_WIN) {
+  } else if (status == this.game.STATUS_ENUM.P1_WIN) {
     this.context.fillText("Game over!\nBLACK wins!", 570, 200);
-  } else if (this.game.status == this.game.STATUS_ENUM.WHITE_WIN) {
+  } else if (status == this.game.STATUS_ENUM.P2_WIN) {
     this.context.fillText("Game over!\nWHITE wins!", 570, 200);
-  } else if (this.game.status == this.game.STATUS_ENUM.DRAW) {
+  } else if (status == this.game.STATUS_ENUM.DRAW) {
     this.context.fillText("Game over!\nDRAW!", 570, 200);
   } else {
     this.context.drawImage(GameGUI.BLACK, 600, 100);
@@ -338,7 +342,7 @@ GameGUI.prototype.drawStone = function(position, image) {
 };
 
 GameGUI.prototype.isMyTurn = function() {
-  if (!this.game || this.game.status != this.game.STATUS_ENUM.UNDECIDED) {
+  if (!this.game || this.game.getStatus() != this.game.STATUS_ENUM.UNDECIDED) {
     return false;
   }
   if (this.view == "LOCAL") {

@@ -1,5 +1,5 @@
 var assert = require("assert");
-var Connect6 = require("../public/javascript/games/connect6.js").Connect6;
+var Connect6 = require("../modules/games.js").Connect6;
 
 describe("Connect6", function() {
   beforeEach(function() {
@@ -39,7 +39,7 @@ describe("Connect6", function() {
     game.makeMove({p1:{x: 1, y: 2}, p2:{x: 1, y: 3}});
     game.makeMove({p1:{x: 0, y: 3}, p2:{x: 2, y: 4}});
     game.makeMove({p1:{x: 1, y: 4}, p2:{x: 1, y: 5}});
-    assert.equal(game.status, game.STATUS_ENUM.WHITE_WIN);
+    assert.equal(game.getStatus(), game.STATUS_ENUM.P2_WIN);
   });
 
   // game taken from http://java.csie.nctu.edu.tw/~icwu/connect6/connect6.html#Ref_record
@@ -63,6 +63,6 @@ describe("Connect6", function() {
     game.makeMove({p1:{x: 9 , y: 6 }, p2:{x: 8 , y: 5 }});
     game.makeMove({p1:{x: 7 , y: 4 }, p2:{x: 8 , y: 4 }});
     game.makeMove({p1:{x: 13, y: 10}, p2:{x: 12, y: 9 }});
-    assert.equal(game.status, game.STATUS_ENUM.BLACK_WIN);
+    assert.equal(game.getStatus(), game.STATUS_ENUM.P1_WIN);
   });
 });

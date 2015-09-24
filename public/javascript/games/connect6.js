@@ -1,16 +1,22 @@
-(function(exports){
+var Game;
+if (typeof require !== 'undefined') {
+  Game = require("./game").Game;
+} else if (this["OSASG"].Game) {
+  Game = this["OSASG"].Game;
+} else {
+  throw new Error("Please include javascript/games/game.js before including this file!");
+}
+
+if (typeof exports === 'undefined') {
+  exports = this['OSASG'];
+}
+
+(function(exports, Game){
 
 // Colours
 const BLACK = "BLACK";
 const WHITE = "WHITE";
 const EMPTY = "EMPTY";
-
-// Status results
-const UNDECIDED = "UNDECIDED";
-const BLACK_WIN = "BLACK_WIN";
-const WHITE_WIN = "WHITE_WIN";
-const DRAW = "DRAW";
-
 
 // Line Class
 function Line(c1, c2) {
@@ -34,17 +40,9 @@ function Connect6(settings) {
     WHITE: WHITE,
     EMPTY: EMPTY
   }
-  
-  this.STATUS_ENUM = {
-    UNDECIDED: UNDECIDED,
-    BLACK_WIN: BLACK_WIN,
-    WHITE_WIN: WHITE_WIN,
-    DRAW: DRAW
-  }
     
   this.moves = [];
   this.board = [];
-  this.status = UNDECIDED;
   this.settings = settings;
   
   for (var i = 0; i < this.width; ++i) {
@@ -55,10 +53,11 @@ function Connect6(settings) {
   }
 }
 
+Connect6.prototype = Object.create(Game.prototype);
+
 Connect6.prototype.init = function(gameData) {
   this.moves = gameData.moves;
   this.board = gameData.board;
-  this.status = gameData.status;
   this.settings = gameData.settings;
 };
 
@@ -66,7 +65,6 @@ Connect6.prototype.makeGameData = function() {
   var gameData = {};
   gameData.moves = this.moves;
   gameData.board = this.board;
-  gameData.status = this.status;
   gameData.settings = this.settings;
   return gameData;
 };
@@ -95,19 +93,9 @@ Connect6.prototype.isPositionOnBoard = function(position) {
 
 // Checks if the move is valid.
 // This is necessary since we might not know the origin of the move object.
-// Returns an error if the move is not valid.
-// Returns null if the move is valid.
 Connect6.prototype.validateMove = function(move) {
-  var error;
-  error = this.validateFormatOfMove(move);
-  if (error) {
-    return error;
-  }
-  error = this.validateLegalityOfMove(move);
-  if (error) {
-    return error;
-  }
-  return null;
+  this.validateFormatOfMove(move);
+  this.validateLegalityOfMove(move);
 };
 
 // We check if the move object follows the proper format.
@@ -140,7 +128,7 @@ Connect6.prototype.validateFormatOfMove = function(move) {
 
 // We assume that the move object has the proper format.
 Connect6.prototype.validateLegalityOfMove = function(move) {
-  if (this.status != UNDECIDED) {
+  if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
     throw new Error("No moves are legal since the game is already over.");
   }
   if (!this.isPositionOnBoard(move.p1)) {
@@ -173,7 +161,6 @@ Connect6.prototype.makeMove = function(move) {
     this.setColourAt(move.p2, this.getColourToPlay());
   }
   this.moves.push(move);
-  this.status = this.getStatus();
 };
 
 // Returns the undone move.
@@ -186,18 +173,17 @@ Connect6.prototype.undoMove = function() {
   if (move.p2) {
     this.setColourAt(move.p2, EMPTY);
   }
-  this.status = UNDECIDED;
   return move;
 };
 
 Connect6.prototype.getStatus = function() {
   if (this.getWinLine()) {
-    return this.moves.length % 2 == 0 ? WHITE_WIN : BLACK_WIN;
+    return this.moves.length % 2 == 0 ? this.STATUS_ENUM.P2_WIN : this.STATUS_ENUM.P1_WIN;
   }
-  if (2 * this.turnNumber - 1 >= this.width * this.height) {
-    return DRAW;
+  if (2 * this.moves.length - 1 >= this.width * this.height) {
+    return this.STATUS_ENUM.DRAW;
   }
-  return UNDECIDED;
+  return this.STATUS_ENUM.UNDECIDED;
 };
 
 Connect6.prototype.getWinLine = function() {
@@ -269,4 +255,4 @@ Connect6.prototype.getLongestLineAtPosition = function(position) {
 
 exports.Connect6 = Connect6;
 
-})(typeof exports == 'undefined' ? this['OSASG'] : exports);
+})(exports, Game);
