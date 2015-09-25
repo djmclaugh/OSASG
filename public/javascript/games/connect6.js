@@ -55,13 +55,13 @@ function Connect6(settings) {
 
 Connect6.prototype = Object.create(Game.prototype);
 
-Connect6.prototype.init = function(gameData) {
+Connect6.prototype.initFromGameData = function(gameData) {
   this.moves = gameData.moves;
   this.board = gameData.board;
   this.settings = gameData.settings;
 };
 
-Connect6.prototype.makeGameData = function() {
+Connect6.prototype.generateGameData = function() {
   var gameData = {};
   gameData.moves = this.moves;
   gameData.board = this.board;
@@ -71,6 +71,10 @@ Connect6.prototype.makeGameData = function() {
 
 Connect6.prototype.getColourToPlay = function() {
   return this.moves.length % 2 == 0 ? BLACK : WHITE;
+}
+
+Connect6.prototype.whosTurnIsIt = function() {
+  return this.moves.length % 2 == 0 ? this.PLAYER_ENUM.P1 : this.PLAYER_ENUM.P2;
 }
 
 Connect6.prototype.getColourAt = function(position) {

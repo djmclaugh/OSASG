@@ -4,7 +4,6 @@ var guest_names = require("./guest_names");
 var router = express.Router();
 
 function checkCredentials(req, res, next) {
-  console.log(req.sessionID);
   if (!req.session.username) {
     req.session.username = guest_names.getGuestName();
     if (req.session.username == null) {

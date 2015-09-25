@@ -1,5 +1,5 @@
 if (!window['OSASG'].Connect6) {
-  console.log("Please include javascript/games/connect6.js before including this file!");
+  throw new Error("Include javascript/games/connect6.js before including this file!");
 } else {
   var Connect6 = window['OSASG'].Connect6;
 }
@@ -100,11 +100,19 @@ function GameGUI(socket, canvas) {
   this.mouseTarget = {type:"NULL"};
   this.preset = [];
   
-  this.socket.on("init", this.receiveInitData.bind(this));
+  this.gameId = null;
+  
+  this.socket.on("join", this.joinGame.bind(this));
   
   canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
   canvas.addEventListener('mouseout', this.onMouseOut.bind(this));
   canvas.addEventListener('click', this.onMouseClick.bind(this));
+}
+
+GameGUI.prototype.joinGame = function(data) {
+  this.gameID = data;
+  this.socket.removeAllListeners("join");
+  this.socket.on(this.gameID + "-update", this.receiveInitData.bind(this));
 }
 
 GameGUI.prototype.receiveInitData = function(data) {
@@ -112,16 +120,16 @@ GameGUI.prototype.receiveInitData = function(data) {
   this.settings = data.setting;
   this.view = data.view;
   this.game = new Connect6(this.settings);
-  this.game.init(data.gameData);
-  this.socket.removeAllListeners("init");
-  this.socket.on("play", this.receiveMove.bind(this));
+  this.game.initFromGameData(data.gameData);
+  this.socket.removeAllListeners("Connect6_0-update");
+  this.socket.on(this.gameID + "-play", this.receiveMove.bind(this));
 };
 
 GameGUI.prototype.startLocal = function() {
   this.view = "LOCAL";
   this.names = ["Black", "White"];
   this.game = new Connect6(this.settings);
-  this.socket.removeAllListeners("init");
+  this.socket.removeAllListeners("join");
 };
 
 GameGUI.prototype.onMouseMove = function(event) {
@@ -203,7 +211,7 @@ GameGUI.prototype.commit = function() {
   }
   this.game.makeMove(move);
   this.preset = [];
-  this.socket.emit("play", move);
+  this.socket.emit(this.gameID + "-play", move);
 };
 
 GameGUI.prototype.isReadyToCommit = function() {
@@ -232,7 +240,7 @@ GameGUI.prototype.draw = function() {
     var status = this.game.getStatus();
     if (status == this.game.STATUS_ENUM.P1_WIN) {
       this.drawWin(this.game.getWinLine(), "white");
-    } else if (this.status == this.game.STATUS_ENUM.P2_WIN) {
+    } else if (status == this.game.STATUS_ENUM.P2_WIN) {
       this.drawWin(this.game.getWinLine(), "black");
     }
   }
@@ -348,10 +356,10 @@ GameGUI.prototype.isMyTurn = function() {
   if (this.view == "LOCAL") {
     return true;
   }
-  if (this.view == "BLACK" && this.game.moves.length % 2 == 0) {
+  if (this.view == "P1" && this.game.moves.length % 2 == 0) {
     return true;
   }
-  if (this.view == "WHITE" && this.game.moves.length % 2 == 1) {
+  if (this.view == "P2" && this.game.moves.length % 2 == 1) {
     return true;
   }
   return false;
