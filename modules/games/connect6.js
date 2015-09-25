@@ -1,17 +1,4 @@
-var Game;
-if (typeof require !== 'undefined') {
-  Game = require("./game").Game;
-} else if (this["OSASG"].Game) {
-  Game = this["OSASG"].Game;
-} else {
-  throw new Error("Please include javascript/games/game.js before including this file!");
-}
-
-if (typeof exports === 'undefined') {
-  exports = this['OSASG'];
-}
-
-(function(exports, Game){
+var Game = require("./game");
 
 // Colours
 const BLACK = "BLACK";
@@ -257,6 +244,4 @@ Connect6.prototype.getLongestLineAtPosition = function(position) {
   return longestLine;
 };
 
-exports.Connect6 = Connect6;
-
-})(exports, Game);
+module.exports = Connect6;

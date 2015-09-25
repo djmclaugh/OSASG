@@ -1,5 +1,3 @@
-(function(exports) {
-
 function Game() {}
 
 Game.prototype.PLAYER_ENUM = {
@@ -34,6 +32,4 @@ Game.prototype.getStatus = function() {
   throw new Error("This method needs to be implemented by the subclass.");
 };
 
-exports.Game = Game;
-
-})(typeof exports == 'undefined' ? this['OSASG'] : exports);
+module.exports = Game;

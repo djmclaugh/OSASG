@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-<%- include header.ejs %>
-    <script src="javascript/games/game.js"></script>
-    <script src="javascript/games/connect6.js"></script>
-    <script src="javascript/guis/connect6_gui.js"></script>
+    <meta charset="utf-8">
+    <link href="stylesheets/style.css" rel="stylesheet">
+    <title><%= title %></title>
+    <script src="/javascript/osasg_client.js"></script>
     <script src="/socket.io/socket.io.js"></script>
   </head>
 
@@ -29,6 +29,7 @@
       }
 
       function init() {
+          console.log(window);
       	gameGUI = new GameGUI(socket, gameCanvas);
       }
 

@@ -1,9 +1,4 @@
-if (!window['OSASG'].Connect6) {
-  throw new Error("Include javascript/games/connect6.js before including this file!");
-} else {
-  var Connect6 = window['OSASG'].Connect6;
-}
-
+var Connect6 = require("../connect6");
 var _c;
 var _ctx;
 
@@ -368,3 +363,5 @@ GameGUI.prototype.isMyTurn = function() {
 function isSamePosition(p1, p2) {
   return p1.x == p2.x && p1.y == p2.y;
 }
+
+module.exports = GameGUI;
