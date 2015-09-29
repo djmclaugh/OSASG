@@ -98,6 +98,7 @@ function GameGUI(socket, canvas) {
   
   this.gameId = null;
   
+  this.socket.on("matchup-join", this.receiveJoinData.bind(this));
   this.socket.on("matchup-update", this.receiveInitData.bind(this));
   
   canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
@@ -105,12 +106,18 @@ function GameGUI(socket, canvas) {
   canvas.addEventListener('click', this.onMouseClick.bind(this));
 }
 
-GameGUI.prototype.receiveInitData = function(data) {
-  console.log(data);
+GameGUI.prototype.receiveJoinData = function(data) {
   this.matchupId = data.id;
+  this.view = data.view;
+  this.socket.removeAllListeners("matchup-join");
+};
+
+GameGUI.prototype.receiveInitData = function(data) {
+  if (data.id != this.matchupId) {
+    return;
+  }
   this.names = data.names;
   this.settings = data.setting;
-  this.view = data.view;
   this.game = new Connect6(this.settings);
   this.game.initFromGameData(data.gameData);
   this.socket.removeAllListeners("matchup-update");
@@ -148,7 +155,7 @@ GameGUI.prototype.moveOnBoard = function(x, y) {
     return;
   }
   var p = {x: Math.round(x / 25) - 1, y: Math.round(y / 25) - 1};
-  if (!this.game.isPositionOnBoard(p) || this.game.getColourAt(p) != this.game.COLOUR_ENUM.EMPTY) {
+  if (!this.game.isPositionOnBoard(p) || this.game.getColourAt(p) != "EMPTY") {
     return;
   }
   if (this.getPresetIndex(p) >= 0) {
@@ -226,7 +233,7 @@ GameGUI.prototype.getPresetIndex = function(position) {
 
 GameGUI.prototype.draw = function() {
   this.context.drawImage(GameGUI.BOARD, 0, 0);
-  if (this.view !== "") {
+  if (this.game !== null) {
     this.drawPlacedStones();
     this.drawMarkup();
     this.drawPresetStones();
@@ -281,9 +288,9 @@ GameGUI.prototype.drawCP = function() {
 GameGUI.prototype.drawPlacedStones = function() {
   for (var i = 0; i < this.game.board.length; ++i) {
     for (var j = 0; j < this.game.board.length; ++j) {
-      if (this.game.board[i][j] == this.game.COLOUR_ENUM.BLACK) {
+      if (this.game.board[i][j] == "BLACK") {
         this.drawStone({x: i, y: j}, GameGUI.BLACK);
-      } else if (this.game.board[i][j] == this.game.COLOUR_ENUM.WHITE) {
+      } else if (this.game.board[i][j] == "WHITE") {
         this.drawStone({x: i, y: j}, GameGUI.WHITE);
       }
     }

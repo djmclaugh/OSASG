@@ -47,7 +47,12 @@ io.use(function setSessionInfo(socket, next) {
 
 io.on('connection', function (socket) {
   console.log(socket.session.username + " has connected!");
-  gameManager.automatchPlayer(socket, "Connect6");
+  var inProgress = gameManager.getMatchesUserIsPlaying(socket);
+  if (inProgress.length == 0) {
+    gameManager.automatchPlayer(socket, "Connect6");
+  } else {
+    inProgress[0].addPlayer(socket);
+  }
   socket.on('disconnect', function(){
     console.log(socket.session.username + " has disconnected!");
   });

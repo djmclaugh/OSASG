@@ -35,6 +35,7 @@ function Connect6(settings) {
 }
 
 Connect6.prototype = Object.create(Game.prototype);
+Connect6.prototype.constructor = Connect6;
 
 Connect6.prototype.initFromGameData = function(gameData) {
   this.moves = gameData.moves;
