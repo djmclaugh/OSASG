@@ -23,20 +23,19 @@
       
       window.onload = function main() {
         gameCanvas = document.getElementById("gameCanvas");
-	      socket = io();
+        socket = io();
         init();
         tick();
       }
 
       function init() {
-          console.log(window);
-      	gameGUI = new GameGUI(socket, gameCanvas);
+        gameGUI = new GameGUI(socket, gameCanvas);
       }
 
       function tick() {
-	      window.requestAnimationFrame(tick);
-      	gameCanvas.getContext("2d").clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-	      gameGUI.draw();
+        window.requestAnimationFrame(tick);
+        gameCanvas.getContext("2d").clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+        gameGUI.draw();
       }
     </script>
   </body>

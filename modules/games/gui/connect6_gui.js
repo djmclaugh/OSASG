@@ -91,33 +91,30 @@ function GameGUI(socket, canvas) {
   this.game = null;
   this.setings = {};
   this.names = ["", ""];
+  this.matchupId = null;
   
   this.mouseTarget = {type:"NULL"};
   this.preset = [];
   
   this.gameId = null;
   
-  this.socket.on("join", this.joinGame.bind(this));
+  this.socket.on("matchup-update", this.receiveInitData.bind(this));
   
   canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
   canvas.addEventListener('mouseout', this.onMouseOut.bind(this));
   canvas.addEventListener('click', this.onMouseClick.bind(this));
 }
 
-GameGUI.prototype.joinGame = function(data) {
-  this.gameID = data;
-  this.socket.removeAllListeners("join");
-  this.socket.on(this.gameID + "-update", this.receiveInitData.bind(this));
-}
-
 GameGUI.prototype.receiveInitData = function(data) {
+  console.log(data);
+  this.matchupId = data.id;
   this.names = data.names;
   this.settings = data.setting;
   this.view = data.view;
   this.game = new Connect6(this.settings);
   this.game.initFromGameData(data.gameData);
-  this.socket.removeAllListeners("Connect6_0-update");
-  this.socket.on(this.gameID + "-play", this.receiveMove.bind(this));
+  this.socket.removeAllListeners("matchup-update");
+  this.socket.on("matchup-play", this.receiveMove.bind(this));
 };
 
 GameGUI.prototype.startLocal = function() {
@@ -193,8 +190,10 @@ GameGUI.prototype.localCommit = function() {
   this.preset = [];
 };
 
-GameGUI.prototype.receiveMove = function(move) {
-  this.game.makeMove(move);
+GameGUI.prototype.receiveMove = function(data) {
+  if (data.id == this.matchupId) {
+    this.game.makeMove(data.move);
+  }
 };
 
 GameGUI.prototype.commit = function() {
@@ -206,7 +205,7 @@ GameGUI.prototype.commit = function() {
   }
   this.game.makeMove(move);
   this.preset = [];
-  this.socket.emit(this.gameID + "-play", move);
+  this.socket.emit("matchup-play", {id: this.matchupId, move: move});
 };
 
 GameGUI.prototype.isReadyToCommit = function() {

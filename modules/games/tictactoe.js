@@ -1,22 +1,20 @@
 var Game = require("./game");
 
-// Colours
-const X = "X";
-const O = "O";
+const X = Game.prototype.PLAYER_ENUM.P1;
+const O = Game.prototype.PLAYER_ENUM.P2;
 const EMPTY = "EMPTY";
+const WIDTH = 3;
+const HEIGHT = 3;
 
 // Tictactoe CLASS
-function Tictactoe(settings) {
-  this.width = 3;
-  this.height = 3;
-  
+function Tictactoe(settings) {  
   this.moves = [];
   this.board = [];
   this.settings = settings;
   
-  for (var i = 0; i < this.width; ++i) {
+  for (var i = 0; i < WIDTH; ++i) {
     this.board[i] = [];
-    for (var j = 0; j < this.height; ++j) {
+    for (var j = 0; j < HEIGHT; ++j) {
       this.board[i][j] = EMPTY;
     }
   }
@@ -38,7 +36,7 @@ Tictactoe.prototype.generateGameData = function() {
   return gameData;
 };
 
-Tictactoe.prototype.getColourToPlay = function() {
+Tictactoe.prototype.whosTurnIsIt = function() {
   return this.moves.length % 2 == 0 ? X : O;
 }
 
@@ -51,10 +49,10 @@ Tictactoe.prototype.setColourAt = function(position, colour) {
 };
 
 Tictactoe.prototype.isPositionOnBoard = function(position) {
-  if (position.x < 0 || position.x >= this.width) {
+  if (position.x < 0 || position.x >= WIDTH) {
     return false;
   }
-  if (position.y < 0 || position.y >= this.height) {
+  if (position.y < 0 || position.y >= HEIGHT) {
     return false;
   }
   return true;
@@ -100,7 +98,7 @@ Tictactoe.prototype.validateLegalityOfMove = function(move) {
 
 Tictactoe.prototype.makeMove = function(move) {
   this.validateMove(move);
-  this.setColourAt(move, this.getColourToPlay());
+  this.setColourAt(move, this.whosTurnIsIt());
   this.moves.push(move);
 };
 
@@ -108,7 +106,7 @@ Tictactoe.prototype.getStatus = function() {
   if (this.getWinLine()) {
     return this.moves.length % 2 == 0 ? this.STATUS_ENUM.P2_WIN : this.STATUS_ENUM.P1_WIN;
   }
-  if (this.moves.length >= this.width * this.height) {
+  if (this.moves.length >= WIDTH * HEIGHT) {
     return this.STATUS_ENUM.DRAW;
   }
   return this.STATUS_ENUM.UNDECIDED;
@@ -119,13 +117,13 @@ Tictactoe.prototype.getWinLine = function() {
     return a != EMPTY && a == b && a == c;
   }
   // Horizontal check
-  for (var y = 0; y < this.height; ++y) {
+  for (var y = 0; y < HEIGHT; ++y) {
     if (isTriple(this.getColourAt({x: 0, y: y}), this.getColourAt({x: 1, y: y}), this.getColourAt({x: 2, y: y}))) {
       return {c1: {x: 0, y: y}, c2: {x: 2, y: y}};
     }
   }
   // Vertical check
-  for (var x = 0; x < this.width; ++x) {
+  for (var x = 0; x < WIDTH; ++x) {
     if (isTriple(this.getColourAt({x: x, y: 0}), this.getColourAt({x: x, y: 1}), this.getColourAt({x: x, y: 2}))) {
       return {c1: {x: x, y: 0}, c2: {x: x, y: 2}};
     }

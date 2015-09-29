@@ -21,12 +21,6 @@ Line.prototype.length = function() {
 function Connect6(settings) {
   this.width = 19;
   this.height = 19;
-  
-  this.COLOUR_ENUM = {
-    BLACK: BLACK,
-    WHITE: WHITE,
-    EMPTY: EMPTY
-  }
     
   this.moves = [];
   this.board = [];
