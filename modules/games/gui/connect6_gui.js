@@ -1,153 +1,23 @@
 var Connect6 = require("../connect6");
-var _c;
-var _ctx;
+var Assets = require("./assets");
 
-// Board Background
-_c = document.createElement("canvas");
-_c.width = _c.height = 500;
-_ctx = _c.getContext("2d");
-_ctx.fillStyle = "#DDAA77";
-_ctx.fillRect(0, 0, 500, 500);
-
-_ctx.lineWidth = 1;
-_ctx.strokeStyle = "black";
-_ctx.lineCap = "round";
-_ctx.beginPath();
-for (var i = 0; i < 19; ++i) {
-  _ctx.moveTo(25.5 + (25 * i), 25.5);
-  _ctx.lineTo(25.5 + (25 * i), 475.5);
-}
-for (var j = 0; j < 19; ++j) {
-  _ctx.moveTo(25.5, 25.5 + (25 * j));
-  _ctx.lineTo(475.5, 25.5 + (25 * j));
-}
-_ctx.stroke();    
-    
-GameGUI.BOARD = new Image();
-GameGUI.BOARD.src = _c.toDataURL();
-
-// Black Stone
-_c = document.createElement("canvas");
-_c.width = _c.height = 24;
-_ctx = _c.getContext("2d");
-_ctx.fillStyle = "#000000";
-_ctx.lineWidth = 1;
-_ctx.strokeStyle = "#000000";
-_ctx.beginPath();
-_ctx.arc(12.5, 12.5, 10, 0, 2 * Math.PI);
-_ctx.fill();
-_ctx.stroke();
-    
-GameGUI.BLACK = new Image();
-GameGUI.BLACK.src = _c.toDataURL();
-
-// White Stone
-_c = document.createElement("canvas");
-_c.width = _c.height = 24;
-_ctx = _c.getContext("2d");
-_ctx.fillStyle = "#FFFFFF";
-_ctx.lineWidth = 1;
-_ctx.strokeStyle = "#000000";
-_ctx.beginPath();
-_ctx.arc(12.5, 12.5, 10, 0, 2 * Math.PI);
-_ctx.fill();
-_ctx.stroke();
-    
-GameGUI.WHITE = new Image();
-GameGUI.WHITE.src = _c.toDataURL();
-
-// Black Last Move Markup
-_c = document.createElement("canvas");
-_c.width = _c.height = 24;
-_ctx = _c.getContext("2d");
-_ctx.lineWidth = 2;
-_ctx.strokeStyle = "#FFFFFF";
-_ctx.beginPath();
-_ctx.arc(12.5, 12.5, 5, 0, 2 * Math.PI);
-_ctx.fill();
-_ctx.stroke();
-    
-GameGUI.BLACK_LM = new Image();
-GameGUI.BLACK_LM.src = _c.toDataURL();
-
-// White Last Move Markup
-_c = document.createElement("canvas");
-_c.width = _c.height = 24;
-_ctx = _c.getContext("2d");
-_ctx.lineWidth = 2;
-_ctx.strokeStyle = "#000000";
-_ctx.beginPath();
-_ctx.arc(12.5, 12.5, 5, 0, 2 * Math.PI);
-_ctx.stroke();
-    
-GameGUI.WHITE_LM = new Image();
-GameGUI.WHITE_LM.src = _c.toDataURL();
-
-function GameGUI(socket, canvas) {
+function Connect6GUI(canvas) {
   this.canvas = canvas;
   this.context = canvas.getContext("2d");
-  this.socket = socket;
-  this.view = ""; // BLACK, WHITE, SPECTATOR, LOCAL
+  
   this.game = null;
-  this.setings = {};
-  this.names = ["", ""];
-  this.matchupId = null;
   
   this.mouseTarget = {type:"NULL"};
   this.preset = [];
-  
-  this.gameId = null;
-  
-  this.socket.on("matchup-join", this.receiveJoinData.bind(this));
-  this.socket.on("matchup-update", this.receiveInitData.bind(this));
-  
-  canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
-  canvas.addEventListener('mouseout', this.onMouseOut.bind(this));
-  canvas.addEventListener('click', this.onMouseClick.bind(this));
 }
 
-GameGUI.prototype.receiveJoinData = function(data) {
-  this.matchupId = data.id;
-  this.view = data.view;
-  this.socket.removeAllListeners("matchup-join");
+Connect6GUI.prototype.createGame = function(gameData) {
+  this.game = new Connect6({});
+  this.game.initFromGameData(gameData);
 };
 
-GameGUI.prototype.receiveInitData = function(data) {
-  if (data.id != this.matchupId) {
-    return;
-  }
-  this.names = data.names;
-  this.settings = data.setting;
-  this.game = new Connect6(this.settings);
-  this.game.initFromGameData(data.gameData);
-  this.socket.removeAllListeners("matchup-update");
-  this.socket.on("matchup-play", this.receiveMove.bind(this));
-};
-
-GameGUI.prototype.startLocal = function() {
-  this.view = "LOCAL";
-  this.names = ["Black", "White"];
-  this.game = new Connect6(this.settings);
-  this.socket.removeAllListeners("join");
-};
-
-GameGUI.prototype.onMouseMove = function(event) {
-  this.mouseTarget = {type:"NULL"};
-  var rect = this.canvas.getBoundingClientRect();
-  var mouseX = event.clientX - rect.left - 0.5;
-  var mouseY = event.clientY - rect.top - 0.5;
-  if (mouseX < 500) {
-    this.moveOnBoard(mouseX, mouseY);
-  } else {
-    this.moveOnCP(mouseX, mouseY);
-  }
-  
-};
-
-GameGUI.prototype.moveOnBoard = function(x, y) {
-  if (!this.isMyTurn()) {
-    return;
-  }
+Connect6GUI.prototype.onMouseMove = function(x, y) {
+  this.mouseTarget = {type: "NULL"};
   if (x < 15 || y < 15 || x > 485 || y > 485) {
     return;
   }
@@ -165,64 +35,47 @@ GameGUI.prototype.moveOnBoard = function(x, y) {
   }
 };
 
-GameGUI.prototype.moveOnCP = function(x, y) {
+Connect6GUI.prototype.onMouseOut = function(event) {
   this.mouseTarget = {type:"NULL"};
 };
 
-GameGUI.prototype.onMouseOut = function(event) {
-  this.mouseTarget = {type:"NULL"};
-};
-
-GameGUI.prototype.onMouseClick = function(event) {
-  this.onMouseMove(event);
+Connect6GUI.prototype.onMouseClick = function(x, y) {
+  this.onMouseMove(x, y);
   if (this.mouseTarget.type == "BOARD") {
     this.preset.push(this.mouseTarget.position);
   } else if (this.mouseTarget.type == "PRESET") {
     this.preset.splice(this.mouseTarget.index, 1);
   }
-  if (this.view == "LOCAL" && this.isReadyToCommit()) {
-    this.localCommit();
-  } else if (this.isReadyToCommit()) {
-    this.commit();
-  }
-  
+  this.mouseTarget = {type: "NULL"};
 };
 
-GameGUI.prototype.localCommit = function() {
-  if (this.preset.length == 1) {
-    this.game.makeMove({p1: this.preset[0]});
-  } else {
-    this.game.makeMove({p1: this.preset[0], p2: this.preset[1]});
-  }
+Connect6GUI.prototype.makeMove = function(move) {
   this.preset = [];
-};
-
-GameGUI.prototype.receiveMove = function(data) {
-  if (data.id == this.matchupId) {
-    this.game.makeMove(data.move);
-  }
-};
-
-GameGUI.prototype.commit = function() {
-  var move;
-  if (this.preset.length == 1) {
-    move = {p1: this.preset[0]};
-  } else {
-    move = {p1: this.preset[0], p2: this.preset[1]};
-  }
   this.game.makeMove(move);
-  this.preset = [];
-  this.socket.emit("matchup-play", {id: this.matchupId, move: move});
 };
 
-GameGUI.prototype.isReadyToCommit = function() {
+Connect6GUI.prototype.isReadyToCommit = function() {
+  if (!this.game) {
+    return false;
+  }
   if (this.game.moves.length == 0) {
     return this.preset.length == 1;
   }
   return this.preset.length == 2;
 };
 
-GameGUI.prototype.getPresetIndex = function(position) {
+Connect6GUI.prototype.getMove = function() {
+  if (this.isReadyToCommit()) { 
+    if (this.preset.length == 1) {
+      return {p1: this.preset[0]};
+    } else {
+      return {p1: this.preset[0], p2: this.preset[1]};
+    }
+  }
+  return null;
+}
+
+Connect6GUI.prototype.getPresetIndex = function(position) {
   for (var i = 0; i < this.preset.length; ++i) {
     if (isSamePosition(this.preset[i], position)) {
       return i;
@@ -231,8 +84,8 @@ GameGUI.prototype.getPresetIndex = function(position) {
   return -1;
 };
 
-GameGUI.prototype.draw = function() {
-  this.context.drawImage(GameGUI.BOARD, 0, 0);
+Connect6GUI.prototype.draw = function() {
+  this.context.drawImage(Assets.GO_BOARD, 0, 0);
   if (this.game !== null) {
     this.drawPlacedStones();
     this.drawMarkup();
@@ -245,10 +98,9 @@ GameGUI.prototype.draw = function() {
       this.drawWin(this.game.getWinLine(), "black");
     }
   }
-  this.drawCP();
 };
 
-GameGUI.prototype.drawWin = function(win_line, colour) {
+Connect6GUI.prototype.drawWin = function(win_line, colour) {
   this.context.save();
   this.context.lineWidth = 2;
   this.context.strokeStyle = colour;
@@ -260,44 +112,19 @@ GameGUI.prototype.drawWin = function(win_line, colour) {
   this.context.restore();
 };
 
-GameGUI.prototype.drawCP = function() {
-  this.context.save();
-  this.context.fillStyle = "black";
-  this.context.font = "bold 16px Arial";
-  var status = "";
-  if (this.game) {
-    status = this.game.getStatus();
-  }
-  if (status === "") {
-    this.context.fillText("Waiting to be matched!", 570, 200);
-  } else if (status == this.game.STATUS_ENUM.P1_WIN) {
-    this.context.fillText("Game over!\nBLACK wins!", 570, 200);
-  } else if (status == this.game.STATUS_ENUM.P2_WIN) {
-    this.context.fillText("Game over!\nWHITE wins!", 570, 200);
-  } else if (status == this.game.STATUS_ENUM.DRAW) {
-    this.context.fillText("Game over!\nDRAW!", 570, 200);
-  } else {
-    this.context.drawImage(GameGUI.BLACK, 600, 100);
-    this.context.fillText(this.names[0], 630, 120);
-    this.context.drawImage(GameGUI.WHITE, 600, 200);
-    this.context.fillText(this.names[1], 630, 220);
-  }
-  this.context.restore();
-};
-
-GameGUI.prototype.drawPlacedStones = function() {
+Connect6GUI.prototype.drawPlacedStones = function() {
   for (var i = 0; i < this.game.board.length; ++i) {
     for (var j = 0; j < this.game.board.length; ++j) {
       if (this.game.board[i][j] == "BLACK") {
-        this.drawStone({x: i, y: j}, GameGUI.BLACK);
+        this.drawStone({x: i, y: j}, Assets.BLACK_STONE);
       } else if (this.game.board[i][j] == "WHITE") {
-        this.drawStone({x: i, y: j}, GameGUI.WHITE);
+        this.drawStone({x: i, y: j}, Assets.WHITE_STONE);
       }
     }
   }
 };
 
-GameGUI.prototype.drawPresetStones = function() {
+Connect6GUI.prototype.drawPresetStones = function() {
   var stone = this.getCurrentStone();
   this.context.save();
   this.context.globalAlpha = 0.5;
@@ -307,7 +134,7 @@ GameGUI.prototype.drawPresetStones = function() {
   this.context.restore();
 };
 
-GameGUI.prototype.drawMouse = function() {
+Connect6GUI.prototype.drawMouse = function() {
   if (this.mouseTarget.type == "BOARD") {
     var stone = this.getCurrentStone();
     this.context.save();
@@ -323,15 +150,15 @@ GameGUI.prototype.drawMouse = function() {
   }
 };
 
-GameGUI.prototype.drawMarkup = function() {
+Connect6GUI.prototype.drawMarkup = function() {
   if (this.game.turnNumber === 0) {
     return;
   }
   var markup;
   if (this.game.moves.length % 2 == 0) {
-    markup = GameGUI.WHITE_LM;
+    markup = Assets.WHITE_STONE_LM;
   } else {
-    markup = GameGUI.BLACK_LM;
+    markup = Assets.BLACK_STONE_LM;
   }
   var lastMove = this.game.moves[this.game.moves.length - 1];
   for (var key in lastMove) {
@@ -339,35 +166,19 @@ GameGUI.prototype.drawMarkup = function() {
   }
 };
 
-GameGUI.prototype.getCurrentStone = function() {
+Connect6GUI.prototype.getCurrentStone = function() {
   if (this.game.moves.length % 2 == 0) {
-    return GameGUI.BLACK;
+    return Assets.BLACK_STONE;
   }
-  return GameGUI.WHITE;
+  return Assets.WHITE_STONE;
 };
 
-GameGUI.prototype.drawStone = function(position, image) {
+Connect6GUI.prototype.drawStone = function(position, image) {
   this.context.drawImage(image, (position.x * 25) + 13, (position.y * 25) + 13);
-};
-
-GameGUI.prototype.isMyTurn = function() {
-  if (!this.game || this.game.getStatus() != this.game.STATUS_ENUM.UNDECIDED) {
-    return false;
-  }
-  if (this.view == "LOCAL") {
-    return true;
-  }
-  if (this.view == "P1" && this.game.moves.length % 2 == 0) {
-    return true;
-  }
-  if (this.view == "P2" && this.game.moves.length % 2 == 1) {
-    return true;
-  }
-  return false;
 };
 
 function isSamePosition(p1, p2) {
   return p1.x == p2.x && p1.y == p2.y;
 }
 
-module.exports = GameGUI;
+module.exports = Connect6GUI;

@@ -4,153 +4,32 @@ body {
   background-color: #F6F6F6;
 }
 
-h1 {
-	text-align: center;
+.match-window {
+  margin: 0;
+  padding: 0;
 }
 
-h2 {
-	font-size: 32px;
-	font-weight: normal;
-}
-
-.intro {
-	margin: 0 auto;
-	max-width: 750px;
-}
-
-p {
-	text-align: center;
-}
-
-p.announcement {
-	font-size: 16px;
-}
-
-h3.announcement {
-	font-size: 20px;
-}
-
-div.announcement {
-	max-width: 1000px;
-  	margin: 0 auto;
-  	padding: 20px;
-  	background-color: #FFFFFF;
-  	border: 1px solid #AAAAAA;
-}
-
-.announcement_time {
-	font-family: 'Bree Serif', serif;
-  	font-weight: normal;
-}
-
-p.high_scores {
-	font-size: 16px;
-}
-
-.high_scores {
-	font-size: 20px;
-}
-
-div.high_scores {
-	max-width: 1000px;
-  	margin: 0 auto;
-  	padding: 20px;
-  	background-color: #FFFFFF;
-  	border: 1px solid #AAAAAA;
-}
-
-a {
-  color: #00B7FF;
+div {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 canvas {
-	border: solid;
-	background-color: #FFFFFF;
-	margin-top: 20px;
-	padding-left: 0;
-    padding-right: 0;
-    margin-left: auto;
-    margin-right: auto;
-    display: block;
+  margin: 0;
+  padding: 0;
+  display: block;
 }
 
-.game_container {
-	width: 800px;
-  	margin: 0 auto;
+h1 {
+  text-align: center;
 }
 
-.darker {
-    font-weight: bold;
-    color: #0088DD;
-    margin-left: 5px;
+p {
+  text-align: center;
 }
 
-label {
-    color: #000000;
-    display: inline-block;
-    margin-left: 0px;
-    padding-top: 0px;
-}
-
-input[type=email], input[type=text], input[type=password] {
-    width: 120px;
-    height: 20px;
-    border: 1px solid #111111;
-    border-radius: 3px;
-    margin-right: 5px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-}
-
-input[type=submit] {
-    width: 80px;
-    height: 30px;
-    font-weight: bold;
-    background-color: #FFFFFF;
-    background-image: linear-gradient(rgb(230,230,230), rgb(170,170,170));
-    border-radius: 30px;
-    border: 1px solid #111111;
-    box-shadow: 0 1px 2px rgba(0,0,0,.3);
-    cursor: pointer;
-    margin-right: 5px;
-    margin-top: 5px;
-    margin-bottom:5px;
-}
-
-#login_form {
-    padding: 10px;
-    background: #EEEEEE;
-    border-radius:3px;
-    border: 1px solid #BBBBBB;
-    position:absolute;
-    right:2%;
-    top:20px;
-    margin-left:2%;
-}
-
-#register_form {
-    width: 300px;
-    padding: 10px;
-    background: #EEEEEE;
-    border-radius:3px;
-    border:1px solid #BBBBBB;
-    margin-left:auto;
-    margin-right:auto;
-}
-
-#register_form input[type=text],
-#register_form input[type=email],
-#register_form form input[type=password] {
-    width: 200px;
-    margin-left: 50px;
-    margin-bottom: 20px;
-}
-
-#register_form form label {
-    font-weight: bold;
-}
-
-#register_form form input[type=submit] {
-    width: 100px;
-    margin-left: 100px;
+.game-container {
+  width: 800px;
+  margin: 0 auto;
 }

@@ -1,1 +1,2 @@
-window.GameGUI = require("./games/gui/connect6_gui");
+window.MatchGUI = require("./games/gui/match_gui");
+

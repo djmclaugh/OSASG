@@ -29,7 +29,7 @@ app.use(session({
 
 app.use(router);
 
-var gameManager = new (require("./modules/game_manager"))();
+var gameManager = require("./modules/game_manager").prototype.getInstance();
 
 io.use(function setSessionInfo(socket, next) {
   var req = socket.request;
@@ -45,15 +45,12 @@ io.use(function setSessionInfo(socket, next) {
   });
 });
 
-io.on('connection', function (socket) {
+io.on("connection", function (socket) {
   console.log(socket.session.username + " has connected!");
-  var inProgress = gameManager.getMatchesUserIsPlaying(socket);
-  if (inProgress.length == 0) {
-    gameManager.automatchPlayer(socket, "Connect6");
-  } else {
-    inProgress[0].addPlayer(socket);
-  }
-  socket.on('disconnect', function(){
+  socket.on("join-match", function(data) {
+    gameManager.getMatchupById(data.id).addPlayer(socket);
+  });
+  socket.on("disconnect", function(){
     console.log(socket.session.username + " has disconnected!");
   });
 })

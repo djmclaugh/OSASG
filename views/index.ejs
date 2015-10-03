@@ -15,29 +15,10 @@
       <p>This website is still under construction.</p>
       <p>View progress on <a href="https://github.com/djmclaugh/OSASG">GitHub</a>.</p>
     </div>
-    <div class=game_container>
-      <canvas class=gameGUI id="gameCanvas" width=800 height=500></canvas>
-    </div>
-    <script>
-      var gameCanvas, cpCanvas, socket, game, gameGUI, cp ;
-      
-      window.onload = function main() {
-        gameCanvas = document.getElementById("gameCanvas");
-        socket = io();
-        init();
-        tick();
-      }
-
-      function init() {
-        gameGUI = new GameGUI(socket, gameCanvas);
-      }
-
-      function tick() {
-        window.requestAnimationFrame(tick);
-        gameCanvas.getContext("2d").clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-        gameGUI.draw();
-      }
-    </script>
+    <% for (var i = 0; i < matches.length; ++i) { -%>
+    <p><%= matches[i].p1Username ? matches[i].p1Username : "EMPTY"%> vs <%= matches[i].p2Username ? matches[i].p2Username : "EMPTY"%> : <button onclick="window.open('/match/<%= matches[i].id %>','<%= matches[i].id %>', 'width=800, height=500')">JOIN</button></p>
+    <% } -%>
+    <p><button onclick="document.location='/creatematch'">NEW MATCH</button></p>
   </body>
   
 </html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <link href="/stylesheets/style.css" rel="stylesheet">
+    <title><%= title %></title>
+    <script src="/javascript/osasg_client.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+  </head>
+
+  <body class="match-window">
+    <div class=game-container>
+      <canvas class=gameGUI id="gameCanvas" width=800 height=500></canvas>
+    </div>
+    <script>
+      var gameCanvas, socket, matchGUI;
+      
+      window.onload = function main() {
+        gameCanvas = document.getElementById("gameCanvas");
+        socket = io();
+        socket.session = {};
+        socket.session.username = "<%= username %>";
+        init();
+        tick();
+      }
+
+      function init() {
+        matchGUI = new MatchGUI("<%= id %>", socket, gameCanvas);
+      }
+
+      function tick() {
+        window.requestAnimationFrame(tick);
+        gameCanvas.getContext("2d").clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+        matchGUI.draw();
+      }
+    </script>
+  </body>
+</html>

@@ -1,5 +1,6 @@
 var express = require("express");
 var guest_names = require("./guest_names");
+var gameManager = require("./game_manager").prototype.getInstance();
 
 var router = express.Router();
 
@@ -14,8 +15,27 @@ function checkCredentials(req, res, next) {
   next();
 }
 
-router.get('/', checkCredentials, function(req, res) {
-  res.render('index', {title: 'Open Source Abstract Strategy Games', username: req.session.username});
+router.use(checkCredentials);
+
+router.get("/", function(req, res) {
+  res.render("index", {
+      title: "Open Source Abstract Strategy Games",
+      username: req.session.username,
+      matches: gameManager.getMatchesUserCanJoin()
+  });
+});
+
+router.get("/creatematch", function(req, res) {
+  gameManager.createNewMatchup("Connect6", {}, null);
+  res.redirect("/");
+});
+
+router.get("/match/:gameId", checkCredentials, function(req, res) {
+  res.render("match", {
+      title: req.params.gameId,
+      username: req.session.username,
+      id: req.params.gameId
+  });
 });
 
 module.exports = router;

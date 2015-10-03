@@ -9,7 +9,7 @@ describe("Matchups", function() {
   var matchup;
   
   beforeEach(function(done) {
-    matchup = new Matchup("Tictactoe_0", "Tictactoe", {});
+    matchup = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
     
     function onSocketAdded(clientSocket, serverSocket) {
       var username = serverSocket.session.username;
@@ -36,13 +36,16 @@ describe("Matchups", function() {
     var spectator = clientSockets["User_2"];
 
     function player2_init(data) {
-      player2.removeAllListeners("matchup-update");
-      player2.emit("matchup-play", {id: matchup.id, move: {x: 0, y: 0}});
+      if (matchup.hasStarted()) {
+        player2.removeAllListeners(matchup.MESSAGES.UPDATE);
+        player2.emit(matchup.MESSAGES.PLAY, {move: {x: 0, y: 0}});
+      }
     };
 
     function expected_error_received(data) {
-      assert.equal(data.id, matchup.id);
-      assert.equal(data.error, "It isn't your turn to play yet.");
+      assert.equal(data.message, matchup.MESSAGES.PLAY);
+      assert.deepEqual(data.data.move, {x: 0, y: 0});
+      assert.equal(data.error, "It isn't your turn to play.");
       // Wait a bit to make sure no one else receives an error.
       setTimeout(done, 10);
     }
@@ -51,14 +54,17 @@ describe("Matchups", function() {
       assert(false, "Only the player playing out of turn should be receiving this message.");
     }
 
-    player2.on("matchup-update", player2_init);
-    player1.on("matchup-error", unexpected_error_received);
-    player2.on("matchup-error", expected_error_received);
-    spectator.on("matchup-error", unexpected_error_received);
+    player2.on(matchup.MESSAGES.UPDATE, player2_init);
+    player1.on(matchup.MESSAGES.ERROR, unexpected_error_received);
+    player2.on(matchup.MESSAGES.ERROR, expected_error_received);
+    spectator.on(matchup.MESSAGES.ERROR, unexpected_error_received);
     
-    matchup.addSpectator(serverSockets["User_2"]);
     matchup.addPlayer(serverSockets["User_0"]);
     matchup.addPlayer(serverSockets["User_1"]);
+    matchup.addPlayer(serverSockets["User_2"]);
+
+    player1.emit(matchup.MESSAGES.SIT, {seat: 1});
+    player2.emit(matchup.MESSAGES.SIT, {seat: 2});
   });
   
   it("should send an error message if the user makes an illegal move", function(done) {
@@ -67,12 +73,15 @@ describe("Matchups", function() {
     var spectator = clientSockets["User_2"];
 
     function player1_init(data) {
-      player1.removeAllListeners("matchup-update");
-      player1.emit("matchup-play", {id: matchup.id, move: {x: 4, y: 4}});
+      if (matchup.hasStarted()) {
+        player1.removeAllListeners(matchup.MESSAGES.UPDATE);
+        player1.emit(matchup.MESSAGES.PLAY, {id: matchup.id, move: {x: 4, y: 4}});
+      }
     };
 
     function expected_error_received(data) {
-      assert.equal(data.id, matchup.id);
+      assert.equal(data.message, matchup.MESSAGES.PLAY);
+      assert.deepEqual(data.data.move, {x: 4, y: 4}); 
       assert.notEqual(data.error, null);
       // Wait a bit to make sure no one else receives an error.
       setTimeout(done, 10);
@@ -82,42 +91,56 @@ describe("Matchups", function() {
       assert(false, "Only the player making the illegal move should be receiving this message.");
     }
 
-    player1.on("matchup-update", player1_init);
-    player1.on("matchup-error", expected_error_received);
-    player2.on("matchup-error", unexpected_error_received);
-    spectator.on("matchup-error", unexpected_error_received);
+    player1.on(matchup.MESSAGES.UPDATE, player1_init);
+    player1.on(matchup.MESSAGES.ERROR, expected_error_received);
+    player2.on(matchup.MESSAGES.ERROR, unexpected_error_received);
+    spectator.on(matchup.MESSAGES.ERROR, unexpected_error_received);
     
-    matchup.addSpectator(serverSockets["User_2"]);
     matchup.addPlayer(serverSockets["User_0"]);
     matchup.addPlayer(serverSockets["User_1"]);
+    matchup.addPlayer(serverSockets["User_2"]);
+
+    player1.emit(matchup.MESSAGES.SIT, {seat: 1});
+    player2.emit(matchup.MESSAGES.SIT, {seat: 2});
   });
   
-  it("should allow a user to join a private game they belong to", function() {
+  it("should allow a user to join a private game they belong to", function(done) {
     matchup.privateUsers = ["User_0", "User_1"];
     
     matchup.addPlayer(serverSockets["User_0"]);
-    
-    assert.equal(matchup.p1.session.username, "User_0");
+    clientSockets["User_0"].on(matchup.MESSAGES.UPDATE, function(data) {
+      done();
+    });
   });
   
-  it("should not allow a user to join a full game", function() {
+  it("should not allow a user to sit in an occupied seat", function(done) {
     matchup.addPlayer(serverSockets["User_0"]);
     matchup.addPlayer(serverSockets["User_1"]);
-    assert.throws(function() {
-      matchup.addPlayer(serverSockets["User_2"]);
-    }, matchup.ERRORS.FAILED_TO_JOIN_MATCHUP);
+
+    var p1 = clientSockets["User_0"];
+    var p2 = clientSockets["User_1"];
+
+    p1.emit(matchup.MESSAGES.SIT, {seat: 1});
+
+    p1.on(matchup.MESSAGES.UPDATE, function(data) {
+      if (data.p1 == "User_0") {
+        p2.emit(matchup.MESSAGES.SIT, {seat: 1});
+      }
+    });
+
+    p2.on(matchup.MESSAGES.ERROR, function(data) {
+      assert.equal(data.message, matchup.MESSAGES.SIT);
+      assert.equal(data.data.seat, 1);
+      assert.equal(data.error, "The P1 seat is already taken.");
+      done()
+    });
   });
   
-  it("should not allow a user to join/spectate a private game they do not belong to", function() {
+  it("should not allow a user to join a private game they do not belong to", function() {
     matchup.privateUsers = ["User_0", "User_1"];
-    
     assert.throws(function() {
       matchup.addPlayer(serverSockets["User_2"]);
     }, matchup.ERRORS.FAILED_TO_JOIN_MATCHUP);
-    
-    assert.throws(function() {
-      matchup.addSpectator(serverSockets["User_2"]);
-    }, matchup.ERRORS.FAILED_TO_SPECTATE_MATCHUP);
   });
   
   it("should allow a user to reconnect", function(done) {
@@ -126,22 +149,19 @@ describe("Matchups", function() {
     var reconnectedPlayer1 = null;
     
     function player1_init(data) {
-      player1.removeAllListeners("matchup-update");
-      player1.emit("matchup-play", {id: matchup.id, move: {x: 0, y: 0}});
+      if (data.p1 == "User_0" && data.p2 == "User_1") {
+        player1.removeAllListeners(matchup.MESSAGES.UPDATE);
+        player1.emit(matchup.MESSAGES.PLAY, {move: {x: 0, y: 0}});
+      }
     };
     
-    function reconnected_join(data) {
-      assert.equal(data.id, matchup.id);
-      assert.equal(data.view, "P1");
-    }
-    
     function reconnected_init(data) {
-      assert.equal(data.id, matchup.id);
-      assert.deepEqual(data.names, ["User_0", "User_1"]);
+      assert.equal(data.p1, "User_0");
+      assert.equal(data.p2, "User_1");
       assert.deepEqual(data.gameData.moves[0], {x: 0, y: 0});
       assert.deepEqual(data.gameData.moves[1], {x: 1, y: 1});
       assert.equal(data.gameData.moves.length, 2);
-      reconnectedPlayer1.emit("matchup-play", {id: matchup.id, move: {x: 2, y: 2}});
+      reconnectedPlayer1.emit(matchup.MESSAGES.PLAY, {move: {x: 2, y: 2}});
     }
     
     function reconnected_onPlay(data) {
@@ -160,30 +180,31 @@ describe("Matchups", function() {
     function player2_onPlay(data) {
       if (matchup.game.moves.length == 1) {
         player1.disconnect();
-        player2.emit("matchup-play", {id: matchup.id, move: {x: 1, y: 1}});
+        player2.emit(matchup.MESSAGES.PLAY, {move: {x: 1, y: 1}});
         setTimeout(reconnectP1, 10);
       }
       if (matchup.game.moves.length == 3) {
         assert.deepEqual(data.move, {x: 2, y: 2});
-        player2.emit("matchup-play", {id: matchup.id, move: {x: 0, y: 1}});
+        player2.emit(matchup.MESSAGES.PLAY, {move: {x: 0, y: 1}});
       }
     }
     
     function reconnectP1() {
       mockServer.addClient("User_0", function(clientSocket, serverSocket) {
         reconnectedPlayer1 = clientSocket;
-        reconnectedPlayer1.on("matchup-join", reconnected_join);
-        reconnectedPlayer1.on("matchup-update", reconnected_init);
-        reconnectedPlayer1.on("matchup-play", reconnected_onPlay);
+        reconnectedPlayer1.on(matchup.MESSAGES.UPDATE, reconnected_init);
+        reconnectedPlayer1.on(matchup.MESSAGES.PLAY, reconnected_onPlay);
         matchup.addPlayer(serverSocket);
       })
     }
     
-    player1.on("matchup-update", player1_init);
-    player2.on("matchup-play", player2_onPlay);
+    player1.on(matchup.MESSAGES.UPDATE, player1_init);
+    player2.on(matchup.MESSAGES.PLAY, player2_onPlay);
     
     matchup.addPlayer(serverSockets["User_0"]);
     matchup.addPlayer(serverSockets["User_1"]);
+    player1.emit(matchup.MESSAGES.SIT, {seat: 1});
+    player2.emit(matchup.MESSAGES.SIT, {seat: 2});
   });
     
   it("should let two users join and play a full game while being spectated", function(done) {
@@ -205,48 +226,32 @@ describe("Matchups", function() {
       {x: 2, y: 2}
     ];
 
+    var p1HasRequestedToSit = false;
+    var p2HasRequestedToSit = false;
+
+    var p1HasMadeFirstMove = false;
+
     var movesReceivedByP1 = [];
     var movesReceivedByP2 = [];
     var movesReceivedBySpectator = [];
 
-    function player1_join(data) {
-      assert.equal(data.id, id);
-      assert.equal(data.view, "P1");
-      player1.removeAllListeners("matchup-join");
+    function player1_update(data) {
+      if (!p1HasRequestedToSit) {
+        player1.emit(matchup.MESSAGES.SIT, {seat: 1});
+        p1HasRequestedToSit = true;
+      } else if (!p1HasMadeFirstMove && data.p1 == "User_0" && data.p2 == "User_1") {
+        player1.emit("matchup-play", {id: id, move: moves[0]});
+        p1HasMadeFirstMove = true;
+      }
     };
-    function player2_join(data) {
-      assert.equal(data.id, id);
-      assert.equal(data.view, "P2");
-      player2.removeAllListeners("matchup-join");
-    };
-    function spectator_join(data) {
-      assert.equal(data.id, id);
-      assert.equal(data.view, "SPECTATOR");
-      spectator.removeAllListeners("matchup-join");
-    };
-
-    function player1_init(data) {
-      assert.equal(data.id, id);
-      assert.deepEqual(data.names, ["User_0", "User_1"]);
-      player1.removeAllListeners("matchup-update");
-      player1.on("matchup-play", p1_move_received);
-      player1.emit("matchup-play", {id: id, move: moves[0]});
-    };
-    function player2_init(data) {
-      assert.equal(data.id, id);
-      assert.deepEqual(data.names, ["User_0", "User_1"]);
-      player2.removeAllListeners("matchup-update");
-      player2.on("matchup-play", p2_move_received);
-    };
-    function spectator_init(data) {
-      assert.equal(data.id, id);
-      assert.deepEqual(data.names, ["User_0", "User_1"]);
-      spectator.removeAllListeners("matchup-update");
-      spectator.on("matchup-play", spectator_move_received);
+    function player2_update(data) {
+      if (!p2HasRequestedToSit) {
+        player2.emit(matchup.MESSAGES.SIT, {seat: 2});
+        p2HasRequestedToSit = true;
+      }
     };
       
     function p1_move_received(data) {
-      assert.equal(data.id, id);
       assert.deepEqual(data.move, moves[movesReceivedByP1.length]);
       movesReceivedByP1.push(data.move);
       if (movesReceivedByP1.length % 2 == 0) {
@@ -255,7 +260,6 @@ describe("Matchups", function() {
       }
     }  
     function p2_move_received(data) {
-      assert.equal(data.id, id);
       assert.deepEqual(data.move, moves[movesReceivedByP2.length]);
       movesReceivedByP2.push(data.move);
       if (movesReceivedByP2.length % 2 == 1) {
@@ -267,10 +271,8 @@ describe("Matchups", function() {
           player2.emit("matchup-play", {id: id, move: nextMove});
         }
       }
-    }
-      
+    }     
     function spectator_move_received(data) {
-      assert.equal(data.id, id);
       assert.deepEqual(data.move, moves[movesReceivedBySpectator.length]);
       movesReceivedBySpectator.push(data.move);
     }
@@ -283,16 +285,15 @@ describe("Matchups", function() {
       done();
     }
       
-    player1.on("matchup-update", player1_init);
-    player2.on("matchup-update", player2_init);
-    spectator.on("matchup-update", spectator_init);
-    
-    player1.on("matchup-join", player1_join);
-    player2.on("matchup-join", player2_join);
-    spectator.on("matchup-join", spectator_join);
+    player1.on(matchup.MESSAGES.UPDATE, player1_update);
+    player2.on(matchup.MESSAGES.UPDATE, player2_update);
 
-    matchup.addSpectator(serverSockets["User_2"]);
+    player1.on(matchup.MESSAGES.PLAY, p1_move_received);
+    player2.on(matchup.MESSAGES.PLAY, p2_move_received);
+    spectator.on(matchup.MESSAGES.PLAY, spectator_move_received);
+ 
     matchup.addPlayer(serverSockets["User_0"]);
     matchup.addPlayer(serverSockets["User_1"]);
+    matchup.addPlayer(serverSockets["User_2"]);
   });
 });
