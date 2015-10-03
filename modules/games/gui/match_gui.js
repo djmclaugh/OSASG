@@ -31,7 +31,7 @@ MatchGUI.prototype.gameGUIForId = function(matchupId) {
   if (matchupId.indexOf("connect6") == 0) {
     return new Connect6GUI(this.canvas);
   } else if (matchupId.indexOf("tictactoe") == 0) {
-    return new Tictactoe(this.canvas);
+    return new TictactoeGUI(this.canvas);
   }
   throw new Error("Game type not found for id '" + matchupId + ".");
 }

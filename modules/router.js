@@ -25,8 +25,8 @@ router.get("/", function(req, res) {
   });
 });
 
-router.get("/creatematch", function(req, res) {
-  gameManager.createNewMatchup("Connect6", {}, null);
+router.get("/creatematch/:gameTitle", function(req, res) {
+  gameManager.createNewMatchup(req.params.gameTitle, {}, null);
   res.redirect("/");
 });
 

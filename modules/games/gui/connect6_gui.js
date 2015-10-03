@@ -151,7 +151,7 @@ Connect6GUI.prototype.drawMouse = function() {
 };
 
 Connect6GUI.prototype.drawMarkup = function() {
-  if (this.game.turnNumber === 0) {
+  if (this.game.moves.length == 0) {
     return;
   }
   var markup;

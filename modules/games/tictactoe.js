@@ -23,7 +23,7 @@ function Tictactoe(settings) {
 Tictactoe.prototype = Object.create(Game.prototype);
 Tictactoe.prototype.constructor = Tictactoe;
 
-Tictactoe.prototype.initWithGameData = function(gameData) {
+Tictactoe.prototype.initFromGameData = function(gameData) {
   this.moves = gameData.moves;
   this.board = gameData.board;
   this.settings = gameData.settings;
