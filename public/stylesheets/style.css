@@ -29,6 +29,10 @@ p {
   text-align: center;
 }
 
+.error {
+  color: red;
+}
+
 .game-container {
   width: 800px;
   margin: 0 auto;

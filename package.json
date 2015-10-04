@@ -5,7 +5,7 @@
   "description": "I am planing on developing a website with many abstract stratagy games available.",
   "main": "index.js",
   "scripts": {
-    "start": "browserify modules/osasg_client.js -o public/javascript/osasg_client.js && node index.js",
+    "start": "browserify modules/osasg_client.js > public/javascript/osasg_client.js && node index.js",
     "test": "mocha"
   },
   "repository": {

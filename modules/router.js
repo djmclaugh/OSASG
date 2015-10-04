@@ -30,12 +30,16 @@ router.get("/creatematch/:gameTitle", function(req, res) {
   res.redirect("/");
 });
 
-router.get("/match/:gameId", checkCredentials, function(req, res) {
+router.get("/match/:gameId", function(req, res) {
   res.render("match", {
       title: req.params.gameId,
       username: req.session.username,
       id: req.params.gameId
   });
+});
+
+router.get("/api/activeMatches", function(req, res) {
+  res.send(gameManager.getMatchesUserCanJoin(req.session.username));
 });
 
 module.exports = router;
