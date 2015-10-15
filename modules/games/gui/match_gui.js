@@ -8,6 +8,7 @@ function MatchGUI(matchupId, socket, canvas) {
   this.socket = socket;
   this.view = "";
   this.game = null;
+  this.id = matchupId;
   
   this.settings = {};
   this.p1Name = null;
@@ -16,11 +17,11 @@ function MatchGUI(matchupId, socket, canvas) {
   this.isCommiting = false;
   this.mouseTarget = {type:"NULL"};
 
-  this.socket.emit("join-match", {id: matchupId});
+  this.socket.emit("join", {matchId: matchupId, seat:3});
 
-  this.socket.on("matchup-play", this.receivePlay.bind(this));
-  this.socket.on("matchup-update", this.receiveUpdate.bind(this));
-  this.socket.on("matchup-error", this.receiveError.bind(this));
+  this.socket.on("play", this.receivePlay.bind(this));
+  this.socket.on("update", this.receiveUpdate.bind(this));
+  this.socket.on("error-message", this.receiveError.bind(this));
   
   canvas.addEventListener('mousemove', this.onMouseMove.bind(this));
   canvas.addEventListener('mouseout', this.onMouseOut.bind(this));
@@ -34,7 +35,7 @@ MatchGUI.prototype.gameGUIForId = function(matchupId) {
     return new TictactoeGUI(this.canvas);
   }
   throw new Error("Game type not found for id '" + matchupId + ".");
-}
+};
 
 MatchGUI.prototype.receiveError = function(data) {
   console.log("Error after sending '" + data.message + "' (with " + data.data + "): " + data.error);
@@ -78,11 +79,19 @@ MatchGUI.prototype.onMouseClick = function(event) {
     this.commit();
     this.isCommiting = true;
   }
-  if (mouseX > 600 && mouseY > 100 && mouseY < 120) {
-    this.socket.emit("matchup-sit", {seat: 1});
+  if (this.p1Name == null && mouseX > 600 && mouseY > 100 && mouseY < 120) {
+    if (this.p2Name == this.socket.session.username) {
+      this.socket.emit("request-bot", {matchId: this.id, username: "OSASG-RandomBot"});
+    } else {
+      this.socket.emit("join", {matchId: this.id, seat: 1});
+    }
   }
-  if (mouseX > 600 && mouseY > 200 && mouseY < 220) {
-    this.socket.emit("matchup-sit", {seat: 2});
+  if (this.p2Name == null && mouseX > 600 && mouseY > 200 && mouseY < 220) {
+    if (this.p1Name == this.socket.session.username) {
+      this.socket.emit("request-bot", {matchId: this.id, username: "OSASG-RandomBot"});
+    } else {
+      this.socket.emit("join", {matchId: this.id, seat: 2});
+    }
   }
 };
 
@@ -100,7 +109,7 @@ MatchGUI.prototype.isMyTurn = function() {
 };
 
 MatchGUI.prototype.commit = function() {
-  this.socket.emit("matchup-play", {id: this.matchupId, move: this.gameGUI.getMove()});
+  this.socket.emit("play", {matchId: this.id, move: this.gameGUI.getMove()});
 };
 
 MatchGUI.prototype.draw = function() {
@@ -117,10 +126,24 @@ MatchGUI.prototype.drawControlPanel = function() {
     status = this.gameGUI.game.getStatus();
   }
   if (status === "" || status == this.game.STATUS_ENUM.UNDECIDED) {
-    var p1 = this.p1Name ? this.p1Name : "CLICK TO JOIN";
-    var p2 = this.p2Name ? this.p2Name : "CLICK TO JOIN";
-    this.context.fillText("P1: " + p1, 600, 120);
-    this.context.fillText("P2: " + p2, 600, 220);
+    var p1  = this.p1Name;
+    if (!p1) {
+      if (this.p2Name == this.socket.session.username) {
+        p1 = "CLICK TO ADD BOT";
+      } else {
+        p1 = "CLICK TO JOIN AS P1";
+      }
+    }
+    var p2  = this.p2Name;
+    if (!p2) {
+      if (this.p1Name == this.socket.session.username) {
+        p2 = "CLICK TO ADD BOT";
+      } else {
+        p2 = "CLICK TO JOIN AS P2";
+      }
+    }
+    this.context.fillText("P1: " + p1, 550, 120);
+    this.context.fillText("P2: " + p2, 550, 220);
   } else if (status == this.game.STATUS_ENUM.P1_WIN) {
     this.context.fillText("Game over!\nBLACK wins!", 570, 200);
   } else if (status == this.game.STATUS_ENUM.P2_WIN) {

@@ -25,7 +25,7 @@ Connect6GUI.prototype.onMouseMove = function(x, y) {
     return;
   }
   var p = {x: Math.round(x / 25) - 1, y: Math.round(y / 25) - 1};
-  if (!this.game.isPositionOnBoard(p) || this.game.getColourAt(p) != "EMPTY") {
+  if (!this.game.isPositionOnBoard(p) || this.game.getColourAt(p) != 3) {
     return;
   }
   if (this.getPresetIndex(p) >= 0) {
@@ -115,9 +115,9 @@ Connect6GUI.prototype.drawWin = function(win_line, colour) {
 Connect6GUI.prototype.drawPlacedStones = function() {
   for (var i = 0; i < this.game.board.length; ++i) {
     for (var j = 0; j < this.game.board.length; ++j) {
-      if (this.game.board[i][j] == "BLACK") {
+      if (this.game.board[i][j] == 1) {
         this.drawStone({x: i, y: j}, Assets.BLACK_STONE);
-      } else if (this.game.board[i][j] == "WHITE") {
+      } else if (this.game.board[i][j] == 2) {
         this.drawStone({x: i, y: j}, Assets.WHITE_STONE);
       }
     }

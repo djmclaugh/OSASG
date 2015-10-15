@@ -1,8 +1,9 @@
 var Game = require("./game");
 
-const X = Game.prototype.PLAYER_ENUM.P1;
-const O = Game.prototype.PLAYER_ENUM.P2;
-const EMPTY = "EMPTY";
+const X = 1;
+const O = 2;
+const EMPTY = 3;
+
 const WIDTH = 3;
 const HEIGHT = 3;
 
@@ -38,7 +39,7 @@ Tictactoe.prototype.generateGameData = function() {
 };
 
 Tictactoe.prototype.whosTurnIsIt = function() {
-  return this.moves.length % 2 == 0 ? X : O;
+  return this.moves.length % 2 == 0 ? this.PLAYER_ENUM.P1 : this.PLAYER_ENUM.P2;
 }
 
 Tictactoe.prototype.getColourAt = function(position) {
@@ -99,7 +100,7 @@ Tictactoe.prototype.validateLegalityOfMove = function(move) {
 
 Tictactoe.prototype.makeMove = function(move) {
   this.validateMove(move);
-  this.setColourAt(move, this.whosTurnIsIt());
+  this.setColourAt(move, this.moves.length % 2 == 0 ? X : O);
   this.moves.push(move);
 };
 

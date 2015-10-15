@@ -14,51 +14,66 @@ FailedToJoinMatchupError.prototype = Object.create(Error.prototype);
 ////////////////////////////////////////
 
 function Matchup(id, gameTitle, gameSettings, privateUsers) {
+  var self = this;
   this.id = id;
   this.game = Games.newGame(gameTitle, gameSettings);
   this.p1Username = null;
   this.p2Username = null;
+  var spectators = [];
+  var players = [];
   // List of usernames that can interact with this matchup. If null, this matchup is public.
-  this.privateUsers = privateUsers
+  this.privateUsers = privateUsers;
   
   this.onFinish = function() {};
+
+  this.broadcast = function(message, data) {
+    for (var i = 0; i < spectators.length; ++i) {
+      spectators[i].emit(message, data);
+    }
+  };
+  this.addToSpectatorsList = function(player) {
+    for (var i = 0; i < players.length; ++i) {
+      if (players[i] == player) {
+        // I am already in the spectators list.
+        return;
+      }
+    }
+    spectators.push(player);
+  };
+  this.addToPlayersList = function(player) {
+    for (var i = 0; i < players.length; ++i) {
+      if (players[i] == player) {
+        // I am already in the players list.
+        return;
+      }
+    }
+    players.push(player);
+    player.on(self.MESSAGES.PLAY, onPlay(self, player));
+  };
+
+  this.MESSAGES = {
+    JOIN: "join",
+    PLAY: "play",
+    UPDATE: "update",
+    ERROR: "error-message"
+  };
 }
-
-Matchup.prototype.MESSAGES = {
-  // server receives -> server responds
-  // -> server emits to the client only
-  // => server broadcasts to the whole room
-
-  // {seat:(1 or 2)} => UPDATE
-  // -> ERROR if seat taken
-  SIT: "matchup-sit",
-  // {} => UPDATE
-  // -> ERROR if not seated or match has already started.
-  STAND:  "matchup-stand",
-  // {} => UPDATE
-  // -> ERROR if not playing or match has not started.
-  RESIGN: "matchup-resign",
-  // {move} => {move}
-  // -> ERROR if playing out of turn or illegal move.
-  PLAY:   "matchup-play",
-  // {} -> {gameData, p1, p2}
-  UPDATE: "matchup-update",
-  // Server cannot receive ERROR messages, it only sends them.
-  // {message_that_triggered_the_error, data_associated_with_it, error_message}
-  ERROR:  "matchup-error"
-};
 
 Matchup.prototype.ERRORS = {
   FAILED_TO_JOIN_MATCHUP: FailedToJoinMatchupError
-}
+};
 
 Matchup.prototype.canJoin = function(username) {
   return this.privateUsers == null || this.privateUsers.indexOf(username) != -1;
-}
+};
+
+Matchup.prototype.isCurrentlyPlaying = function(username) {
+  return this.p1Username == username || this.p2Username == username;
+};
 
 Matchup.prototype.hasStarted = function() {
   return this.p1Username != null && this.p2Username != null;
-}
+};
 
 Matchup.prototype.checkIfOver = function() {
   if (this.game.getStatus() != this.game.STATUS_ENUM.UNDECIDED) {
@@ -67,18 +82,58 @@ Matchup.prototype.checkIfOver = function() {
   }
 };
 
-Matchup.prototype.addPlayer = function(player) {
+Matchup.prototype.addPlayer = function(player, seat) {  
   var username = player.session.username;
   if (!this.canJoin(username)) {
     throw new FailedToJoinMatchupError(player, this, "this is a private game");
   }
-  player.join(this.id);
-  player.on(this.MESSAGES.SIT, onSit(this, player));
-  player.on(this.MESSAGES.STAND, onStand(this, player));
-  player.on(this.MESSAGES.RESIGN, onResign(this, player));
-  player.on(this.MESSAGES.PLAY, onPlay(this, player));
-  player.on(this.MESSAGES.UPDATE, onUpdate(this, player));
-  player.emit(this.MESSAGES.UPDATE, this.dataForUpdate());
+  this.addToSpectatorsList(player);
+  if (!seat) {
+    // If the user has not specified a seat, let's chose one for them.
+    if (this.p1Username == username) {
+      seat = 1;
+    } else if (this.p2Username == username) {
+      seat = 2;
+    } else if (!this.p1Username) {
+      seat = 1;
+    } else if (!this.p2Username) {
+      seat = 2;
+    } else {
+      seat = 3;
+    }
+  }
+  if (seat == 3) {
+    // 'player' just wants to spectate.
+    player.emit(this.MESSAGES.UPDATE, this.dataForUpdate());
+  } else if (seat == 1) {
+    if (this.p1Username == username) {
+      // 'player' simply wants to reconect. Send them an update of the game.
+      this.addToPlayersList(player);
+      player.emit(this.MESSAGES.UPDATE, this.dataForUpdate());
+    } else if (!this.p1Username) {
+      // 'player' wants to join as P1. Make them join and tell everyone.
+      this.p1Username = username;
+      this.addToPlayersList(player);
+      this.broadcast(this.MESSAGES.UPDATE, this.dataForUpdate());
+    } else {
+      // The P1 seat is already taken.
+      throw new FailedToJoinMatchupError(player, this, "the P1 seat is already occupied");
+    }
+  } else if (seat == 2) {
+    if (this.p2Username == username) {
+      // 'player' simply wants to reconect. Send them an update of the game.
+      this.addToPlayersList(player);
+      player.emit(this.MESSAGES.UPDATE, this.dataForUpdate());
+    } else if (!this.p2Username) {
+      // 'player' wants to join as P2. Make them join and tell everyone.
+      this.p2Username = username;
+      this.addToPlayersList(player);
+      this.broadcast(this.MESSAGES.UPDATE, this.dataForUpdate());
+    } else {
+      // The P2 seat is already taken.
+      throw new FailedToJoinMatchupError(player, this, "the P2 seat is already occupied");
+    }
+  }
 };
 
 Matchup.prototype.dataForUpdate = function() {
@@ -86,72 +141,17 @@ Matchup.prototype.dataForUpdate = function() {
   data.gameData = this.game.generateGameData();
   data.p1 = this.p1Username;
   data.p2 = this.p2Username;
+  data.matchId = this.id;
   return data;
 };
 
-function onSit(matchup, player) {
-  return function(data) {
-    if (!data.seat || (data.seat != 1 && data.seat != 2)) {
-      player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.SIT, data: data, error: "'seat' must be 1 or 2."});
-      return;
-    }
-    var username = player.session.username;
-    if (username == matchup.p1Username || username == matchup.p2Username) {
-      player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.SIT, data: data, error: "You are already sitting at this match."});
-      return;
-    }
-    if (data.seat == 1) {
-      if (matchup.p1Username != null) {
-        player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.SIT, data: data, error: "The P1 seat is already taken."});
-        return;
-      } else {
-        matchup.p1Username = username;
-        player.server.in(matchup.id).emit(matchup.MESSAGES.UPDATE, matchup.dataForUpdate());
-        return;
-      }
-    } else if (data.seat == 2) {
-      if (matchup.p2Username != null) {
-        player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.SIT, data: data, error: "The P2 seat is already taken."});
-        return;
-      } else {
-        matchup.p2Username = username;
-        player.server.in(matchup.id).emit(matchup.MESSAGES.UPDATE, matchup.dataForUpdate());
-        return;
-      }
-    }
-  };
-}
-
-function onStand(matchup, player) {
-  return function(data) {
-    if (matchup.hasStarted()) {
-      player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.LEAVE, data: data,
-          error: "You cannot stand up once the game has started. You must resign if you want to leave."});
-    }
-    var username = player.session.username;
-    if (username == matchup.p1Username) {
-      matchup.p1 = null;
-      player.server.in(matchup.id).emit(matchup.MESSAGES.UPDATE, matchup.dataForUpdate());
-    } else if (username == matchup.p2Username) {
-      matchup.p2 = null;
-      player.server.in(matchup.id).emit(matchup.MESSAGES.UPDATE, matchup.dataForUpdate());
-    } else {
-      player.emit(matchup.MESSAGES.ERROR, {matchup: matchup.MESSAGES.LEAVE, data: data, error: "You are not even sitting."});
-    }
-  };
-}
-
-function onResign(matchup, player) {
-  return function(data) {
-    // TODO(djmclaugh)
-    player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.RESIGN, data: data, error: "'RESIGN' has not been implemented yet..."});
-  };
-}
-
 function onPlay(matchup, player) {
   return function(data) {
+    if (data.matchId != matchup.id) {
+      return;
+    }
     if (!matchup.hasStarted()) {
-      player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.PLAY, data: data, error: "The game hasn't started yet."});
+      player.emit(matchup.MESSAGES.ERROR, {error: "The game hasn't started yet."});
       return;
     }
     var username = player.session.username;
@@ -161,20 +161,15 @@ function onPlay(matchup, player) {
       try {
         game.makeMove(data.move);
       } catch (error) {
-        player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.PLAY, data: data, error: error.message});
+        player.emit(matchup.MESSAGES.ERROR,
+            {error: "Error while trying to make a move: " + error.message});
         return;
       }
-      player.server.in(matchup.id).emit(matchup.MESSAGES.PLAY, {move:data.move});
+      matchup.broadcast(matchup.MESSAGES.PLAY, {matchId:matchup.id, move:data.move});
       matchup.checkIfOver();
     } else {
-      player.emit(matchup.MESSAGES.ERROR, {message: matchup.MESSAGES.PLAY, data: data, error: "It isn't your turn to play."});
+      player.emit(matchup.MESSAGES.ERROR, {error: "It isn't your turn to play."});
     }
-  };
-}
-
-function onUpdate(matchup, player) {
-  return function(data) {
-    player.emit(matchup.MESSAGES.UPDATE, matchup.dataForUpdate());
   };
 }
 

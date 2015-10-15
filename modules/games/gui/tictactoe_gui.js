@@ -25,7 +25,7 @@ TictactoeGUI.prototype.onMouseMove = function(x, y) {
     return;
   }
   var p = {x: Math.round((x - 100) / 150), y: Math.round((y - 100) / 150)};
-  if (this.game.getColourAt(p) != "EMPTY") {
+  if (this.game.getColourAt(p) != 3) {
     return;
   }
   if (this.preset && isSamePosition(this.preset, p)) {
@@ -97,9 +97,9 @@ TictactoeGUI.prototype.drawWin = function(win_line, colour) {
 TictactoeGUI.prototype.drawMoves = function() {
   for (var i = 0; i < this.game.board.length; ++i) {
     for (var j = 0; j < this.game.board.length; ++j) {
-      if (this.game.board[i][j] == this.game.PLAYER_ENUM.P1) {
+      if (this.game.board[i][j] == 1) {
         this.drawMove({x: i, y: j}, Assets.X);
-      } else if (this.game.board[i][j] == this.game.PLAYER_ENUM.P2) {
+      } else if (this.game.board[i][j] == 2) {
         this.drawMove({x: i, y: j}, Assets.O);
       }
     }

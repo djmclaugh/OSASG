@@ -19,8 +19,7 @@ GameManager.prototype.getMatchesUserCanJoin = function(username) {
 
 GameManager.prototype.getMatchesUserIsPlaying = function(username) {
   return this.matchups.filter(function(matchup) {
-    return (matchup.p1 && matchup.p1 == username) ||
-        (matchup.p2 && matchup.p2 == username);
+    return matchup.isCurrentlyPlaying(username);
   });
 };
 
@@ -36,8 +35,8 @@ GameManager.prototype.getMatchupById = function(matchId) {
 
 GameManager.prototype.createNewMatchup = function(gameTitle, gameSettings, privateUsers) {
   var self = this;
-  var matchup = new Matchup(gameTitle.toLowerCase() + "_" + this.counter, gameTitle, gameSettings, privateUsers)
-  ++this.counter;
+  var matchup = new Matchup(gameTitle.toLowerCase() + "_" + this.counter, gameTitle, gameSettings, privateUsers);
+  this.counter += 1;
   matchup.onFinish = function() {
     var index = self.matchups.indexOf(matchup);
     self.matchups.splice(index, 1);

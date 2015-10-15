@@ -1,9 +1,9 @@
 var Game = require("./game");
 
 // Colours
-const BLACK = "BLACK";
-const WHITE = "WHITE";
-const EMPTY = "EMPTY";
+const BLACK = 1;
+const WHITE = 2;
+const EMPTY = 3;
 
 // Line Class
 function Line(c1, c2) {
@@ -87,7 +87,8 @@ Connect6.prototype.validateMove = function(move) {
 // We check if the move object follows the proper format.
 // {p1:{x, y}, p2:{x, y}} or {p1:{x, y}} where all x and y are natural numbers.
 Connect6.prototype.validateFormatOfMove = function(move) {
-  var format = "'move' should follow the format {p1:{x, y}, p2:{x, y}} or {p1:{x, y}} where all x and y are natural numbers.";
+  var format = "'move' should follow the format {p1:{x, y}, p2:{x, y}} or {p1:{x, y}}" +
+      "where all x and y are natural numbers.";
   if (typeof move != "object") {
     throw new Error("'move'= " + JSON.stringify(move) + " is not an object.\n" + format);
   }
@@ -95,20 +96,26 @@ Connect6.prototype.validateFormatOfMove = function(move) {
     throw new Error("'move.p1'= " + JSON.stringify(move.p1) + " is not an object.\n" + format);
   }
   if (typeof move.p1.x != "number" || move.p1.x < 0 || move.p1.x % 1 != 0) {
-    throw new Error("'move.p1.x'= " + JSON.stringify(move.p1.x) + " is not natural number.\n" + format);
+    throw new Error(
+        "'move.p1.x'= " + JSON.stringify(move.p1.x) + " is not natural number.\n" + format);
   }
   if (typeof move.p1.y != "number" || move.p1.y < 0 || move.p1.y % 1 != 0) {
-    throw new Error("'move.p1.y'= " + JSON.stringify(move.p1.y) + " is not natural number.\n" + format);
+    throw new Error(
+        "'move.p1.y'= " + JSON.stringify(move.p1.y) + " is not natural number.\n" + format);
   }
   if (typeof move.p2 == "object") {
     if (typeof move.p2.x != "number" || move.p2.x < 0 || move.p2.x % 1 != 0) {
-      throw new Error("'move.p2.x'= " + JSON.stringify(move.p2.x) + " is not natural number.\n" + format);
+      throw new Error(
+          "'move.p2.x'= " + JSON.stringify(move.p2.x) + " is not natural number.\n" + format);
     }
     if (typeof move.p2.y != "number" || move.p2.y < 0 || move.p2.y % 1 != 0) {
-      throw new Error("'move.p2.y'= " + JSON.stringify(move.p2.y) + " is not natural number.\n" + format);
+      throw new Error(
+          "'move.p2.y'= " + JSON.stringify(move.p2.y) + " is not natural number.\n" + format);
     }
   } else if (typeof move.p2 != "null" && typeof move.p2 != "undefined") {
-    throw new Error("'move.p2'= " + JSON.stringify(move.p2) + " is not an object, null, or undefined.\n" + format);
+    throw new Error(
+        "'move.p2'= " + JSON.stringify(move.p2) +
+        " is not an object, null, or undefined.\n" + format);
   }
 };
 
@@ -118,7 +125,9 @@ Connect6.prototype.validateLegalityOfMove = function(move) {
     throw new Error("No moves are legal since the game is already over.");
   }
   if (!this.isPositionOnBoard(move.p1)) {
-    throw new Error("'move.p1'= " + JSON.stringify(move.p1) + " is not a position on the " + this.width + " by " + this.height + " board.");
+    throw new Error(
+        "'move.p1'= " + JSON.stringify(move.p1) + " is not a position on the " +
+        this.width + " by " + this.height + " board.");
   }
   if (this.getColourAt(move.p1) != EMPTY) {
     throw new Error("'move.p1'= " + JSON.stringify(move.p1) + " is an already occupied position.");
@@ -128,10 +137,13 @@ Connect6.prototype.validateLegalityOfMove = function(move) {
       throw new Error("On the first turn, you can only place a single stone.");
     }
     if (!this.isPositionOnBoard(move.p2)) {
-      throw new Error("'move.p2'= " + JSON.stringify(move.p2) + " is not a position on the " + this.width + " by " + this.height + " board.");
+      throw new Error(
+          "'move.p2'= " + JSON.stringify(move.p2) + " is not a position on the " +
+          this.width + " by " + this.height + " board.");
     }
     if (this.getColourAt(move.p2) != EMPTY) {
-      throw new Error("'move.p2'= " + JSON.stringify(move.p2) + " is an already occupied position.");
+      throw new Error(
+          "'move.p2'= " + JSON.stringify(move.p2) + " is an already occupied position.");
     }
   } else {
     if (this.moves.length > 0) {
