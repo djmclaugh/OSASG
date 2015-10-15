@@ -39,9 +39,9 @@ SERVER: (closes socket if authentication fails or silently accepts.)
 
 SERVER: `join tictactoe_123` (Hey, join this match!)  
 BOT: `join tictactoe_123` (Sure, I'll join tictactoe\_123)  
-SERVER: `update tictactoe_123` testBot proBot *gameData* (Here's the match information so far. You can see that you have joined this match as P1. You can also see that P2 has joined as well, so the game has started and you should make your move.)  
-BOT: `play tictactoe_123` {x: 1, y: 1} (I want to play in the center.)  
-SERVER: `play tictactoe_123` {x: 1, y: 1} (The move {x: 1, y: 1} has been accepted.)  
+SERVER: `update tictactoe_123 testBot proBot *gameData*` (Here's the match information so far. You can see that you have joined this match as P1. You can also see that P2 has joined as well, so the game has started and you should make your move.)  
+BOT: `play tictactoe_123 {x: 1, y: 1}` (I want to play in the center.)  
+SERVER: `play tictactoe_123 {x: 1, y: 1}` (The move {x: 1, y: 1} has been accepted.)  
 
 ~~~ some amount of time ~~~
 
