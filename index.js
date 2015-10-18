@@ -54,7 +54,7 @@ io.on("connection", function (socket) {
   socket.on("request-bot", function(data) {
     for (var i = 0; i < bots.length; ++i) {
       if (bots[i].session.username == data.username) {
-        bots[i].emit("join", {matchId: data.matchId});
+        bots[i].emit("join", {matchId: data.matchId, seat:data.seat});
         break;
       }
     }

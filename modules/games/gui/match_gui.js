@@ -81,14 +81,14 @@ MatchGUI.prototype.onMouseClick = function(event) {
   }
   if (this.p1Name == null && mouseX > 600 && mouseY > 100 && mouseY < 120) {
     if (this.p2Name == this.socket.session.username) {
-      this.socket.emit("request-bot", {matchId: this.id, username: "OSASG-RandomBot"});
+      this.socket.emit("request-bot", {matchId: this.id, username: "OSASG-RandomBot", seat: 1});
     } else {
       this.socket.emit("join", {matchId: this.id, seat: 1});
     }
   }
   if (this.p2Name == null && mouseX > 600 && mouseY > 200 && mouseY < 220) {
     if (this.p1Name == this.socket.session.username) {
-      this.socket.emit("request-bot", {matchId: this.id, username: "OSASG-RandomBot"});
+      this.socket.emit("request-bot", {matchId: this.id, username: "OSASG-SimpleBot", seat: 2});
     } else {
       this.socket.emit("join", {matchId: this.id, seat: 2});
     }
