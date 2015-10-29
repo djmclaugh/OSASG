@@ -12,7 +12,7 @@ Game.prototype.STATUS_ENUM = {
   DRAW: "GAME_STATUS_DRAW"
 };
   
-Game.prototype.initWithGameData = function(gameData) {
+Game.prototype.initFromGameData = function(gameData) {
   throw new Error("This method needs to be implemented by the subclass.");
 };
 

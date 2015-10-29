@@ -1,78 +1,25 @@
-var Connect6 = require("../connect6");
 var Assets = require("./assets");
+var Connect6 = require("../connect6");
+var GameGUI = require("./game_gui");
 
-function Connect6GUI(canvas) {
-  this.canvas = canvas;
-  this.context = canvas.getContext("2d");
-  
-  this.game = null;
-  
+function Connect6GUI(game, canvas) {
+  GameGUI.call(this, game, canvas);
   this.mouseTarget = {type:"NULL"};
   this.preset = [];
+  this.isMouseDisabled = false;
+
+  this.canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
+  this.canvas.addEventListener("mouseout", this.onMouseOut.bind(this));
+  this.canvas.addEventListener("click", this.onMouseClick.bind(this));
 }
 
-Connect6GUI.prototype.createGame = function(gameData) {
-  this.game = new Connect6({});
-  this.game.initFromGameData(gameData);
-};
+module.exports = Connect6GUI;
 
-Connect6GUI.prototype.onMouseMove = function(x, y) {
-  this.mouseTarget = {type: "NULL"};
-  if (x < 15 || y < 15 || x > 485 || y > 485) {
-    return;
-  }
-  if ((x + 10) % 25 > 20 || (y + 10) % 25 > 20) {
-    return;
-  }
-  var p = {x: Math.round(x / 25) - 1, y: Math.round(y / 25) - 1};
-  if (!this.game.isPositionOnBoard(p) || this.game.getColourAt(p) != 3) {
-    return;
-  }
-  if (this.getPresetIndex(p) >= 0) {
-    this.mouseTarget = {type: "PRESET", index: this.getPresetIndex(p)};
-  } else if (!this.isReadyToCommit()) {
-    this.mouseTarget = {type: "BOARD", position: p};
-  }
-};
+Connect6GUI.prototype = Object.create(GameGUI.prototype);
+Connect6GUI.prototype.constructor = Connect6GUI;
 
-Connect6GUI.prototype.onMouseOut = function(event) {
-  this.mouseTarget = {type:"NULL"};
-};
-
-Connect6GUI.prototype.onMouseClick = function(x, y) {
-  this.onMouseMove(x, y);
-  if (this.mouseTarget.type == "BOARD") {
-    this.preset.push(this.mouseTarget.position);
-  } else if (this.mouseTarget.type == "PRESET") {
-    this.preset.splice(this.mouseTarget.index, 1);
-  }
-  this.mouseTarget = {type: "NULL"};
-};
-
-Connect6GUI.prototype.makeMove = function(move) {
-  this.preset = [];
-  this.game.makeMove(move);
-};
-
-Connect6GUI.prototype.isReadyToCommit = function() {
-  if (!this.game) {
-    return false;
-  }
-  if (this.game.moves.length == 0) {
-    return this.preset.length == 1;
-  }
-  return this.preset.length == 2;
-};
-
-Connect6GUI.prototype.getMove = function() {
-  if (this.isReadyToCommit()) { 
-    if (this.preset.length == 1) {
-      return {p1: this.preset[0]};
-    } else {
-      return {p1: this.preset[0], p2: this.preset[1]};
-    }
-  }
-  return null;
+function isSamePosition(p1, p2) {
+  return p1.x == p2.x && p1.y == p2.y;
 }
 
 Connect6GUI.prototype.getPresetIndex = function(position) {
@@ -83,6 +30,100 @@ Connect6GUI.prototype.getPresetIndex = function(position) {
   }
   return -1;
 };
+
+////////////////////////////////////////
+// GameGUI methods override
+////////////////////////////////////////
+
+Connect6GUI.prototype.setMouseDisabled = function(mouseDisabled) {
+  this.isMouseDisabled = mouseDisabled;
+  this.clean();
+};
+
+Connect6GUI.prototype.clean = function() {
+  this.preset = [];
+  this.mouseTarget = {type: "NULL"};
+};
+
+Connect6GUI.prototype.getMove = function() {
+  if (this.preset.length == 2 && this.game.moves.length > 0) {
+    return {p1: this.preset[0], p2: this.preset[1]};
+  } else if (this.preset.length == 1 && this.game.moves.length == 0) {
+    return {p1: this.preset[0]};
+  }
+  return null;
+};
+
+Connect6GUI.prototype.draw = function() {
+  this.context.drawImage(Assets.GO_BOARD, 0, 0);
+  if (this.game !== null) {
+    this.drawPlacedStones();
+    this.drawMarkup();
+    this.drawPresetStones();
+    this.drawMouse();
+    var status = this.game.getStatus();
+    if (status == this.game.STATUS_ENUM.P1_WIN) {
+      this.drawWin(this.game.getWinLine(), "white");
+    } else if (status == this.game.STATUS_ENUM.P2_WIN) {
+      this.drawWin(this.game.getWinLine(), "black");
+    }
+  }
+};
+
+////////////////////////////////////////
+// Mouse event handlers
+////////////////////////////////////////
+
+Connect6GUI.prototype.onMouseMove = function(e) {
+  if (this.isMouseDisabled) {
+    this.mouseTarget = {type: "NULL"};
+    return;
+  }
+
+  var coordinates = this.getMouseCoordinates(e);
+  var x = coordinates.x;
+  var y = coordinates.y;
+  
+  this.mouseTarget = {type: "NULL"};
+  if (x < 15 || y < 15 || x > 485 || y > 485) {
+    return;
+  }
+  if ((x + 10) % 25 > 20 || (y + 10) % 25 > 20) {
+    return;
+  }
+  
+  var p = {x: Math.round(x / 25) - 1, y: Math.round(y / 25) - 1};
+  
+  if (!this.game.isPositionOnBoard(p) || this.game.getColourAt(p) != 3) {
+    return;
+  }
+  
+  if (this.getPresetIndex(p) >= 0) {
+    this.mouseTarget = {type: "PRESET", index: this.getPresetIndex(p)};
+  } else if (this.getMove() == null) {
+    this.mouseTarget = {type: "BOARD", position: p};
+  }
+};
+
+Connect6GUI.prototype.onMouseOut = function(event) {
+  this.mouseTarget = {type:"NULL"};
+};
+
+Connect6GUI.prototype.onMouseClick = function(e) {
+  this.onMouseMove(e);
+  if (this.mouseTarget.type == "BOARD") {
+    this.preset.push(this.mouseTarget.position);
+    this.changeHappened();
+  } else if (this.mouseTarget.type == "PRESET") {
+    this.preset.splice(this.mouseTarget.index, 1);
+    this.changeHappened();
+  }
+  this.mouseTarget = {type: "NULL"};
+};
+
+////////////////////////////////////////
+// Draw helpers
+////////////////////////////////////////
 
 Connect6GUI.prototype.draw = function() {
   this.context.drawImage(Assets.GO_BOARD, 0, 0);
@@ -176,9 +217,3 @@ Connect6GUI.prototype.getCurrentStone = function() {
 Connect6GUI.prototype.drawStone = function(position, image) {
   this.context.drawImage(image, (position.x * 25) + 13, (position.y * 25) + 13);
 };
-
-function isSamePosition(p1, p2) {
-  return p1.x == p2.x && p1.y == p2.y;
-}
-
-module.exports = Connect6GUI;

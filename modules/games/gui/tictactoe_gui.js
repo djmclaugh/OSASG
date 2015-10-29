@@ -1,72 +1,44 @@
-var Tictactoe = require("../tictactoe");
 var Assets = require("./assets");
+var GameGUI = require("./game_gui");
+var Tictactoe = require("../tictactoe");
 
-function TictactoeGUI(canvas) {
-  this.canvas = canvas;
-  this.context = canvas.getContext("2d");
-  
-  this.game = null;
-  
+function TictactoeGUI(game, canvas) {
+  GameGUI.call(this, game, canvas);
   this.mouseTarget = {type:"NULL"};
   this.preset = null;
+  this.isMouseDisabled = false;
+
+  this.canvas.addEventListener("mousemove", this.onMouseMove.bind(this));
+  this.canvas.addEventListener("mouseout", this.onMouseOut.bind(this));
+  this.canvas.addEventListener("click", this.onMouseClick.bind(this));
 }
 
-TictactoeGUI.prototype.createGame = function(gameData) {
-  this.game = new Tictactoe();
-  this.game.initFromGameData(gameData);
+module.exports = TictactoeGUI;
+
+TictactoeGUI.prototype = Object.create(GameGUI.prototype);
+TictactoeGUI.prototype.constructor = TictactoeGUI;
+
+function isSamePosition(p1, p2) {
+  return p1.x == p2.x && p1.y == p2.y;
+}
+
+////////////////////////////////////////
+// GameGUI methods override
+////////////////////////////////////////
+
+TictactoeGUI.prototype.setMouseDisabled = function(mouseDisabled) {
+  this.isMouseDisabled = mouseDisabled;
+  this.clean();
 };
 
-TictactoeGUI.prototype.onMouseMove = function(x, y) {
-  this.mouseTarget = {type: "NULL"};
-  if (x < 25 || y < 25 || x > 475 || y > 475) {
-    return;
-  }
-  if ((x - 30) % 150 > 140 || (y - 30) % 150 > 140) {
-    return;
-  }
-  var p = {x: Math.round((x - 100) / 150), y: Math.round((y - 100) / 150)};
-  if (this.game.getColourAt(p) != 3) {
-    return;
-  }
-  if (this.preset && isSamePosition(this.preset, p)) {
-    this.mouseTarget = {type: "PRESET"};
-  } else if (!this.isReadyToCommit()) {
-    this.mouseTarget = {type: "BOARD", position: p};
-  }
-};
-
-TictactoeGUI.prototype.onMouseOut = function(event) {
-  this.mouseTarget = {type:"NULL"};
-};
-
-TictactoeGUI.prototype.onMouseClick = function(x, y) {
-  this.onMouseMove(x, y);
-  if (this.mouseTarget.type == "BOARD") {
-    this.preset = this.mouseTarget.position;
-  } else if (this.mouseTarget.type == "PRESET") {
-    this.preset = null;
-  }
-  this.mouseTarget = {type: "NULL"};
-};
-
-TictactoeGUI.prototype.makeMove = function(move) {
+TictactoeGUI.prototype.clean = function() {
   this.preset = null;
-  this.game.makeMove(move);
-};
-
-TictactoeGUI.prototype.isReadyToCommit = function() {
-  if (!this.game) {
-    return false;
-  }
-  return this.preset != null;
+  this.mouseTarget = {type: "NULL"};
 };
 
 TictactoeGUI.prototype.getMove = function() {
-  if (this.isReadyToCommit()) {
-    return this.preset;
-  }
-  return null;
-}
+  return this.preset;
+};
 
 TictactoeGUI.prototype.draw = function() {
   this.context.drawImage(Assets.TICTACTOE_BOARD, 0, 0);
@@ -81,6 +53,56 @@ TictactoeGUI.prototype.draw = function() {
     }
   }
 };
+
+////////////////////////////////////////
+// Mouse event handlers
+////////////////////////////////////////
+
+TictactoeGUI.prototype.onMouseMove = function(e) {
+  if (this.isMouseDisabled) {
+    this.mouseTarget = {type: "NULL"};
+    return;
+  }
+  var coordinates = this.getMouseCoordinates(e);
+  var x = coordinates.x;
+  var y = coordinates.y;
+  this.mouseTarget = {type: "NULL"};
+  if (x < 25 || y < 25 || x > 475 || y > 475) {
+    return;
+  }
+  if ((x - 30) % 150 > 140 || (y - 30) % 150 > 140) {
+    return;
+  }
+  var p = {x: Math.round((x - 100) / 150), y: Math.round((y - 100) / 150)};
+  if (this.game.getColourAt(p) != 3) {
+    return;
+  }
+  if (this.preset && isSamePosition(this.preset, p)) {
+    this.mouseTarget = {type: "PRESET"};
+  } else if (!this.preset) {
+    this.mouseTarget = {type: "BOARD", position: p};
+  }
+};
+
+TictactoeGUI.prototype.onMouseOut = function(e) {
+  this.mouseTarget = {type:"NULL"};
+};
+
+TictactoeGUI.prototype.onMouseClick = function(e) {
+  this.onMouseMove(e);
+  if (this.mouseTarget.type == "BOARD") {
+    this.preset = this.mouseTarget.position;
+    this.changeHappened();
+  } else if (this.mouseTarget.type == "PRESET") {
+    this.preset = null;
+    this.changeHappened();
+  }
+  this.mouseTarget = {type: "NULL"};
+};
+
+////////////////////////////////////////
+// Draw helpers
+////////////////////////////////////////
 
 TictactoeGUI.prototype.drawWin = function(win_line, colour) {
   this.context.save();
@@ -152,9 +174,3 @@ TictactoeGUI.prototype.getCurrentMark = function() {
 TictactoeGUI.prototype.drawMove = function(position, image) {
   this.context.drawImage(image, (position.x * 150) + 25, (position.y * 150) + 25);
 };
-
-function isSamePosition(p1, p2) {
-  return p1.x == p2.x && p1.y == p2.y;
-}
-
-module.exports = TictactoeGUI;

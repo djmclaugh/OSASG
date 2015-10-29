@@ -32,6 +32,18 @@ app.use(router);
 var gameManager = require("./modules/game_manager").prototype.getInstance();
 var bots = [];
 
+gameManager.onMatchAdded(function(match) {
+  io.emit("api-active-matches-add", match);
+});
+
+gameManager.onMatchRemoved(function(match) {
+  io.emit("api-active-matches-remove", match);
+});
+
+gameManager.onMatchUpdated(function(match) {
+  io.emit("api-active-matches-update", match);
+});
+
 io.use(function setSessionInfo(socket, next) {
   var req = socket.request;
   cookieParser(secret)(req, null, function (err) {
@@ -48,6 +60,10 @@ io.use(function setSessionInfo(socket, next) {
 
 io.on("connection", function (socket) {
   console.log(socket.session.username + " has connected!");
+  socket.emit("session-info", socket.session);
+  socket.on("api-active-matches", function() {
+    socket.emit("api-active-matches", gameManager.getMatchesUserCanJoin(socket.session.username));
+  });
   socket.on("join", function(data) {
     gameManager.getMatchupById(data.matchId).addPlayer(socket, data.seat);
   });

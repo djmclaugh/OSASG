@@ -1,15 +1,11 @@
-module.exports = ["$window", "MatchService", function($window, MatchService) {
+module.exports = ["$window", "LobbyService", function($window, LobbyService) {
   var self = this;
   
   self.error = null;
-  self.matches = MatchService.activeMatches;
+  self.matches = LobbyService.activeMatches;
   
-  MatchService.fetchActiveMatches(function(error) {
-    self.error = error;
-  });
-
   self.createMatch = function(gameTitle) {
-    MatchService.createMatch(gameTitle, function(error) {
+    LobbyService.createMatch(gameTitle, function(error) {
       self.error = error;
     });
   };

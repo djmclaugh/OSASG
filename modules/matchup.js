@@ -25,6 +25,7 @@ function Matchup(id, gameTitle, gameSettings, privateUsers) {
   this.privateUsers = privateUsers;
   
   this.onFinish = function() {};
+  this.onUpdate = function() {};
 
   this.broadcast = function(message, data) {
     for (var i = 0; i < spectators.length; ++i) {
@@ -32,8 +33,8 @@ function Matchup(id, gameTitle, gameSettings, privateUsers) {
     }
   };
   this.addToSpectatorsList = function(player) {
-    for (var i = 0; i < players.length; ++i) {
-      if (players[i] == player) {
+    for (var i = 0; i < spectators.length; ++i) {
+      if (spectators[i] == player) {
         // I am already in the spectators list.
         return;
       }
@@ -113,6 +114,7 @@ Matchup.prototype.addPlayer = function(player, seat) {
     } else if (!this.p1Username) {
       // 'player' wants to join as P1. Make them join and tell everyone.
       this.p1Username = username;
+      this.onUpdate();
       this.addToPlayersList(player);
       this.broadcast(this.MESSAGES.UPDATE, this.dataForUpdate());
     } else {
@@ -127,6 +129,7 @@ Matchup.prototype.addPlayer = function(player, seat) {
     } else if (!this.p2Username) {
       // 'player' wants to join as P2. Make them join and tell everyone.
       this.p2Username = username;
+      this.onUpdate();
       this.addToPlayersList(player);
       this.broadcast(this.MESSAGES.UPDATE, this.dataForUpdate());
     } else {
