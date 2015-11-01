@@ -3,7 +3,7 @@ module.exports = ["SocketService", "$http", function(SocketService, $http) {
 
   self.activeMatches = [];
   SocketService.emit("api-active-matches");  
-  console.log("Emiting: api-active-matches");
+  
   SocketService.on("api-active-matches", function(allMatches) {
     self.activeMatches.splice.apply(self.activeMatches, [0, self.activeMatches.length].concat(allMatches));
   });

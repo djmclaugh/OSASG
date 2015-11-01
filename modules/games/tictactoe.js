@@ -4,36 +4,89 @@ const X = 1;
 const O = 2;
 const EMPTY = 3;
 
-const WIDTH = 3;
-const HEIGHT = 3;
+// Boards are stored as binary numbers where a 1 at index i means that there is a token at
+// position i on the board.
+//
+// The board positions are as follows:
+// 0 1 2
+// 3 4 5
+// 6 7 8
+//
+// So:
+// X - -
+// X - X == 000101001 == 41
+// - - -
+
+const FULL_BOARD = 511;
+
+const TOP_ROW = 7;
+const MIDDLE_ROW = 56;
+const BOTTOM_ROW = 448
+const LEFT_COLUMN = 73;
+const MIDDLE_COLUMN = 146;
+const RIGHT_COLUMN = 292;
+const DIAGONAL_1 = 84;
+const DIAGONAL_2 = 273;
+
+const LINES = [
+  TOP_ROW,
+  MIDDLE_ROW,
+  BOTTOM_ROW,
+  LEFT_COLUMN,
+  MIDDLE_COLUMN,
+  RIGHT_COLUMN,
+  DIAGONAL_1,
+  DIAGONAL_2
+];
+
 
 // Tictactoe CLASS
 function Tictactoe(settings) {  
   this.moves = [];
-  this.board = [];
+  this.boardX = 0;
+  this.boardO = 0;
   this.settings = settings;
-  
-  for (var i = 0; i < WIDTH; ++i) {
-    this.board[i] = [];
-    for (var j = 0; j < HEIGHT; ++j) {
-      this.board[i][j] = EMPTY;
-    }
-  }
 }
 
 Tictactoe.prototype = Object.create(Game.prototype);
 Tictactoe.prototype.constructor = Tictactoe;
 
+module.exports = Tictactoe;
+
+function boardToArrayOfPositions(board) {
+  var result =[];
+  for (var i = 0; i < 9; ++i) {
+    if (board & Math.pow(2, i)) {
+      result.push(i);
+    }
+  }
+  return result;
+}
+
+function invertedBoard(board) {
+  return board ^ FULL_BOARD;
+}
+
+Tictactoe.prototype.COLOUR_ENUM = {
+  X: X,
+  O: O,
+  EMPTY: EMPTY
+};
+
+Tictactoe.prototype.LINES = LINES;
+
 Tictactoe.prototype.initFromGameData = function(gameData) {
   this.moves = gameData.moves;
-  this.board = gameData.board;
+  this.boardX = gameData.boardX;
+  this.boardO = gameData.boardO;
   this.settings = gameData.settings;
 };
 
 Tictactoe.prototype.generateGameData = function() {
   var gameData = {};
   gameData.moves = this.moves;
-  gameData.board = this.board;
+  gameData.boardX = this.boardX;
+  gameData.boardO = this.boardO;
   gameData.settings = this.settings;
   return gameData;
 };
@@ -43,21 +96,29 @@ Tictactoe.prototype.whosTurnIsIt = function() {
 }
 
 Tictactoe.prototype.getColourAt = function(position) {
-  return this.board[position.x][position.y];
+  var mask = Math.pow(2, position);
+  if (mask & this.boardX) {
+    return X;
+  }
+  if (mask & this.boardO) {
+    return O;
+  }
+  return EMPTY;
 };
 
 Tictactoe.prototype.setColourAt = function(position, colour) {
-  this.board[position.x][position.y] = colour;
-};
-
-Tictactoe.prototype.isPositionOnBoard = function(position) {
-  if (position.x < 0 || position.x >= WIDTH) {
-    return false;
+  var mask = Math.pow(2, position);
+  var removeMask = invertedBoard(mask);
+  if (colour == X) {
+    this.boardX |= mask;
+    this.boardO &= removeMask;
+  } else if (colour == O) {
+    this.boardX &= removeMask;
+    this.boardO |= mask;
+  } else {
+    this.boardX &= removeMask;
+    this.boardO &= removeMask;
   }
-  if (position.y < 0 || position.y >= HEIGHT) {
-    return false;
-  }
-  return true;
 };
 
 // Checks if the move is valid.
@@ -68,23 +129,11 @@ Tictactoe.prototype.validateMove = function(move) {
 };
 
 // We check if the move object follows the proper format.
-// {x, y} where x and y are 0, 1, or 2.
+// "move" should be a number from 0 to 8 representing which square has been played.
 Tictactoe.prototype.validateFormatOfMove = function(move) {
-  var format = "'move' should follow the format {x, y} where x and y are 0, 1, or 2.";
-  if (typeof move != "object") {
-    throw new Error("'move'= " + JSON.stringify(move) + " is not an object.\n" + format);
-  }
-  if (typeof move.x != "number") {
-    throw new Error("'move.x'= " + JSON.stringify(move.x) + " is not a number.\n" + format);
-  }
-  if (move.x != 0 && move.x != 1 && move.x != 2) {
-    throw new Error("'move.x'= " + JSON.stringify(move.x) + " is not 0, 1, or 2.\n" + format);
-  }
-  if (typeof move.y != "number") {
-    throw new Error("'move.y'= " + JSON.stringify(move.y) + " is not a number.\n" + format);
-  }
-  if (move.y != 0 && move.y != 1 && move.y != 2) {
-    throw new Error("'move.y'= " + JSON.stringify(move.y) + " is not 0, 1, or 2.\n" + format);
+  if (move !== 0 && move !== 1 && move !== 2 && move !== 3 && move !== 4
+    && move !== 5 && move !== 6 && move !== 7 && move !==8) {
+    throw new Error("'move'= " + JSON.stringify(move) + " is not a natural number from 0 to 8.");
   }
 };
 
@@ -104,40 +153,27 @@ Tictactoe.prototype.makeMove = function(move) {
   this.moves.push(move);
 };
 
+Tictactoe.prototype.undoLastMove = function() {
+  var move = this.moves.pop();
+  this.setColourAt(move, EMPTY);
+};
+
 Tictactoe.prototype.getStatus = function() {
   if (this.getWinLine()) {
     return this.moves.length % 2 == 0 ? this.STATUS_ENUM.P2_WIN : this.STATUS_ENUM.P1_WIN;
   }
-  if (this.moves.length >= WIDTH * HEIGHT) {
+  if (this.moves.length == 9) {
     return this.STATUS_ENUM.DRAW;
   }
   return this.STATUS_ENUM.UNDECIDED;
 };
 
 Tictactoe.prototype.getWinLine = function() {
-  function isTriple(a, b, c) {
-    return a != EMPTY && a == b && a == c;
-  }
-  // Horizontal check
-  for (var y = 0; y < HEIGHT; ++y) {
-    if (isTriple(this.getColourAt({x: 0, y: y}), this.getColourAt({x: 1, y: y}), this.getColourAt({x: 2, y: y}))) {
-      return {c1: {x: 0, y: y}, c2: {x: 2, y: y}};
+  for (var i = 0; i < LINES.length; ++i) {
+    var line = LINES[i];
+    if ((this.boardX & line) == line || (this.boardO & line) == line) {
+      return boardToArrayOfPositions(line);
     }
   }
-  // Vertical check
-  for (var x = 0; x < WIDTH; ++x) {
-    if (isTriple(this.getColourAt({x: x, y: 0}), this.getColourAt({x: x, y: 1}), this.getColourAt({x: x, y: 2}))) {
-      return {c1: {x: x, y: 0}, c2: {x: x, y: 2}};
-    }
-  }
-  // Diagonal check
-  if (isTriple(this.getColourAt({x: 0, y: 0}), this.getColourAt({x: 1, y: 1}), this.getColourAt({x: 2, y: 2}))) {
-      return {c1: {x: 0, y: 0}, c2: {x: 2, y: 2}};
-  }
-  if (isTriple(this.getColourAt({x: 0, y: 2}), this.getColourAt({x: 1, y: 1}), this.getColourAt({x: 2, y: 0}))) {
-      return {c1: {x: 0, y: 2}, c2: {x: 2, y: 0}};
-  }
-  return null;
-}
+};
 
-module.exports = Tictactoe;

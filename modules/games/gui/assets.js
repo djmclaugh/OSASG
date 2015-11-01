@@ -123,8 +123,25 @@ _ctx.lineTo(144.5, 5.5);
 _ctx.lineTo(5.5, 5.5);
 _ctx.stroke();
 
-exports.BOX_HIGHLIGHT = new Image();
-exports.BOX_HIGHLIGHT.src = _c.toDataURL();
+exports.BOX_HIGHLIGHT_2 = new Image();
+exports.BOX_HIGHLIGHT_2.src = _c.toDataURL();
+
+// Tictactoe Win Line Markup
+_c = document.createElement("canvas");
+_c.width = _c.height = 148;
+_ctx = _c.getContext("2d");
+_ctx.lineWidth = 1;
+_ctx.strokeStyle = "#555555";
+_ctx.beginPath();
+_ctx.moveTo(65.5, 65.5);
+_ctx.lineTo(65.5, 84.5);
+_ctx.lineTo(84.5, 84.5);
+_ctx.lineTo(84.5, 65.5);
+_ctx.lineTo(65.5, 65.5);
+_ctx.stroke();
+
+exports.BOX_HIGHLIGHT_1 = new Image();
+exports.BOX_HIGHLIGHT_1.src = _c.toDataURL();
 
 // Black Last Move Markup
 _c = document.createElement("canvas");

@@ -125,7 +125,7 @@ describe("Matchups", function() {
     function player1_init(data) {
       if (data.p1 == "User_0" && data.p2 == "User_1") {
         player1.removeAllListeners(matchup.MESSAGES.UPDATE);
-        player1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: {x: 0, y: 0}});
+        player1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: 0});
       }
     }
     
@@ -133,21 +133,21 @@ describe("Matchups", function() {
       assert.equal(data.matchId, matchup.id);
       assert.equal(data.p1, "User_0");
       assert.equal(data.p2, "User_1");
-      assert.deepEqual(data.gameData.moves[0], {x: 0, y: 0});
-      assert.deepEqual(data.gameData.moves[1], {x: 1, y: 1});
+      assert.equal(data.gameData.moves[0], 0);
+      assert.equal(data.gameData.moves[1], 4);
       assert.equal(data.gameData.moves.length, 2);
-      reconnectedPlayer1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: {x: 2, y: 2}});
+      reconnectedPlayer1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: 8});
     }
     
     function reconnected_onPlay(data) {
       assert.equal(data.matchId, matchup.id);
       if (matchup.game.moves.length == 3) {
         // The reconnected socket should receive the ack of its move.
-        assert.deepEqual(data.move, {x: 2, y: 2});
+        assert.equal(data.move, 8);
       }
       if (matchup.game.moves.length == 4) {
         // The reconnected socket should receive p2's move.
-        assert.deepEqual(data.move, {x: 0, y: 1});
+        assert.equal(data.move, 3);
         done();
       }
     }
@@ -156,12 +156,12 @@ describe("Matchups", function() {
       assert.equal(data.matchId, matchup.id);
       if (matchup.game.moves.length == 1) {
         player1.disconnect();
-        player2.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: {x: 1, y: 1}});
+        player2.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: 4});
         setTimeout(reconnectP1, 10);
       }
       if (matchup.game.moves.length == 3) {
-        assert.deepEqual(data.move, {x: 2, y: 2});
-        player2.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: {x: 0, y: 1}});
+        assert.equal(data.move, 8);
+        player2.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: 3});
       }
     }
     
@@ -189,18 +189,8 @@ describe("Matchups", function() {
     var player2 = clientSockets["User_1"];
     var spectator = clientSockets["User_2"];
       
-    var moves = [
-      {x: 1, y: 1},
-      {x: 0, y: 0},
-      {x: 2, y: 0},
-      {x: 0, y: 2},
-      {x: 0, y: 1},
-      {x: 2, y: 1},
-      {x: 1, y: 2},
-      {x: 1, y: 0},
-      {x: 2, y: 2}
-    ];
-    
+    var moves = [4, 0, 2, 6, 3, 5, 7, 1, 8];
+
     var movesReceivedByP1 = [];
     var movesReceivedByP2 = [];
     var movesReceivedBySpectator = [];

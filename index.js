@@ -33,15 +33,15 @@ var gameManager = require("./modules/game_manager").prototype.getInstance();
 var bots = [];
 
 gameManager.onMatchAdded(function(match) {
-  io.emit("api-active-matches-add", match);
+  io.to("api-active-matches").emit("api-active-matches-add", match);
 });
 
 gameManager.onMatchRemoved(function(match) {
-  io.emit("api-active-matches-remove", match);
+  io.to("api-active-matches").emit("api-active-matches-remove", match);
 });
 
 gameManager.onMatchUpdated(function(match) {
-  io.emit("api-active-matches-update", match);
+  io.to("api-active-matches").emit("api-active-matches-update", match);
 });
 
 io.use(function setSessionInfo(socket, next) {
@@ -63,6 +63,14 @@ io.on("connection", function (socket) {
   socket.emit("session-info", socket.session);
   socket.on("api-active-matches", function() {
     socket.emit("api-active-matches", gameManager.getMatchesUserCanJoin(socket.session.username));
+    socket.join("api-active-matches");
+  });
+  socket.on("api-active-bots", function() {
+    var botData = bots.map(function(bot) {
+      return {id: bot.session.username, gameList: bot.session.gameList};
+    });
+    socket.emit("api-active-bots", botData);
+    socket.join("api-active-bots");
   });
   socket.on("join", function(data) {
     gameManager.getMatchupById(data.matchId).addPlayer(socket, data.seat);
@@ -85,6 +93,7 @@ var socketServer = new SocketServer(8882);
 socketServer.onConnection(function(socket) {
   console.log(socket.session.username + " has connected!");
   bots.push(socket);
+  io.to("api-active-bots").emit("api-active-bots-add", {id: socket.session.username, gameList: socket.session.gameList});
   socket.on("join", function(data) {
     var matchup = gameManager.getMatchupById(data.matchId);
     if (matchup) {
@@ -96,6 +105,7 @@ socketServer.onConnection(function(socket) {
   socket.on("disconnect", function() {
     bots.splice(bots.indexOf(socket), 1);
     console.log(socket.session.username + " has disconnected!");
+    io.to("api-active-bots").emit("api-active-bots-remove", {id: socket.session.username});
   });
 });
 

@@ -18,8 +18,12 @@ module.exports = TictactoeGUI;
 TictactoeGUI.prototype = Object.create(GameGUI.prototype);
 TictactoeGUI.prototype.constructor = TictactoeGUI;
 
-function isSamePosition(p1, p2) {
-  return p1.x == p2.x && p1.y == p2.y;
+function coordinateToPosition(x, y) {
+  return x + (3 * y);
+}
+
+function positionToCoordinate(p) {
+  return {x: p % 3, y: Math.floor(p / 3)};
 }
 
 ////////////////////////////////////////
@@ -73,11 +77,13 @@ TictactoeGUI.prototype.onMouseMove = function(e) {
   if ((x - 30) % 150 > 140 || (y - 30) % 150 > 140) {
     return;
   }
-  var p = {x: Math.round((x - 100) / 150), y: Math.round((y - 100) / 150)};
-  if (this.game.getColourAt(p) != 3) {
+  var coordX = Math.round((x - 100) / 150);
+  var coordY = Math.round((y - 100) / 150);
+  var p = coordX + (3 * coordY);
+  if (this.game.getColourAt(p) != this.game.COLOUR_ENUM.EMPTY) {
     return;
   }
-  if (this.preset && isSamePosition(this.preset, p)) {
+  if (this.preset === p) {
     this.mouseTarget = {type: "PRESET"};
   } else if (!this.preset) {
     this.mouseTarget = {type: "BOARD", position: p};
@@ -104,32 +110,22 @@ TictactoeGUI.prototype.onMouseClick = function(e) {
 // Draw helpers
 ////////////////////////////////////////
 
-TictactoeGUI.prototype.drawWin = function(win_line, colour) {
-  this.context.save();
-  this.context.lineWidth = 5;
-  this.context.strokeStyle = "0x000000";
-  this.context.lineCap = "round";
-  this.context.beginPath();
-  this.context.moveTo(100 + (150 * win_line.c1.x), 100 + (150 * win_line.c1.y));
-  this.context.lineTo(100 + (150 * win_line.c2.x), 100 + (150 * win_line.c2.y));
-  this.context.stroke();
-  this.context.restore();
+TictactoeGUI.prototype.drawWin = function(winLine, colour) {
+  for (var i = 0; i < winLine.length; ++i) {
+    this.drawMove(winLine[i], Assets.BOX_HIGHLIGHT_2);
+  }
 };
 
 TictactoeGUI.prototype.drawMoves = function() {
-  for (var i = 0; i < this.game.board.length; ++i) {
-    for (var j = 0; j < this.game.board.length; ++j) {
-      if (this.game.board[i][j] == 1) {
-        this.drawMove({x: i, y: j}, Assets.X);
-      } else if (this.game.board[i][j] == 2) {
-        this.drawMove({x: i, y: j}, Assets.O);
-      }
-    }
+  for (var i = 0; i < this.game.moves.length; ++i) {
+    var position = this.game.moves[i];
+    var mark = (i % 2) == 0 ? Assets.X : Assets.O;
+    this.drawMove(position, mark);
   }
 };
 
 TictactoeGUI.prototype.drawPreset = function() {
-  if (this.preset == null) {
+  if (this.preset === null) {
     return;
   }
   var mark = this.getCurrentMark();
@@ -159,7 +155,7 @@ TictactoeGUI.prototype.drawMarkup = function() {
   if (this.game.moves.length == 0) {
     return;
   }
-  var markup = Assets.BOX_HIGHLIGHT;
+  var markup = Assets.BOX_HIGHLIGHT_1;
   var lastMove = this.game.moves[this.game.moves.length - 1];
   this.drawMove(lastMove, markup);
 };
@@ -172,5 +168,6 @@ TictactoeGUI.prototype.getCurrentMark = function() {
 };
 
 TictactoeGUI.prototype.drawMove = function(position, image) {
-  this.context.drawImage(image, (position.x * 150) + 25, (position.y * 150) + 25);
+  var coordinate = positionToCoordinate(position);
+  this.context.drawImage(image, (coordinate.x * 150) + 25, (coordinate.y * 150) + 25);
 };

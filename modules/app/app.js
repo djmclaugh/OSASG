@@ -1,5 +1,6 @@
 var app = angular.module("osasg", []);
 
+app.service("BotService", require("./bot_service"));
 app.service("LobbyService", require("./lobby_service"));
 app.service("MatchService", require("./match_service"));
 app.service("SocketService", require("./socket_service"));

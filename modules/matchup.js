@@ -95,10 +95,6 @@ Matchup.prototype.addPlayer = function(player, seat) {
       seat = 1;
     } else if (this.p2Username == username) {
       seat = 2;
-    } else if (!this.p1Username) {
-      seat = 1;
-    } else if (!this.p2Username) {
-      seat = 2;
     } else {
       seat = 3;
     }
