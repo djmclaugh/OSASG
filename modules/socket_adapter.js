@@ -1,7 +1,9 @@
+var EventDispatcher = require("./event_dispatcher");
+
 // Adds the .on, .emit, and .session functionality to a TCP socket using new line delemited JSON.
 function SocketAdapter(socket, bufferSize) {
   this.socket = socket;
-  this.callbacks = {};
+  this.dispatcher = new EventDispatcher();
   this.session = {};
   var self = this;
 
@@ -9,6 +11,9 @@ function SocketAdapter(socket, bufferSize) {
   var incompleteJSON = "";
 
   this.socket.on("data", function(data) {
+    if (typeof data != "string") {
+      data = data.toString('utf-8');
+    }
     incompleteLine += data;
     var index = incompleteLine.indexOf("\n");
     while (index != -1) {
@@ -38,12 +43,7 @@ function SocketAdapter(socket, bufferSize) {
   function onMessage(message) {
     var type = message.type;
     delete message.type;
-    if (type in self.callbacks) {
-      var callbacks = self.callbacks[type];
-      for (var i = 0; i < callbacks.length; ++i) {
-        callbacks[i](message);
-      }
-    }
+    self.dispatcher.dispatchEvent(type, message);
   }
 
   this.socket.on("error", function(error) {
@@ -58,15 +58,8 @@ function SocketAdapter(socket, bufferSize) {
   });
 }
 
-SocketAdapter.prototype.on = function(type, callback) {  
-  if (!(type in this.callbacks)) {
-    this.callbacks[type] = [];
-  }
-  this.callbacks[type].push(function(message) {
-    process.nextTick(function() {
-      callback(message);
-    });
-  });
+SocketAdapter.prototype.on = function(type, callback) {
+  return this.dispatcher.on(type, callback);  
 };
 
 SocketAdapter.prototype.emit = function(type, message) {

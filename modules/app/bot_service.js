@@ -11,24 +11,22 @@ module.exports = ["SocketService", function(SocketService) {
 
   self.activeBots = [];
   SocketService.emit("api-active-bots");  
-  
-  SocketService.on("api-active-bots", function(allBots) {
-    self.activeBots.splice.apply(self.activeBots, [0, self.activeBots.length].concat(allBots));
-    changeHappened();
-  });
 
-  SocketService.on("api-active-bots-remove", function(bot) {
-    for (var i = 0; i < self.activeBots.length; ++i) {
-      if (self.activeBots[i].id == bot.id) {
-        self.activeBots.splice(i, 1);
-        break;
+  SocketService.on("api-active-bots", function(data) {
+    if ("set" in data) {
+      self.activeBots.splice.apply(self.activeBots, [0, self.activeBots.length].concat(data.set));  
+    }
+    if ("add" in data) {
+      self.activeBots.push(data.add);
+    }
+    if ("remove" in data) {
+      for (var i = 0; i < self.activeBots.length; ++i) {
+        if (self.activeBots[i].id == data.remove) {
+          self.activeBots.splice(i, 1);
+          break;
+        }
       }
     }
-   changeHappened();
-  });
-
-  SocketService.on("api-active-bots-add", function(bot) {
-    self.activeBots.push(bot);
     changeHappened();
   });
 

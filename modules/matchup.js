@@ -51,17 +51,17 @@ function Matchup(id, gameTitle, gameSettings, privateUsers) {
     players.push(player);
     player.on(self.MESSAGES.PLAY, onPlay(self, player));
   };
-
-  this.MESSAGES = {
-    JOIN: "join",
-    PLAY: "play",
-    UPDATE: "update",
-    ERROR: "error-message"
-  };
 }
 
 Matchup.prototype.ERRORS = {
   FAILED_TO_JOIN_MATCHUP: FailedToJoinMatchupError
+};
+
+Matchup.prototype.MESSAGES = {
+  JOIN: "join",
+  PLAY: "play",
+  UPDATE: "update",
+  ERROR: "error-message"
 };
 
 Matchup.prototype.canJoin = function(username) {

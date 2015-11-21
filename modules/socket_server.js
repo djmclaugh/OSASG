@@ -1,8 +1,9 @@
 var net = require("net");
 var SocketAdapter = require("./socket_adapter");
+var EventDispatcher = require("./event_dispatcher");
 
 function SocketServer(port) {
-  this.callbacks = [];
+  this.dispatcher = new EventDispatcher();
   this.sockets = [];
   
   var self = this;
@@ -13,9 +14,7 @@ function SocketServer(port) {
     adapter.on("authorization", function(data) {
       adapter.session.username = data.name;
       adapter.session.gameList = data.gameList;
-      for (var i = 0; i < self.callbacks.length; ++i) {
-        self.callbacks[i](adapter);
-      }
+      self.dispatcher.dispatchEvent("connection", adapter);
     });
     adapter.on("disconnect", function() {
       var index = self.sockets.indexOf(adapter);
@@ -25,11 +24,11 @@ function SocketServer(port) {
 }
 
 SocketServer.prototype.onConnection = function(callback) {
-  this.callbacks.push(function(socket) {
-    process.nextTick(function() {
-      callback(socket);
-    });
-  });
+  return this.dispatcher.on("connection", callback);
+};
+
+SocketServer.prototype.removeListener = function(id) {
+  this.dispatcher.removeListener(id);
 };
 
 SocketServer.prototype.close = function(callback) {

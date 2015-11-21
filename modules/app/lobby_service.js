@@ -4,28 +4,27 @@ module.exports = ["SocketService", "$http", function(SocketService, $http) {
   self.activeMatches = [];
   SocketService.emit("api-active-matches");  
   
-  SocketService.on("api-active-matches", function(allMatches) {
-    self.activeMatches.splice.apply(self.activeMatches, [0, self.activeMatches.length].concat(allMatches));
-  });
-
-  SocketService.on("api-active-matches-remove", function(matchData) {
-    for (var i = 0; i < self.activeMatches.length; ++i) {
-      if (self.activeMatches[i].id == matchData.id) {
-        self.activeMatches.splice(i, 1);
-        break;
+  SocketService.on("api-active-matches", function(data) {
+    if ("set" in data) {
+      self.activeMatches.splice.apply(self.activeMatches, [0, self.activeMatches.length].concat(data.set));
+    }
+    if ("add" in data) {
+      self.activeMatches.push(data.add);
+    }
+    if ("remove" in data) {
+      for (var i = 0; i < self.activeMatches.length; ++i) {
+        if (self.activeMatches[i].id == data.remove.id) {
+          self.activeMatches.splice(i, 1);
+          break;
+        }
       }
     }
-  });
-
-  SocketService.on("api-active-matches-add", function(matchData) {
-    self.activeMatches.push(matchData);
-  });
-  
-  SocketService.on("api-active-matches-update", function(matchData) {
-    for (var i = 0; i < self.activeMatches.length; ++i) {
-      if (self.activeMatches[i].id == matchData.id) {
-        self.activeMatches[i] = matchData;
-        break;
+    if ("update" in data) {
+      for (var i = 0; i < self.activeMatches.length; ++i) {
+        if (self.activeMatches[i].id == data.update.id) {
+          self.activeMatches[i] = data.update;
+          break;
+        }
       }
     }
   });

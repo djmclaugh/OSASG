@@ -1,11 +1,15 @@
 var Matchup = require("./matchup");
+var EventDispatcher = require("./event_dispatcher");
+
+const MATCH_ADDED = "match-added";
+const MATCH_REMOVED = "match-removed";
+const MATCH_UPDATED = "match-updated";
+
 
 function GameManager() {
   this.matchups = [];
-  this.onAddCallbacks = [];
-  this.onRemoveCallbacks = [];
-  this.onUpdateCallbacks = [];
   this.counter = 0;
+  this.dispatcher = new EventDispatcher();
 }
 
 var gameManagerInstance = new GameManager();
@@ -14,45 +18,36 @@ GameManager.prototype.getInstance = function() {
   return gameManagerInstance;
 };
 
-function wrapCallback(callback) {
-  return function(match) {
-    process.nextTick(function() {
-      callback(match);
-    });
-  };
-}
-
 GameManager.prototype.onMatchAdded = function(callback) {
-  this.onAddCallbacks.push(wrapCallback(callback));
+  return this.dispatcher.on(MATCH_ADDED, callback);
 };
 
 GameManager.prototype.onMatchRemoved = function(callback) {
-  this.onRemoveCallbacks.push(wrapCallback(callback));
+  return this.dispatcher.on(MATCH_REMOVED, callback);
 };
 
 GameManager.prototype.onMatchUpdated = function(callback) {
-  this.onUpdateCallbacks.push(wrapCallback(callback));
+  return this.dispatcher.on(MATCH_UPDATED, callback);
+};
+
+GameManager.prototype.removeListener = function(id) {
+  this.dispatcher.removeListener(id);
 };
 
 GameManager.prototype.addMatch = function(match) {
   this.matchups.push(match);
-  for (var i = 0; i < this.onAddCallbacks.length; ++i) {
-    this.onAddCallbacks[i](match);
-  }
+  this.dispatcher.dispatchEvent(MATCH_ADDED, match);
 };
 
 GameManager.prototype.removeMatch = function(match) {
   var index = this.matchups.indexOf(match);
   if (index != -1) {
     this.matchups.splice(index, 1);
-    for (var i = 0; i < this.onRemoveCallbacks.length; ++i) {
-      this.onRemoveCallbacks[i](match);
-    }
+    this.dispatcher.dispatchEvent(MATCH_REMOVED, match);
   } else {
     throw new Error("Trying to remove non-existing match '"+ match.id + "'.");
   }
 };
-
 
 GameManager.prototype.getMatchesUserCanJoin = function(username) {
   return this.matchups.filter(function(matchup) {
@@ -78,12 +73,11 @@ GameManager.prototype.getMatchupById = function(matchId) {
 
 GameManager.prototype.createNewMatchup = function(gameTitle, gameSettings, privateUsers) {
   var self = this;
-  var matchup = new Matchup(gameTitle.toLowerCase() + "_" + this.counter, gameTitle, gameSettings, privateUsers);
+  var matchupId = gameTitle.toLowerCase() + "_" + this.counter;
+  var matchup = new Matchup(matchupId, gameTitle, gameSettings, privateUsers);
   this.counter += 1;
   matchup.onUpdate = function() {
-    for (var i = 0; i < self.onUpdateCallbacks.length; ++i) {
-      self.onUpdateCallbacks[i](matchup);
-    }
+    self.dispatcher.dispatchEvent(MATCH_UPDATED, matchup);
   };
   matchup.onFinish = function() {
     self.removeMatch(matchup);
@@ -92,4 +86,10 @@ GameManager.prototype.createNewMatchup = function(gameTitle, gameSettings, priva
   return matchup;
 };
 
+GameManager.prototype.reset = function() {
+  this.counter = 0;
+  this.matchups = [];
+};
+
 module.exports = GameManager;
+
