@@ -2,6 +2,10 @@ var Assets = require("./assets");
 var Connect6 = require("../connect6");
 var GameGUI = require("./game_gui");
 
+const EMPTY = Connect6.prototype.COLOUR_ENUM.EMPTY;
+const BLACK = Connect6.prototype.COLOUR_ENUM.BLACK;
+const WHITE = Connect6.prototype.COLOUR_ENUM.WHITE;
+
 function Connect6GUI(game, canvas) {
   GameGUI.call(this, game, canvas);
   this.mouseTarget = {type:"NULL"};
@@ -18,13 +22,21 @@ module.exports = Connect6GUI;
 Connect6GUI.prototype = Object.create(GameGUI.prototype);
 Connect6GUI.prototype.constructor = Connect6GUI;
 
-function isSamePosition(p1, p2) {
+function isSameCoordinate(p1, p2) {
   return p1.x == p2.x && p1.y == p2.y;
 }
 
-Connect6GUI.prototype.getPresetIndex = function(position) {
+function coordinateToPosition(c) {
+  return c.x + (19 * c.y);
+}
+
+function positionToCoordinate(p) {
+  return {x: p % 19, y: Math.floor(p / 19)};
+}
+
+Connect6GUI.prototype.getPresetIndex = function(coordinate) {
   for (var i = 0; i < this.preset.length; ++i) {
-    if (isSamePosition(this.preset[i], position)) {
+    if (isSameCoordinate(this.preset[i], coordinate)) {
       return i;
     }
   }
@@ -47,9 +59,9 @@ Connect6GUI.prototype.clean = function() {
 
 Connect6GUI.prototype.getMove = function() {
   if (this.preset.length == 2 && this.game.moves.length > 0) {
-    return {p1: this.preset[0], p2: this.preset[1]};
+    return [coordinateToPosition(this.preset[0]), coordinateToPosition(this.preset[1])];
   } else if (this.preset.length == 1 && this.game.moves.length == 0) {
-    return {p1: this.preset[0]};
+    return [coordinateToPosition(this.preset[0])];
   }
   return null;
 };
@@ -92,16 +104,16 @@ Connect6GUI.prototype.onMouseMove = function(e) {
     return;
   }
   
-  var p = {x: Math.round(x / 25) - 1, y: Math.round(y / 25) - 1};
+  var c = {x: Math.round(x / 25) - 1, y: Math.round(y / 25) - 1};
   
-  if (!this.game.isPositionOnBoard(p) || this.game.getColourAt(p) != 3) {
+  if (!this.game.isOnBoard(c) || this.game.getColourAtCoordinate(c) != EMPTY) {
     return;
   }
   
-  if (this.getPresetIndex(p) >= 0) {
-    this.mouseTarget = {type: "PRESET", index: this.getPresetIndex(p)};
+  if (this.getPresetIndex(c) >= 0) {
+    this.mouseTarget = {type: "PRESET", index: this.getPresetIndex(c)};
   } else if (this.getMove() == null) {
-    this.mouseTarget = {type: "BOARD", position: p};
+    this.mouseTarget = {type: "BOARD", coordinate: c};
   }
 };
 
@@ -112,7 +124,7 @@ Connect6GUI.prototype.onMouseOut = function(event) {
 Connect6GUI.prototype.onMouseClick = function(e) {
   this.onMouseMove(e);
   if (this.mouseTarget.type == "BOARD") {
-    this.preset.push(this.mouseTarget.position);
+    this.preset.push(this.mouseTarget.coordinate);
     this.changeHappened();
   } else if (this.mouseTarget.type == "PRESET") {
     this.preset.splice(this.mouseTarget.index, 1);
@@ -154,12 +166,17 @@ Connect6GUI.prototype.drawWin = function(win_line, colour) {
 };
 
 Connect6GUI.prototype.drawPlacedStones = function() {
-  for (var i = 0; i < this.game.board.length; ++i) {
-    for (var j = 0; j < this.game.board.length; ++j) {
-      if (this.game.board[i][j] == 1) {
-        this.drawStone({x: i, y: j}, Assets.BLACK_STONE);
-      } else if (this.game.board[i][j] == 2) {
-        this.drawStone({x: i, y: j}, Assets.WHITE_STONE);
+  for (var i = 0; i < 19; ++i) {
+    for (var j = 0; j < 19; ++j) {
+      var c  = {x: i, y: j};
+      var colour = this.game.getColourAtCoordinate(c);
+      if (colour == -2) {
+        console.log(JSON.stringify(c) + " : " + colour);
+      }
+      if (colour == BLACK) {
+        this.drawStone(c, Assets.BLACK_STONE);
+      } else if (colour == WHITE) {
+        this.drawStone(c, Assets.WHITE_STONE);
       }
     }
   }
@@ -180,7 +197,7 @@ Connect6GUI.prototype.drawMouse = function() {
     var stone = this.getCurrentStone();
     this.context.save();
     this.context.globalAlpha = 0.25;
-    this.drawStone(this.mouseTarget.position, stone);
+    this.drawStone(this.mouseTarget.coordinate, stone);
     this.context.restore();
   } else if (this.mouseTarget.type == "PRESET") {
     var s = this.getCurrentStone();
@@ -202,8 +219,8 @@ Connect6GUI.prototype.drawMarkup = function() {
     markup = Assets.BLACK_STONE_LM;
   }
   var lastMove = this.game.moves[this.game.moves.length - 1];
-  for (var key in lastMove) {
-    this.drawStone(lastMove[key], markup);
+  for (var i = 0; i < lastMove.length; ++i) {
+    this.drawStone(positionToCoordinate(lastMove[i]), markup);
   }
 };
 
@@ -214,6 +231,6 @@ Connect6GUI.prototype.getCurrentStone = function() {
   return Assets.WHITE_STONE;
 };
 
-Connect6GUI.prototype.drawStone = function(position, image) {
-  this.context.drawImage(image, (position.x * 25) + 13, (position.y * 25) + 13);
+Connect6GUI.prototype.drawStone = function(coordinate, image) {
+  this.context.drawImage(image, (coordinate.x * 25) + 13, (coordinate.y * 25) + 13);
 };

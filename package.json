@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "browserify modules/osasg_client.js > public/javascript/osasg_client.js && node index.js",
-    "test": "mocha"
+    "test": "mocha --recursive"
   },
   "repository": {
     "type": "git",

@@ -99,6 +99,7 @@ ConnectionHandler.prototype.onClientConnect = function(socket) {
     self.clients[username] = [];
   }
   self.clients[username].push(socket);
+  socket.emit("session-info", socket.session);
 
   // Let the client suscribe to updates about active matches.
   socket.on(ACTIVE_MATCHES, function() {

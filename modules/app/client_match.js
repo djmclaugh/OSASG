@@ -33,8 +33,6 @@ ClientMatch.prototype.receiveMove = function(move) {
   for (var i = 0; i < this.onChangeCallbacks.length; ++i) {
     this.onChangeCallbacks[i]();
   }
-  console.log(this.game.getStatus());
-  console.log(this.game.STATUS_ENUM.UNDECIDED);
 };
 
 ClientMatch.prototype.update = function(data) {

@@ -1,250 +1,271 @@
 var Game = require("./game");
+var Board = require("./shared/board");
+var Line = require("./shared/line");
 
 // Colours
+const EMPTY = 0;
 const BLACK = 1;
 const WHITE = 2;
-const EMPTY = 3;
 
-// Line Class
-function Line(c1, c2) {
-  this.c1 = c1;
-  this.c2 = c2;
-}
-
-Line.prototype.length = function() {
-  var xDiff = Math.abs(this.c1.x - this.c2.x);
-  var yDiff = Math.abs(this.c1.y - this.c2.y);
-  return Math.max(xDiff, yDiff) + 1;
-}
-
-// Connect6 CLASS
-function Connect6(settings) {
-  this.width = 19;
-  this.height = 19;
-    
-  this.moves = [];
-  this.board = [];
-  this.settings = settings;
-  
-  for (var i = 0; i < this.width; ++i) {
-    this.board[i] = [];
-    for (var j = 0; j < this.height; ++j) {
-      this.board[i][j] = EMPTY;
-    }
-  }
+function Connect6() {
+  this.resetGame();
 }
 
 Connect6.prototype = Object.create(Game.prototype);
 Connect6.prototype.constructor = Connect6;
 
+Connect6.prototype.COLOUR_ENUM = {
+  EMPTY: EMPTY,
+  BLACK: BLACK,
+  WHITE: WHITE
+};
+
+Connect6.prototype.resetGame = function() {
+  this.moves = [];
+  this.board = new Board(19, 19, 3);
+};
+
 Connect6.prototype.initFromGameData = function(gameData) {
-  this.moves = gameData.moves;
-  this.board = gameData.board;
-  this.settings = gameData.settings;
+  this.resetGame();
+  for (var i = 0; i < gameData.moves.length; ++i) {
+    this.makeMove(gameData.moves[i]);
+  }
 };
 
 Connect6.prototype.generateGameData = function() {
   var gameData = {};
   gameData.moves = this.moves;
-  gameData.board = this.board;
-  gameData.settings = this.settings;
   return gameData;
+};
+
+Connect6.prototype.copy = function() {
+  var clone = new Connect6();
+  clone.initFromGameData(this.generateGameData());
+  return clone;
+};
+
+Connect6.prototype.getColourAtPosition = function(position) {
+  return this.board.getStateAtPosition(position);
+};
+
+Connect6.prototype.getColourAtCoordinate = function(coordinate) {
+  return this.board.getStateAtCoordinate(coordinate);
+};
+
+Connect6.prototype.isOnBoard = function(coordinate) {
+  return this.board.isValidCoordinate(coordinate);
 };
 
 Connect6.prototype.getColourToPlay = function() {
   return this.moves.length % 2 == 0 ? BLACK : WHITE;
-}
+};
 
 Connect6.prototype.whosTurnIsIt = function() {
   return this.moves.length % 2 == 0 ? this.PLAYER_ENUM.P1 : this.PLAYER_ENUM.P2;
-}
-
-Connect6.prototype.getColourAt = function(position) {
-  return this.board[position.x][position.y];
-};
-
-Connect6.prototype.setColourAt = function(position, colour) {
-  this.board[position.x][position.y] = colour;
-};
-
-Connect6.prototype.isPositionOnBoard = function(position) {
-  if (position.x < 0 || position.x >= this.width) {
-    return false;
-  }
-  if (position.y < 0 || position.y >= this.height) {
-    return false;
-  }
-  return true;
 };
 
 // Checks if the move is valid.
-// This is necessary since we might not know the origin of the move object.
+// This is necessary since we do not know the origin of the move object.
 Connect6.prototype.validateMove = function(move) {
   this.validateFormatOfMove(move);
   this.validateLegalityOfMove(move);
 };
 
 // We check if the move object follows the proper format.
-// {p1:{x, y}, p2:{x, y}} or {p1:{x, y}} where all x and y are natural numbers.
+// 'move' should be an array of distinct integers from [0, 19*19) with length 1 or 2.
 Connect6.prototype.validateFormatOfMove = function(move) {
-  var format = "'move' should follow the format {p1:{x, y}, p2:{x, y}} or {p1:{x, y}}" +
-      "where all x and y are natural numbers.";
-  if (typeof move != "object") {
-    throw new Error("'move'= " + JSON.stringify(move) + " is not an object.\n" + format);
+  var format = "an array of distinct integers from [0, 19*19) with length 1 or 2.";
+  if (!Array.isArray(move)) {
+    throw new this.InvalidMoveFormatError(move, format, "Received move is not an array.");
   }
-  if (typeof move.p1 != "object") {
-    throw new Error("'move.p1'= " + JSON.stringify(move.p1) + " is not an object.\n" + format);
+  if (move.length != 1 && move.length != 2) {
+    throw new this.InvalidMoveFormatError(move, format, "Received move should have length 1 or 2.");
   }
-  if (typeof move.p1.x != "number" || move.p1.x < 0 || move.p1.x % 1 != 0) {
-    throw new Error(
-        "'move.p1.x'= " + JSON.stringify(move.p1.x) + " is not natural number.\n" + format);
+  if (move.length == 2 && move[0] == move[1]) {
+    throw new this.InvalidMoveFormatError(move, format,
+        "Received move should contain distinct entries.");
   }
-  if (typeof move.p1.y != "number" || move.p1.y < 0 || move.p1.y % 1 != 0) {
-    throw new Error(
-        "'move.p1.y'= " + JSON.stringify(move.p1.y) + " is not natural number.\n" + format);
-  }
-  if (typeof move.p2 == "object") {
-    if (typeof move.p2.x != "number" || move.p2.x < 0 || move.p2.x % 1 != 0) {
-      throw new Error(
-          "'move.p2.x'= " + JSON.stringify(move.p2.x) + " is not natural number.\n" + format);
+  for (var i = 0; i < move.length; ++i) {
+    var m = move[i];
+    if (typeof m != "number" || m % 1 != 0 || !this.board.isValidPosition(m)) {
+      throw new this.InvalidMoveFormatError(move, format,
+          "Received move should only contain integers from [0, 19*19).");
     }
-    if (typeof move.p2.y != "number" || move.p2.y < 0 || move.p2.y % 1 != 0) {
-      throw new Error(
-          "'move.p2.y'= " + JSON.stringify(move.p2.y) + " is not natural number.\n" + format);
-    }
-  } else if (typeof move.p2 != "null" && typeof move.p2 != "undefined") {
-    throw new Error(
-        "'move.p2'= " + JSON.stringify(move.p2) +
-        " is not an object, null, or undefined.\n" + format);
   }
 };
 
 // We assume that the move object has the proper format.
 Connect6.prototype.validateLegalityOfMove = function(move) {
   if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
-    throw new Error("No moves are legal since the game is already over.");
+    throw new this.IllegalMoveError(move, "No moves are legal since the game is already over.");
   }
-  if (!this.isPositionOnBoard(move.p1)) {
-    throw new Error(
-        "'move.p1'= " + JSON.stringify(move.p1) + " is not a position on the " +
-        this.width + " by " + this.height + " board.");
+  if (this.moves.length == 0 && move.length != 1) {
+    throw new this.IllegalMoveError(move,
+        "The first move of the game should contain exactly one position.");
   }
-  if (this.getColourAt(move.p1) != EMPTY) {
-    throw new Error("'move.p1'= " + JSON.stringify(move.p1) + " is an already occupied position.");
+  if (this.moves.length != 0 && move.length != 2) {
+    throw new this.IllegalMoveError(move,
+        "Exept for the first move of the game, every move should contain exactly two positions.");
   }
-  if (move.p2) {
-    if (this.moves.length == 0) {
-      throw new Error("On the first turn, you can only place a single stone.");
-    }
-    if (!this.isPositionOnBoard(move.p2)) {
-      throw new Error(
-          "'move.p2'= " + JSON.stringify(move.p2) + " is not a position on the " +
-          this.width + " by " + this.height + " board.");
-    }
-    if (this.getColourAt(move.p2) != EMPTY) {
-      throw new Error(
-          "'move.p2'= " + JSON.stringify(move.p2) + " is an already occupied position.");
-    }
-  } else {
-    if (this.moves.length > 0) {
-      throw new Error("You must place two stones since this is not the first turn.");
+  for (var i = 0; i < move.length; ++i) {
+    var m = move[i];
+    if (this.board.getStateAtPosition(m) != EMPTY) {
+      throw new this.IllegalMoveError(move,
+          "'move[" + i + "]' = " + m + " is an already occupied position.");
     }
   }
 };
 
+Connect6.prototype.getLegalMoves = function() {
+  if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
+    return [];
+  }
+  var openSpots = this.board.getPositionsWithState(EMPTY);
+  if (this.moves.length == 0) {
+    return openSpots.map(function(spot) {
+      return [spot];
+    });
+  }
+  var legalMoves = [];
+  for (var i = 0; i < openSpots.length; ++i) {
+    for (var j = i + 1; j < openSpots.length; ++j) {
+      legalMoves.push([openSpots[i], openSpots[j]]);
+    }
+  }
+  return legalMoves;
+};
+
 Connect6.prototype.makeMove = function(move) {
   this.validateMove(move);
-  this.setColourAt(move.p1, this.getColourToPlay());
-  if (move.p2) {
-    this.setColourAt(move.p2, this.getColourToPlay());
+  for (var i = 0; i < move.length; ++i) {
+    this.board.setStateAtPosition(move[i], this.getColourToPlay());
   }
   this.moves.push(move);
 };
 
 // Returns the undone move.
-Connect6.prototype.undoMove = function() {
+Connect6.prototype.undoLastMove = function() {
   if (this.moves.length === 0) {
     return;
   }
   var move = this.moves.pop();
-  this.setColourAt(move.p1, EMPTY);
-  if (move.p2) {
-    this.setColourAt(move.p2, EMPTY);
+  for (var i = 0; i < move.length; ++i) {
+    this.board.setStateAtPosition(move[i], EMPTY);
   }
   return move;
 };
 
 Connect6.prototype.getStatus = function() {
-  if (this.getWinLine()) {
+  if (this.didLastMoveWin()) {
     return this.moves.length % 2 == 0 ? this.STATUS_ENUM.P2_WIN : this.STATUS_ENUM.P1_WIN;
   }
-  if (2 * this.moves.length - 1 >= this.width * this.height) {
+  if (2 * this.moves.length - 1 >= this.board.N) {
     return this.STATUS_ENUM.DRAW;
   }
   return this.STATUS_ENUM.UNDECIDED;
 };
 
+Connect6.prototype.willMoveWin = function(move, colour) {
+  for (var i = 0; i < move.length; ++i) {
+    if (this.board.getStateAtPosition(i) != EMPTY) {
+      return false;
+    }
+  }
+  for (var i = 0; i < move.length; ++i) {
+    this.board.setStateAtPosition(move[i], colour);
+  }
+  var result = false;
+  for (var i = 0; i < move.length; ++i) {
+    if (this.getLongestLineAtPosition(move[i]).getLength() >= 6) {
+      result = true;
+      break;
+    }
+  }
+  for (var i = 0; i < move.length; ++i) {
+    this.board.setStateAtPosition(move[i], EMPTY);
+  }
+  return result;
+};
+
+Connect6.prototype.didLastMoveWin = function() {
+  // It is impossible for the game to end in less than 6 moves.
+  // This check guarantees that the last move placed 2 stones.
+  if (this.moves.length < 6) {
+    return false;
+  }
+  var lastMove = this.moves[this.moves.length - 1];
+  if (this.getLongestLineAtPosition(lastMove[0]).getLength() >= 6) {
+    return true;
+  }
+  if (this.getLongestLineAtPosition(lastMove[1]).getLength() >= 6) {
+    return true;
+  }
+  return false;
+};
+
 Connect6.prototype.getWinLine = function() {
   for (var i = this.moves.length - 1; i > 1; --i) {
-    var line = this.getLongestLineAtPosition(this.moves[i].p1);
-    if (line.length() >= 6) {
+    var line = this.getLongestLineAtPosition(this.moves[i][0]);
+    if (line.getLength() >= 6) {
       return line;
     }
-    line = this.getLongestLineAtPosition(this.moves[i].p2);
-    if (line.length() >= 6) {
+    line = this.getLongestLineAtPosition(this.moves[i][1]);
+    if (line.getLength() >= 6) {
       return line;
     }
   }
   return null;
-}
+};
 
 Connect6.prototype.getLongestLineAtPosition = function(position) {
   var self = this;
-  var colour = this.getColourAt(position);
-  
+  var colour = this.board.getStateAtPosition(position);
   if (colour == EMPTY) {
     return null;
   }
   
+  var coordinate = this.board.positionToCoordinate(position);
+  
   function lineEnd(start, direction) {
-    var nextPosition = {x: start.x + direction.x, y: start.y + direction.y};
-    while (self.isPositionOnBoard(nextPosition) && self.getColourAt(nextPosition) == colour) {
-      nextPosition.x += direction.x;
-      nextPosition.y += direction.y;
+    var nextCoordinate = {x: start.x + direction.x, y: start.y + direction.y};
+    while (self.board.isValidCoordinate(nextCoordinate)
+        && self.board.getStateAtCoordinate(nextCoordinate) == colour) {
+      nextCoordinate.x += direction.x;
+      nextCoordinate.y += direction.y;
     }
-    return {x: nextPosition.x - direction.x, y: nextPosition.y - direction.y};
+    return {x: nextCoordinate.x - direction.x, y: nextCoordinate.y - direction.y};
   }
   
-  function getLine(position, direction) {
-    var start = lineEnd(position, {x: -direction.x, y: -direction.y});
-    var end = lineEnd(position, direction);
+  function getLine(coordinate, direction) {
+    var start = lineEnd(coordinate, {x: -direction.x, y: -direction.y});
+    var end = lineEnd(coordinate, direction);
     return new Line(start, end);
   }
   
   var line;
-  var longestLine = new Line(position, position);
+  var longestLine = new Line(coordinate, coordinate);
   
   // Horizontal check
-  line = getLine(position, {x: 1, y: 0});
-  if (line.length() > longestLine.length()) {
+  line = getLine(coordinate, {x: 1, y: 0});
+  if (line.getLength() > longestLine.getLength()) {
     longestLine = line;
   }
   
   // Vertical check
-  line = getLine(position, {x: 0, y: 1});
-  if (line.length() > longestLine.length()) {
+  line = getLine(coordinate, {x: 0, y: 1});
+  if (line.getLength() > longestLine.getLength()) {
     longestLine = line;
   }
   
   // x = y check
-  line = getLine(position, {x: 1, y: 1});
-  if (line.length() > longestLine.length()) {
+  line = getLine(coordinate, {x: 1, y: 1});
+  if (line.getLength() > longestLine.getLength()) {
     longestLine = line;
   }
   
   // x = -y check
-  line = getLine(position, {x: 1, y: -1});
-  if (line.length() > longestLine.length()) {
+  line = getLine(coordinate, {x: 1, y: -1});
+  if (line.getLength() > longestLine.getLength()) {
     longestLine = line;
   }
   

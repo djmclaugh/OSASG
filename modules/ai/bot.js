@@ -1,5 +1,7 @@
-// This is a class you can use if writting a bot in javascript
-// Feel free to use this as a framework to make your own bot.
+// This is a class you can use if you are writting a bot in javascript.
+// It handles the networking needs of the bot.
+// All you have to do is write the logic to decide what move to play.
+// See random_bot.js for an exampe on how to use this class.
 
 var net = require("net");
 
@@ -21,7 +23,7 @@ function Bot(name, password, gameList) {
   this.gameList = gameList;
   this.socket = new net.Socket();
   this.client = new SocketAdapter(this.socket, 100000);
-  this.matches ={};
+  this.matches = {};
   
   this.client.on(JOIN, this.onJoin.bind(this));
   this.client.on(UPDATE, this.onUpdate.bind(this));
@@ -95,7 +97,7 @@ Bot.prototype.onPlay = function(message) {
 };
 
 // This is called whenever a non-fatal error occurs, such as playing an illegal move.
-// In a functioning bot, these errors should never be triggered.
+// In a functioning bot, these errors should never happen.
 // These errors are only provided to help with debbuging.
 // Handling these errors is not recommended since if you receive them, your bot is in a weird state.
 // (Your bot had to think the move was legal when it tried to play it)
@@ -128,5 +130,5 @@ Bot.prototype.takeAction = function(match) {
 };
 
 Bot.prototype.getMove = function(match) {
-  throw new Error("Must be implemented by subclass.");
+  throw new Error("Must be implemented by the subclass.");
 }

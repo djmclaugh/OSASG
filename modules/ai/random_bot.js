@@ -31,49 +31,6 @@ RandomBot.prototype.wantToJoin = function(matchId, settings) {
 
 RandomBot.prototype.getMove = function(match) {
   var game = match.game;
-  if (game instanceof Games.Tictactoe) {
-    return this.getTictactoeMove(game);
-  } else if (game instanceof Games.Connect6) {
-    return this.getConnect6Move(game);
-  }
-  return null;
-};
-
-RandomBot.prototype.getTictactoeMove = function(game) {
-  var possibleMoves = [];
-  for (var i = 0; i < 9; ++i) {
-    if (game.getColourAt(i) == game.COLOUR_ENUM.EMPTY) {
-      possibleMoves.push(i);
-    }
-  }
-  if (possibleMoves.length == 0) {
-    return null;
-  }
+  var possibleMoves = game.getLegalMoves();
   return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-};
-
-RandomBot.prototype.getConnect6Move = function(game) {
-  var openSpots = [];
-  for (var i = 0; i < 19; ++i) {
-    for (var j = 0; j < 19; ++j) {
-      if (game.board[i][j] == 3) {
-        openSpots.push({x: i, y: j});
-      }
-    }
-  }
-  if (openSpots.length == 0) {
-    return null;
-  }
-  var rand1 = Math.floor(Math.random() * openSpots.length);
-  var rand2 = Math.floor(Math.random() * (openSpots.length - 1));
-  if (rand2 >= rand1) {
-    rand2 += 1;
-  }
-  var p1 = openSpots[rand1];
-  var p2 = openSpots[rand2];
-  if (game.moves.length == 0) {
-    return {p1: p1};
-  } else {
-    return {p1: p1, p2: p2};
-  }
 };
