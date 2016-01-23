@@ -147,21 +147,47 @@ ConnectionHandler.prototype.onClientConnect = function(socket) {
 ConnectionHandler.prototype.onBotConnect = function(socket) {
   var self = this;
   var username = socket.session.username;
+  
+  if (username in self.bots) {
+    self.bots[username].emit("error-message",
+        {error: "Closing connection to allow " + username + " to reconnect from another socket."});
+    self.bots[username].close();
+  }
+  
   self.bots[username] = socket;
 
   self.clientServer
       .to(ACTIVE_BOTS)
       .emit(ACTIVE_BOTS, {add: {id: username, gameList: socket.session.gameList}});
+
+  // Invite to any game previously joined
+  var matchesInProgress = gameManager.getMatchesUserIsPlaying(username);
+  for (var i = 0; i < matchesInProgress.length; ++i) {
+    socket.emit("join", {matchId: matchesInProgress[i].id});
+  }
   
   // Allow the bot to join matches
   socket.on("join", function(data) {
+    var matchup = gameManager.getMatchupById(data.matchId);
+    if (!matchup) {
+      return;
+    }
+
+    // Check if the bot is trying to reconnect
+    if (matchup.p1Username == username) {
+      matchup.addPlayer(socket, 1);
+    }
+    if (matchup.p2Username == username) {
+      matchup.addPlayer(socket, 2);
+    }
+
+    // Check if the bot got invited to join the game
     self.cleanBotRequests();
     var validRequests = self.sentBotRequests.filter(function(item) {
       return item.matchId == data.matchId && item.bot == socket;
     });
     if (validRequests.length >= 1) {
       var request = validRequests[0];
-      var matchup = gameManager.getMatchupById(request.matchId);
       if (matchup) {
         try {
           matchup.addPlayer(socket, request.seat);
@@ -174,9 +200,11 @@ ConnectionHandler.prototype.onBotConnect = function(socket) {
 
   // Handle disconnection
   socket.on("disconnect", function() {
-    delete self.bots[username];
-    self.clientServer
-        .to(ACTIVE_BOTS)
-        .emit(ACTIVE_BOTS, {remove: username});
+    if (username in self.bots && self.bots[username] == socket) {
+      delete self.bots[username];
+      self.clientServer
+          .to(ACTIVE_BOTS)
+          .emit(ACTIVE_BOTS, {remove: username});
+    }
   });
 };

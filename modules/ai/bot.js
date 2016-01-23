@@ -78,6 +78,7 @@ Bot.prototype.onUpdate = function(message) {
     match = {};
     match.id = message.matchId;
     match.game = Games.newGameFromId(message.matchId, message.settings);
+    match.isWaitingForMoveConfirmation = false;
     this.matches[message.matchId] = match;
   }
   match.game.initFromGameData(message.gameData);
@@ -93,6 +94,7 @@ Bot.prototype.onUpdate = function(message) {
 Bot.prototype.onPlay = function(message) {
   var match = this.matches[message.matchId];
   match.game.makeMove(message.move);
+  match.isWaitingForMoveConfirmation = false;
   this.takeAction(match);
 };
 
@@ -118,17 +120,18 @@ Bot.prototype.takeAction = function(match) {
     delete this.matches[match.id];
   } else if (match.p1 == null || match.p2 == null) {
     // The match hasn't started yet so just do nothing.
-  } else if (match.game.moves.length % 2 == 0 && amP1) {
+  } else if (!match.isWaitingForMoveConfirmation && (match.game.moves.length % 2 == 0 && amP1)
+      || (match.game.moves.length % 2 == 1 && amP2)) {
     // If it's my turn, submit a move.
     this.client.emit(PLAY, {matchId: match.id, move: this.getMove(match)});
-  } else if (match.game.moves.length % 2 == 1 && amP2) {
-    // If it's my turn, submit a move.
-    // Note: It is possible to have your bot play against itself. So your bot can be P1 and P2 at
-    // the same time.
-    this.client.emit(PLAY, {matchId: match.id, move: this.getMove(match)});
+    // Also, don't submit any other moves until the server has accepted a new move.
+    // This prevents me from playing multiple times in the same turn if I receive multiple updates
+    // about an in progress game while thinking about my next move.
+    match.isWaitingForMoveConfirmation = true;
   }
 };
 
 Bot.prototype.getMove = function(match) {
   throw new Error("Must be implemented by the subclass.");
 }
+

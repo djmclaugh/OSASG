@@ -229,5 +229,57 @@ describe("Connection Handler", function() {
     
     step1();
   });
+
+  it("should invite bots to their ongoing games when they reconnect", function(done) {
+    var user = clientIO(CLIENT_SERVER_URL, {forceNew: true});
+    gameManager.createNewMatchup("Tictactoe", {});
+
+    socket_0 = new net.Socket();
+    bot_0 = new SocketAdapter(socket_0, 100000);
+    bot_0.on("join", onJoin1);
+
+    socket_1 = new net.Socket();
+    bot_1 = new SocketAdapter(socket_1, 100000);
+    bot_1.on("join", onJoin2);
+
+    function onJoin1(data) {
+      assert.equal(data.matchId, "tictactoe_0");
+      bot_0.emit("join", {matchId: data.matchId});
+      setTimeout(function() {
+        bot_0.close();
+        step3();
+      }, 100);
+    }
+
+    function onJoin2(data) {
+      assert.equal(data.matchId, "tictactoe_0");
+      done();
+    }
+
+    var credentials = {
+      name: "bot_0",
+      password: "no password needed",
+      gameList: []
+    };
+
+    function step1() {
+      socket_0.connect(BOT_PORT, "localhost", function() {
+        bot_0.emit("authorization", credentials);
+      });
+      setTimeout(step2, 100);
+    }
+
+    function step2() {
+      user.emit("request-bot", {username: "bot_0", matchId: "tictactoe_0", seat: 2});
+    }
+
+    function step3() {
+      socket_1.connect(BOT_PORT, "localhost", function() {
+        bot_1.emit("authorization", credentials);
+      });
+    }
+
+    step1();
+  });
 });
 
