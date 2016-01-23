@@ -120,8 +120,8 @@ Bot.prototype.takeAction = function(match) {
     delete this.matches[match.id];
   } else if (match.p1 == null || match.p2 == null) {
     // The match hasn't started yet so just do nothing.
-  } else if (!match.isWaitingForMoveConfirmation && (match.game.moves.length % 2 == 0 && amP1)
-      || (match.game.moves.length % 2 == 1 && amP2)) {
+  } else if (!match.isWaitingForMoveConfirmation && ((match.game.moves.length % 2 == 0 && amP1)
+      || (match.game.moves.length % 2 == 1 && amP2))) {
     // If it's my turn, submit a move.
     this.client.emit(PLAY, {matchId: match.id, move: this.getMove(match)});
     // Also, don't submit any other moves until the server has accepted a new move.

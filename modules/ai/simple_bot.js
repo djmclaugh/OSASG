@@ -80,8 +80,8 @@ SimpleBot.prototype.getTictactoeMove = function(game) {
 };
 
 function areWithin6InARow(p1, p2) {
-  var y1 = p1 / 19;
-  var y2 = p2 / 19;
+  var y1 = Math.floor(p1 / 19);
+  var y2 = Math.floor(p2 / 19);
   if (y1 - y2 > 5 || y2 - y1 > 5) {
     return false;
   }
@@ -235,7 +235,7 @@ SimpleBot.prototype.getConnect6Move = function(game) {
     }
     return [blocker, secondBlocker];
   }
-  
+
   // Otherwise, just play randomly
   var rand1 = Math.floor(Math.random() * openSpots.length);
   var rand2 = Math.floor(Math.random() * (openSpots.length - 1));

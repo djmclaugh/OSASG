@@ -167,7 +167,7 @@ Connect6.prototype.getStatus = function() {
 
 Connect6.prototype.willMoveWin = function(move, colour) {
   for (var i = 0; i < move.length; ++i) {
-    if (this.board.getStateAtPosition(i) != EMPTY) {
+    if (this.board.getStateAtPosition(move[i]) != EMPTY) {
       return false;
     }
   }
@@ -176,7 +176,8 @@ Connect6.prototype.willMoveWin = function(move, colour) {
   }
   var result = false;
   for (var i = 0; i < move.length; ++i) {
-    if (this.getLongestLineAtPosition(move[i]).getLength() >= 6) {
+    var line = this.getLongestLineAtPosition(move[i]);
+    if (line.getLength() >= 6) {
       result = true;
       break;
     }
