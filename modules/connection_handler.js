@@ -17,7 +17,7 @@ function ConnectionHandler(clientServer, botServer) {
   self.clients = {};
   // List of bot requests. This is used so that bots don't hijack matches or join in the wrong seat.
   self.sentBotRequests = [];
-};
+}
 
 module.exports = ConnectionHandler;
 

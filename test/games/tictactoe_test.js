@@ -1,5 +1,5 @@
 var assert = require("assert");
-var Tictactoe = require("../../modules/games.js").Tictactoe;
+var Tictactoe = require("../../modules/games/tictactoe");
 
 describe("Tictactoe", function() {
   beforeEach(function() {

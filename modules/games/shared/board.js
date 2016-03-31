@@ -61,6 +61,28 @@ Board.prototype.isValidCoordinate = function(coordinate) {
   return x >= 0 && x < this.w && y >= 0 && y < this.h;
 };
 
+Board.prototype.swappedXYPosition = function(position) {
+  var c = this.positionToCoordinate(position);
+  c = this.swappedXYCoordinate(c);
+  return this.coordinateToPosition(c);
+};
+
+Board.prototype.swappedXYCoordinate = function(c) {
+  return {x: c.y, y:c.x};
+};
+
+Board.prototype.hasPositionsWithState = function(state) {
+  if (state < 0 || state >= this.numStates) {
+    throw new Error("invalid state: " + state);
+  }
+  for (var i = 0; i < this.N; ++i) {
+    if (this.getStateAtPosition(i) === state) {
+      return true;
+    }
+  }
+  return false;
+};
+
 Board.prototype.getPositionsWithState = function(state) {
   if (state < 0 || state >= this.numStates) {
     throw new Error("Invalid state: " + state);

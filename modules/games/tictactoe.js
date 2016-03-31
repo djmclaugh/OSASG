@@ -48,7 +48,7 @@ Tictactoe.prototype.copy = function() {
 
 Tictactoe.prototype.whosTurnIsIt = function() {
   return this.moves.length % 2 == 0 ? this.PLAYER_ENUM.P1 : this.PLAYER_ENUM.P2;
-}
+};
 
 Tictactoe.prototype.getColourAt = function(position) {
   return this.board.getStateAtPosition(position);
@@ -120,7 +120,7 @@ const possibleWins = [
   [2, 5, 8],
   [0, 4, 8],
   [2, 4, 6]
-]
+];
 
 Tictactoe.prototype.getWinLine = function() {
   var self = this;

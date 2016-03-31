@@ -1,5 +1,5 @@
 var assert = require("assert");
-var Connect6 = require("../../modules/games.js").Connect6;
+var Connect6 = require("../../modules/games/connect6");
 
 describe("Connect6", function() {
   beforeEach(function() {
