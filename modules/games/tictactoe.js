@@ -40,12 +40,6 @@ Tictactoe.prototype.generateGameData = function() {
   return gameData;
 };
 
-Tictactoe.prototype.copy = function() {
-  var clone = new Tictactoe();
-  clone.initFromGameData(this.generateGameData());
-  return clone;
-};
-
 Tictactoe.prototype.whosTurnIsIt = function() {
   return this.moves.length % 2 == 0 ? this.PLAYER_ENUM.P1 : this.PLAYER_ENUM.P2;
 };
@@ -68,24 +62,29 @@ Tictactoe.prototype.validateMove = function(move) {
 // We check if the move object follows the proper format.
 // "move" should be a number from 0 to 8 representing which square has been played.
 Tictactoe.prototype.validateFormatOfMove = function(move) {
-  if (typeof move != "number" || move % 1 != 0 || !this.board.isValidPosition(move)) {
-    throw new Error("'move'= " + JSON.stringify(move) + " is not a natural number from 0 to 8.");
+  var expectedFormat = "A whole number from 0 to 8 inclusively";
+  if (typeof move != "number") {
+    throw new this.InvalidMoveFormatError(move, expectedFormat, "Received move is not a number");
+  } else if (move % 1 != 0) {
+    throw new this.InvalidMoveFormatError(move, expectedFormat, "Received move is not a whole number");
+  } else if (!this.board.isValidPosition(move)) {
+    throw new this.InvalidMoveFormatError(move, expectedFormat, "Received move is not a valid position");
   }
 };
 
 // We assume that the move object has the proper format.
 Tictactoe.prototype.validateLegalityOfMove = function(move) {
   if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
-    throw new Error("No moves are legal since the game is already over.");
+    throw new this.IllegalMoveError(move, "No moves are legal since the game is already over");
   }
   if (this.getColourAt(move) != EMPTY) {
-    throw new Error("'move'= " + JSON.stringify(move) + " is an already occupied position.");
+    throw new this.IllegalMoveError(move, "That position is already occupied");
   }
 };
 
 Tictactoe.prototype.getLegalMoves = function() {
   if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
-    return {};
+    return [];
   }
   return this.board.getPositionsWithState(EMPTY);
 };

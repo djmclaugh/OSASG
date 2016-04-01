@@ -9,14 +9,14 @@ describe("Tictactoe", function() {
   it("should throw an error if I try to play outside the board", function() {
     assert.throws(function() {
       game.makeMove(10);
-    }, /is not a natural number from 0 to 8/);
+    }, game.InvalidMoveFormatError);
   });
  
   it("should throw an error if I try to play in an non-empty position", function() {
     game.makeMove(4);
     assert.throws(function() {
       game.makeMove(4);
-    }, /already occupied position/);
+    }, game.IllegalMoveError);
   });
 
   it("should be able to play a simple game", function() {

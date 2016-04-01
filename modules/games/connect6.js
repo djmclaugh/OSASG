@@ -38,12 +38,6 @@ Connect6.prototype.generateGameData = function() {
   return gameData;
 };
 
-Connect6.prototype.copy = function() {
-  var clone = new Connect6();
-  clone.initFromGameData(this.generateGameData());
-  return clone;
-};
-
 Connect6.prototype.getColourAtPosition = function(position) {
   return this.board.getStateAtPosition(position);
 };
@@ -74,7 +68,7 @@ Connect6.prototype.validateMove = function(move) {
 // We check if the move object follows the proper format.
 // 'move' should be an array of distinct integers from [0, 19*19) with length 1 or 2.
 Connect6.prototype.validateFormatOfMove = function(move) {
-  var format = "an array of distinct integers from [0, 19*19) with length 1 or 2.";
+  var format = "An array of length 1 or 2 consisting of distinct integers from [0, 19*19)";
   if (!Array.isArray(move)) {
     throw new this.InvalidMoveFormatError(move, format, "Received move is not an array.");
   }

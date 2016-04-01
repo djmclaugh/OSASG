@@ -9,17 +9,17 @@ describe("Connect6", function() {
   it("should throw an error if I try to place a stone outside the board", function() {
     assert.throws(function() {
       game.makeMove([-1]);
-    }, game.InvalidMoveError);
+    }, game.InvalidMoveFormatError);
     assert.throws(function() {
       game.makeMove([361]);
-    }, game.InvalidMoveError);
+    }, game.InvalidMoveFormatError);
   });
   
   it("should throw an error if I try to play at the same place twice in a single move", function() {
     game.makeMove([0]);
     assert.throws(function() {
       game.makeMove([1, 1]);
-    }, game.InvalidMoveError);
+    }, game.InvalidMoveFormatError);
   });
  
   it("should throw an error if I try to place two stones on the first turn", function() {

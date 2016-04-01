@@ -7,7 +7,11 @@ const BLUE = 2;
 
 // Hex CLASS
 function Hex(settings) {  
-  this.resetGame(settings);
+  if (settings) {
+    this.resetGame(settings);
+  } else {
+    this.resetGame({size: 11});
+  }
 }
 
 Hex.prototype = Object.create(Game.prototype);
@@ -28,6 +32,7 @@ Hex.prototype.resetGame = function(settings) {
 };
 
 Hex.prototype.initFromGameData = function(gameData) {
+  console.log("Received game data: " + JSON.stringify(gameData));
   this.resetGame(gameData.settings);
   for (var i = 0; i < gameData.moves.length; ++i) {
     this.makeMove(gameData.moves[i]);
@@ -38,13 +43,8 @@ Hex.prototype.generateGameData = function() {
   var gameData = {};
   gameData.moves = this.moves;
   gameData.settings = this.settings;
+  console.log("Generated game data: " + JSON.stringify(gameData));
   return gameData;
-};
-
-Hex.prototype.copy = function() {
-  var clone = new Hex();
-  clone.initFromGameData(this.generateGameData());
-  return clone;
 };
 
 Hex.prototype.whosTurnIsIt = function() {
@@ -75,30 +75,28 @@ Hex.prototype.validateMove = function(move) {
 //  3 4 5
 //   6 7 8
 Hex.prototype.validateFormatOfMove = function(move) {
+  var numCells = this.settings.size * this.settings.size;
+  var expectedFormat = "A a natural number from -1 to " + (numCells - 1);
   if (typeof move != "number" || move % 1 != 0
       || (move != -1 && !this.board.isValidPosition(move))) {
-    var numCells = this.settings.size * this.settings.size;
-    var moveString = JSON.stringify(move);
-    var message =
-        "'move' = " + moveString + " is not a natural number from [-1, " + numCells + ").";
-    throw new Error(message);
+    throw new this.InvalidMoveFormatError(move, expectedFormat);
   }
 };
 
 // We assume that the move object has the proper format.
 Hex.prototype.validateLegalityOfMove = function(move) {
   if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
-    throw new Error("No moves are legal since the game is already over.");
+    throw new this.IllegalMoveError(move, "No moves are legal since the game is already over.");
   }
   if (move == -1) {
     if (this.moves.length != 1) {
-      throw new Error("You can only swap immediatly after the first move.");
+      throw new this.IllegalMoveError(move, "You can only swap as the second move.");
     } else {
       return;
     } 
   }
   if (this.getColourAt(move) != EMPTY) {
-    throw new Error("'move'= " + JSON.stringify(move) + " is an already occupied position.");
+    throw new this.IllegalMoveError(move, "Received move is an already occupied position.");
   }
 };
 

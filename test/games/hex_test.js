@@ -11,32 +11,33 @@ describe("Hex", function() {
   it("should throw an error if I try to play outside the board", function() {
     assert.throws(function() {
       game.makeMove(10);
-    }, /is not a natural number from \[-1, 9\)/);
+    }, game.InvalidMoveFormatError);
     assert.throws(function() {
       game.makeMove(-2);
-    }, /is not a natural number from \[-1, 9\)/);
+    }, game.InvalidMoveFormatError);
     game = new Hex({size:4});
     assert.throws(function() {
       game.makeMove(16);
-    }, /is not a natural number from \[-1, 16\)/);
+    }, game.InvalidMoveFormatError);
   });
  
   it("should throw an error if I try to play in an non-empty position", function() {
     game.makeMove(4);
+    game = game.copy();
     assert.throws(function() {
       game.makeMove(4);
-    }, /already occupied position/);
+    }, game.IllegalMoveError);
   });
 
   it("should throw an error if I try to swap not on the second turn", function() {
     assert.throws(function() {
       game.makeMove(-1);
-    }, /You can only swap immediatly after the first move/);
+    }, game.InvalidMoveError);
     game.makeMove(5);
     game.makeMove(6);
     assert.throws(function() {
       game.makeMove(-1);
-    }, /You can only swap immediatly after the first move/);
+    }, game.IllegalMoveError);
   });
 
   it("should swap properly", function() {

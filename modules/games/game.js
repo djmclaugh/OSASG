@@ -41,7 +41,9 @@ Game.prototype.generateGameData = function() {
 };
 
 Game.prototype.copy = function() {
-  throw new Error("This method needs to be implemented by the subclass.");
+  var copy = new this.constructor();
+  copy.initFromGameData(this.generateGameData());
+  return copy;
 };
 
 Game.prototype.whosTurnIsIt = function() {
