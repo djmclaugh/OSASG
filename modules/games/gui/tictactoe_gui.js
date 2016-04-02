@@ -164,7 +164,7 @@ TictactoeGUI.prototype.getCurrentMark = function() {
   if (this.game.moves.length % 2 == 0) {
     return Assets.X;
   }
-  return Assets.O;
+  return  Assets.O;
 };
 
 TictactoeGUI.prototype.drawMove = function(position, image) {

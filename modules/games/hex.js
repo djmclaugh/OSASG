@@ -7,7 +7,7 @@ const BLUE = 2;
 
 // Hex CLASS
 function Hex(settings) {  
-  if (settings) {
+  if (settings && settings.size) {
     this.resetGame(settings);
   } else {
     this.resetGame({size: 11});
@@ -32,7 +32,6 @@ Hex.prototype.resetGame = function(settings) {
 };
 
 Hex.prototype.initFromGameData = function(gameData) {
-  console.log("Received game data: " + JSON.stringify(gameData));
   this.resetGame(gameData.settings);
   for (var i = 0; i < gameData.moves.length; ++i) {
     this.makeMove(gameData.moves[i]);
@@ -43,8 +42,19 @@ Hex.prototype.generateGameData = function() {
   var gameData = {};
   gameData.moves = this.moves;
   gameData.settings = this.settings;
-  console.log("Generated game data: " + JSON.stringify(gameData));
   return gameData;
+};
+
+Hex.prototype.positionToCoordinate = function(p) {
+  return this.board.positionToCoordinate(p);
+};
+
+Hex.prototype.coordinateToPosition = function(c) {
+  return this.board.coordinateToPosition(c);
+};
+
+Hex.prototype.swappedPosition = function(p) {
+  return this.board.swappedXYPosition(p);
 };
 
 Hex.prototype.whosTurnIsIt = function() {

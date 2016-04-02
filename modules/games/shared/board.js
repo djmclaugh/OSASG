@@ -46,7 +46,7 @@ Board.prototype.positionToCoordinate = function(position) {
 
 Board.prototype.coordinateToPosition = function(coordinate) {
   if (!this.isValidCoordinate(coordinate)) {
-    throw new Error("Invalid coordinate: " + coordinate); 
+    throw new Error("Invalid coordinate: " + JSON.stringify(coordinate)); 
   }
   return coordinate.x + (coordinate.y * this.w);
 };

@@ -1,6 +1,5 @@
 // This is a javascript for node.js implementation of a bot that notices immediate winning and
 // lossing moves.
-// This bot is able to play any game on OSASG.
 // Feel free to use this as a framework to make your own bot.
 
 var Bot = require("./bot");

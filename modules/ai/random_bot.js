@@ -5,10 +5,10 @@
 var Bot = require("./bot");
 var Games = require("../games");
 
-const GAMES_I_CAN_PLAY = [Games.Tictactoe, Games.Connect6];
+const GAMES_I_CAN_PLAY = [Games.Tictactoe, Games.Connect6, Games.Hex];
 
 function RandomBot() {
-  Bot.call(this, "OSASG-RandomBot", "not yet implemented", ["Tictactoe", "Connect6"]);
+  Bot.call(this, "OSASG-RandomBot", "not yet implemented", ["Tictactoe", "Connect6", "Hex"]);
 }
 
 module.exports = RandomBot;
