@@ -6,13 +6,17 @@ var router = express.Router();
 
 function checkCredentials(req, res, next) {
   if (!req.session.username) {
-    req.session.username = guest_names.getGuestName();
-    if (req.session.username == null) {
-      req.session.username = req.sesisonID;
-    }
-    req.session.isGuest = true;
+    guest_names.getGuestName(function(username) {
+      req.session.username = username;
+      if (req.session.username == null) {
+        req.session.username = req.session.id;
+      }
+      req.session.isGuest = true;
+      next();
+    });
+  } else {
+    next();
   }
-  next();
 }
 
 router.use(checkCredentials);

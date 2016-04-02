@@ -1,3 +1,4 @@
+var config = require("../config.json");
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
@@ -6,4 +7,4 @@ var SessionSchema = new Schema({
 });
 
 exports.Session = mongoose.model('Session', SessionSchema);
-mongoose.connect('mongodb://localhost/OSASG');
+mongoose.connect(config.databaseLocation);
