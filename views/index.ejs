@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0">
     <link href="stylesheets/style.css" rel="stylesheet">
+    <script src='https://www.google.com/recaptcha/api.js'></script>
     <title><%= title %></title>
     <script src='https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.min.js'></script>
     <script src="/javascript/osasg_client.js"></script>
@@ -12,7 +13,7 @@
   <body>
     <h1><%= title %></h1>
     <div class=intro>
-      <p>Welcome <%= username %>!</p>
+      <p>Welcome <%= username %>! <% if(isGuest) { %>(<a href="/login">Login</a>)<% } else { %>(<a href="/logout">Logout</a>)<% } %></p>
       <p>This website is still under construction.</p>
       <p>View progress on <a href="https://github.com/djmclaugh/OSASG">GitHub</a>.</p>
     </div>

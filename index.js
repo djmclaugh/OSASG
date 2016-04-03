@@ -1,36 +1,68 @@
 var config = require("./config.json");
-var express = require("express");
-var session = require("express-session");
+var path = require("path");
 var cookieParser = require("cookie-parser");
+var bodyParser = require("body-parser");
+var express = require("express");
 var app = express();
 var http = require("http").Server(app);
-var io = require("socket.io")(http);
-var path = require("path");
-var router = require("./modules/router");
-var MongoStore = require("connect-mongo")(session);
-var memoryStore = new MongoStore({ url: config.databaseLocation });
-
-var secret = config.secret;
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cookieParser(secret));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser(config.secret));
 
+// Setup session
+var session = require("express-session");
+var MongoStore = require("connect-mongo")(session);
+var memoryStore = new MongoStore({ url: config.databaseLocation });
 app.use(session({
-  secret: secret,
+  secret: config.secret,
   saveUninitialized: false,
   resave: false,
   store: memoryStore,
   rolling: true
 }));
 
+// Setup passwordless
+var email = require("emailjs");
+var PasswordlessMongoStore = require("passwordless-mongostore");
+var passwordless = require("passwordless");
+
+var emailServer = email.server.connect(config.emailServerOptions);
+var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
+  var email = {
+      text: "You can now access your account by following this link:\n" +
+            config.appURL + ":" + config.port + "?token=" + tokenToSend + "&uid=" +
+            encodeURIComponent(uidToSend),
+      from: config.emailAddress,
+      to: recipient,
+      subject: "Login OSASG"
+  };
+  emailServer.send(email, function(error, message) {
+    if (error) {
+      console.log(error);
+    }
+    callback(error);
+  });
+};
+passwordless.init(new PasswordlessMongoStore(config.databaseLocation));
+passwordless.addDelivery(emailDelivery);
+
+app.use(passwordless.sessionSupport());
+app.use(passwordless.acceptToken({ successRedirect: "/"}));
+
+// Setup router
+var router = require("./modules/router");
 app.use(router);
 
+// Setup websockets
+var io = require("socket.io")(http);
 // Set session information to any socket that tries to connect.
 io.use(function setSessionInfo(socket, next) {
   var req = socket.request;
-  cookieParser(secret)(req, null, function (err) {
+  cookieParser(config.secret)(req, null, function (err) {
     memoryStore.get(req.signedCookies["connect.sid"], function (err, session) {
       if (!session) {
         console.log("Error - no session found");
@@ -45,6 +77,7 @@ io.use(function setSessionInfo(socket, next) {
   });
 });
 
+// Setup TCP socket server for bots
 var SocketServer = require("./modules/socket_server");
 var socketServer = new SocketServer(config.botPort);
 

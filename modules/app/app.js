@@ -5,6 +5,7 @@ app.service("LobbyService", require("./lobby_service"));
 app.service("MatchService", require("./match_service"));
 app.service("SocketService", require("./socket_service"));
 app.controller("LobbyController", require("./lobby_controller"));
+app.controller("LoginFormController", require("./login_form_controller"));
 app.controller("MatchControlPanelController", require("./match_control_panel_controller"));
 
 app.directive("asgMatch", ["MatchService", function(MatchService) {
