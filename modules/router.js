@@ -119,12 +119,22 @@ router.post("/sendToken", function(req, res) {
 
   function getUserId(email, delivery, callback, req) {
     db.User.getOrCreateWithEmail(email, function(error, user) {
-      callback(error, user._id);
+      if (error) {
+        callback(error, null);
+      } else if (!user) {
+        callback(new Error("No user found"), null);
+      } else {
+        callback(null, user._id);
+      }
     });
   }
 
-  function onEmailSent() {
-    res.send("An email has been sent to " + req.body.user + "." );
+  function onEmailSent(error) {
+    if (error) {
+      res.status(500).send(error.message);
+    } else {
+      res.send("An email has been sent to " + req.body.user + "." );
+    }
   }
 });
 
