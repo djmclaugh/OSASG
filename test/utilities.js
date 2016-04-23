@@ -1,5 +1,5 @@
 var serverIO = require("socket.io");
-var clientIO = require("socket.io/node_modules/socket.io-client");
+var clientIO = require("socket.io-client");
 
 const MOCK_SERVER_URL = "http://localhost:5000";
 

@@ -10,6 +10,8 @@ var SocketAdapter = require("../socket_adapter");
 // Helper class that can return Game objects from a match id.
 var Games = require("../games");
 
+var config = require("../../config.json");
+
 // All of the message types I can send or receive.
 const AUTHORIZATION = "authorization";
 const JOIN = "join";
@@ -35,7 +37,7 @@ module.exports = Bot;
 
 Bot.prototype.start = function() {
   var self = this;
-  self.socket.connect(8882, "185.28.22.25", function() {
+  self.socket.connect(8882, config.appURL, function() {
     self.client.emit(AUTHORIZATION, {
         name: self.name,
         password: self.password,

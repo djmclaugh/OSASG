@@ -1,6 +1,6 @@
 var assert = require("assert");
 var WebsocketServer = require("socket.io");
-var clientIO = require("socket.io/node_modules/socket.io-client");
+var clientIO = require("socket.io-client");
 var SocketAdapter = require("../modules/socket_adapter");
 var SocketServer = require("../modules/socket_server");
 var ConnectionHandler = require("../modules/connection_handler");
@@ -67,12 +67,17 @@ describe("Connection Handler", function() {
       {action: "update", match: 3}
     ];
 
+    var hasTriggeredStep2 = false;
+
     function checkIfExpectedForClient(i) {
       clients[i].on(ACTIVE_MATCHES, function(data) {
-        assert(expectations[i].length > 0, "Received unexpected message\n" + JSON.stringify(data));
+        var assertMessage = "Socket " + i + " received:\n"
+          + JSON.stringify(data) + "\n\n But wasn't expecting any.";
+        assert(expectations[i].length > 0, assertMessage);
         var expected = expectations[i][0];
-        var assertMessage =
-            "Received\n" + JSON.stringify(data) + "\nwhile expecting\n" + JSON.stringify(expected);
+        assertMessage = "Socket " + i + " received:\n"
+            + JSON.stringify(data) + "\n\nBut was expecting: \n"
+            + JSON.stringify(expected);
         assert(expected.action in data, assertMessage);
         if (expected.action == "set") {
           assert(data[expected.action].length == expected.matches.length, assertMessage);
@@ -85,10 +90,19 @@ describe("Connection Handler", function() {
         }
         expectations[i].splice(0, 1);
         if (isCompleted()) {
-          // Wait a bit to make sure that don't receive any unexpected messages.
-          setTimeout(done, 100);
+          done();
+        } else if (!hasTriggeredStep2 && isStep1Completed()) {
+          hasTriggeredStep2 = true;
+          step2();
         }
       });
+    }
+
+    function isStep1Completed() {
+      return expectations[0].length == 0
+          && expectations[1].length == 3
+          && expectations[2].length == 0
+          && expectations[3].length == 6;
     }
 
     function isCompleted() {
@@ -114,10 +128,9 @@ describe("Connection Handler", function() {
       match_1 = gameManager.createNewMatchup("Tictactoe", {}, ["client_2", "client_3"]);
       suscribed_uninvited.emit(ACTIVE_MATCHES);
       suscribed_invited.emit(ACTIVE_MATCHES);
-      setTimeout(step2, 100);
     }
 
-    function step2() {    
+    function step2() {
       match_2 = gameManager.createNewMatchup("Tictactoe", {});
       match_3 = gameManager.createNewMatchup("Tictactoe", {}, ["client_2", "client_3"]);
       gameManager.removeMatch(match_0);

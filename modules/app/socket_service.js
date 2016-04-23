@@ -1,4 +1,4 @@
-var socketIO = require("socket.io/node_modules/socket.io-client");
+var socketIO = require("socket.io-client");
 module.exports = ["$rootScope", function($rootScope) {
   var self = this;
   

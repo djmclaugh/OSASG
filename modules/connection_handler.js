@@ -65,12 +65,13 @@ ConnectionHandler.prototype.cleanBotRequests = function() {
   }
 };
 
-// Sends a message to all clients with the given username
+// Sends a message to all clients with the given username that are suscribed to the message.
 ConnectionHandler.prototype.sendToUser = function(username, message, data) {
   if (username in this.clients) {
     sockets = this.clients[username];
     for (var i = 0; i < sockets.length; ++i) {
-      if (sockets[i].rooms.indexOf(message) != -1) {
+      var socket = sockets[i];
+      if (socket.locale.rooms.indexOf(message) != -1) {
         sockets[i].emit(message, data);
       }
     }
@@ -101,9 +102,13 @@ ConnectionHandler.prototype.onClientConnect = function(socket) {
   self.clients[username].push(socket);
   socket.emit("session-info", socket.session);
 
+  socket.locale = {};
+  socket.locale.rooms = [];
+
   // Let the client suscribe to updates about active matches.
   socket.on(ACTIVE_MATCHES, function() {
     socket.emit(ACTIVE_MATCHES, {set: gameManager.getMatchesUserCanJoin(username)});
+    socket.locale.rooms.push(ACTIVE_MATCHES); 
     socket.join(ACTIVE_MATCHES);
   });
 
@@ -114,6 +119,7 @@ ConnectionHandler.prototype.onClientConnect = function(socket) {
       return {id: session.username, gameList: session.gameList};
     });
     socket.emit(ACTIVE_BOTS, {set: botData});
+    socket.locale.rooms.push(ACTIVE_BOTS);
     socket.join(ACTIVE_BOTS); 
   });
 

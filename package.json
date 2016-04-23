@@ -29,7 +29,7 @@
     "express": "^4.9.5",
     "express-session": "^1.11.3",
     "mocha": "^2.3.3",
-    "mongoose": "3.8.23",
+    "mongoose": "^4.4.12",
     "node-uuid": "^1.4.1",
     "passwordless": "^1.1.1",
     "passwordless-mongostore": "^0.1.3",
