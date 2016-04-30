@@ -23,8 +23,8 @@
       <div ng-repeat="match in lobby.matches">
         <p>
           {{ match.id }} - 
-          {{ match.p1Username ? match.p1Username : "EMPTY" }} vs 
-          {{ match.p2Username ? match.p2Username : "EMPTY" }}: 
+          {{ match.p1Username ? match.p1Username : "[no one]" }} vs 
+          {{ match.p2Username ? match.p2Username : "[no one]" }}: 
           <button ng-click="lobby.openWindow(match.id)">JOIN</button>
         </p>
       </div>

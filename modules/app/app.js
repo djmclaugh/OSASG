@@ -1,3 +1,5 @@
+var GameGUIs = require("../games/gui/game_guis");
+
 var app = angular.module("osasg", []);
 
 app.service("BotService", require("./bot_service"));
@@ -18,8 +20,6 @@ app.directive("asgMatch", ["MatchService", function(MatchService) {
     }
   };
 }]);
-
-var GameGUIs = require("../games/gui/game_guis");
 
 app.directive("asgGameCanvas", ["$window", function($window) {
   return {
@@ -62,5 +62,24 @@ app.directive("asgMatchControlPanel", function() {
     controller: "MatchControlPanelController",
     controllerAs: "cpCtrl",
     templateUrl: "/templates/control_panel.html"
+  };
+});
+
+app.directive("asgLogin", function($window) {
+  return {
+    restrict: "E",
+    templateUrl: "/templates/login_form.html",
+    scope: {username: "@username"},
+    link: function (scope, element, attrs) {
+      var s = document.createElement('script');
+      s.src = "https://www.google.com/recaptcha/api.js";
+      document.body.appendChild(s);
+    }
+  };
+});
+
+app.filter("isGuest", function() {
+  return function(username) {
+    return username.indexOf("[guest]") != -1;
   };
 });

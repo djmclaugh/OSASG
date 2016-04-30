@@ -38,10 +38,11 @@ var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
             encodeURIComponent(uidToSend),
       from: config.emailAddress,
       to: recipient,
-      subject: "Login OSASG"
+      subject: "Login Link"
   };
   emailServer.send(email, function(error, message) {
     if (error) {
+      console.log("Error while sending email:");
       console.log(error);
     }
     callback(error);

@@ -7,7 +7,7 @@ function getAvailablesGuestNames(callback) {
   var lines = fs.readFileSync(names_location).toString().split("\n");
   var names = [];
   for (var i = 0; i < lines.length; ++i) {
-    names.push(lines[i] + "Guest");
+    names.push(lines[i] + "[guest]");
   }
 
   Sessions.find({}, function(error, sessions) {

@@ -11,10 +11,14 @@ function fetchUserInformation(req, res, next) {
   if (typeof(res.locals) == "undefined") {
     res.locals = {};
   }
-  db.User.findById(req.user, function(error, user) {
-    res.locals.user = user;
+  if (req.user) {
+    db.User.findById(req.user, function(error, user) {
+      res.locals.user = user;
+      next();
+    });
+  } else {
     next();
-  });
+  }
 }
 
 function checkCredentials(req, res, next) {
@@ -49,8 +53,7 @@ router.get("/", function(req, res) {
 
 router.get("/login", function(req, res) {
   res.render("login", {
-      username: req.session.username,
-      isGuest: req.session.isGuest
+      username: req.session.username
   });
 });
 
@@ -90,7 +93,7 @@ router.post("/sendToken", function(req, res) {
     return;
   }
 
-  https.get(require("../config").recaptchaURL + key, onReCaptchaResponse);
+  https.get(require("../config.json").recaptchaURL + key, onReCaptchaResponse);
 
   function onReCaptchaResponse(response) {
     var data = "";
@@ -133,7 +136,9 @@ router.post("/sendToken", function(req, res) {
     if (error) {
       res.status(500).send(error.message);
     } else {
-      res.send("An email has been sent to " + req.body.user + "." );
+      res.send("An email has been sent to " + req.body.user + ".\n"
+          + "It might take a few seconds before you receive it.\n"
+          + "Remember to check your spam folder." );
     }
   }
 });
