@@ -1,4 +1,4 @@
-var GameGUIs = require("../games/gui/game_guis");
+var GameGUIs = require("../matches/games/gui/game_guis");
 
 var app = angular.module("osasg", []);
 

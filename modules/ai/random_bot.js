@@ -3,7 +3,7 @@
 // Feel free to use this as a framework to make your own bot.
 
 var Bot = require("./bot");
-var Games = require("../games");
+var Games = require("../matches/games");
 
 const GAMES_I_CAN_PLAY = [Games.Tictactoe, Games.Connect6, Games.Hex];
 

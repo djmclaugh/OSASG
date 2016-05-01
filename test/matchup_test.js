@@ -1,5 +1,5 @@
 var assert = require("assert");
-var Matchup = require("../modules/matchup");
+var Matchup = require("../modules/matches/matchup");
 
 var mockServer = require("./utilities").mockServer;
 

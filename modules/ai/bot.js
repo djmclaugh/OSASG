@@ -8,7 +8,7 @@ var net = require("net");
 // Helper class that handles new line delimited json TCP sockets.
 var SocketAdapter = require("../socket_adapter");
 // Helper class that can return Game objects from a match id.
-var Games = require("../games");
+var Games = require("../matches/games");
 
 var config = require("../../config.json");
 
@@ -37,7 +37,7 @@ module.exports = Bot;
 
 Bot.prototype.start = function() {
   var self = this;
-  self.socket.connect(8882, config.appURL, function() {
+  self.socket.connect(config.botPort, config.appURL, function() {
     self.client.emit(AUTHORIZATION, {
         name: self.name,
         password: self.password,

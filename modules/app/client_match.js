@@ -1,4 +1,4 @@
-var Games = require("../games");
+var Games = require("../matches/games");
 
 function ClientMatch(matchId, socket) {
   this.id = matchId;

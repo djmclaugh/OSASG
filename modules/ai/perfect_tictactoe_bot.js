@@ -1,5 +1,5 @@
 var Bot = require("./bot");
-var Games = require("../games");
+var Games = require("../matches/games");
 
 // Since tictactoe is such a small game, we can just compute the game tree.
 

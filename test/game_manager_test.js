@@ -1,7 +1,7 @@
 var assert = require("assert");
-var GameManager = require("../modules/game_manager.js");
-var Matchup = require("../modules/matchup.js");
-var Games = require("../modules/games.js");
+var GameManager = require("../modules/matches/game_manager.js");
+var Matchup = require("../modules/matches/matchup.js");
+var Games = require("../modules/matches/games.js");
 
 describe("Game Manager", function() {
   var manager;

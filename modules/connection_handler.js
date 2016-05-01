@@ -2,7 +2,7 @@
 const ACTIVE_MATCHES = "api-active-matches";
 const ACTIVE_BOTS = "api-active-bots";
 
-const gameManager = require("./game_manager").prototype.getInstance();
+const gameManager = require("./matches/game_manager").prototype.getInstance();
 
 function ConnectionHandler(clientServer, botServer) {
   var self = this;
@@ -108,7 +108,7 @@ ConnectionHandler.prototype.onClientConnect = function(socket) {
   // Let the client suscribe to updates about active matches.
   socket.on(ACTIVE_MATCHES, function() {
     socket.emit(ACTIVE_MATCHES, {set: gameManager.getMatchesUserCanJoin(username)});
-    socket.locale.rooms.push(ACTIVE_MATCHES); 
+    socket.locale.rooms.push(ACTIVE_MATCHES);
     socket.join(ACTIVE_MATCHES);
   });
 

@@ -10,7 +10,7 @@ const CLIENT_PORT = 10000;
 const CLIENT_SERVER_URL = "http://localhost:" + CLIENT_PORT; 
 const BOT_PORT = 10001;
 
-const gameManager = require("../modules/game_manager").prototype.getInstance();
+const gameManager = require("../modules/matches/game_manager").prototype.getInstance();
 
 describe("Connection Handler", function() {
   var botServer;
@@ -72,7 +72,7 @@ describe("Connection Handler", function() {
     function checkIfExpectedForClient(i) {
       clients[i].on(ACTIVE_MATCHES, function(data) {
         var assertMessage = "Socket " + i + " received:\n"
-          + JSON.stringify(data) + "\n\n But wasn't expecting any.";
+            + JSON.stringify(data) + "\n\n But wasn't expecting any.";
         assert(expectations[i].length > 0, assertMessage);
         var expected = expectations[i][0];
         assertMessage = "Socket " + i + " received:\n"

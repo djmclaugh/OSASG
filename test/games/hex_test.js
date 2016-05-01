@@ -1,5 +1,5 @@
 var assert = require("assert");
-var Hex = require("../../modules/games/hex");
+var Hex = require("../../modules/matches/games/hex");
 
 describe("Hex", function() {
   var game;

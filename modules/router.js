@@ -1,6 +1,6 @@
 var express = require("express");
 var guest_names = require("./guest_names");
-var gameManager = require("./game_manager").prototype.getInstance();
+var gameManager = require("./matches/game_manager").prototype.getInstance();
 var db = require("./db");
 var passwordless = require("passwordless");
 var https = require("https");

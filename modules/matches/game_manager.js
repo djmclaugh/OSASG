@@ -1,5 +1,5 @@
 var Matchup = require("./matchup");
-var EventDispatcher = require("./event_dispatcher");
+var EventDispatcher = require("../event_dispatcher");
 
 const MATCH_ADDED = "match-added";
 const MATCH_REMOVED = "match-removed";

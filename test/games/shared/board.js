@@ -1,5 +1,5 @@
 var assert = require("assert");
-var Board = require("../../../modules/games/shared/board.js");
+var Board = require("../../../modules/matches/games/shared/board.js");
 
 describe("Board", function() {
   it("should detect invalid positions", function() {
