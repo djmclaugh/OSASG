@@ -1,9 +1,10 @@
 <span ng-show="username | isGuest">
+  <h3>Log In</h3>
   <p>To log in, simply enter your email address and you'll receive a link to your existing or newly created account.</p>
   <form name="loginForm" ng-controller="LoginFormController as formCtrl" ng-submit="formCtrl.submit()">
     <div ng-hide="formCtrl.emailSent || formCtrl.isSubmiting">
       <p>
-        <label for="email">Emaill:</label>
+        <label for="email">Email:</label>
         <input id="email" ng-model="formCtrl.email" type="email">
       </p>
       <div class="g-recaptcha" data-sitekey="6LcvvR4TAAAAAFp2fvR0WwHl1vDVKvfH1OQZUGtF"></div>
@@ -15,6 +16,7 @@
   </form>
 </span>
 <span ng-hide="username | isGuest">
+  <h3>Log Out</h3>
   <p>You are currently logged in as {{ username }}.</p>
   <form action="/logout">
     <p><input type="submit" value="Logout"></p>

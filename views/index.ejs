@@ -13,7 +13,7 @@
   <body>
     <h1><%= title %></h1>
     <div class=intro>
-      <p>Welcome <%= username %>! <% if(isGuest) { %>(<a href="/login">Login</a>)<% } else { %>(<a href="/logout">Logout</a>)<% } %></p>
+      <p>Welcome <%= username %>! <% if(isGuest) { %>(<a href="/settings">Login</a>)<% } else { %>(<a href="/settings">Settings</a>/<a href="/logout">Logout</a>)<% } %></p>
       <p>This website is still under construction.</p>
       <p>View progress on <a href="https://github.com/djmclaugh/OSASG">GitHub</a>.</p>
     </div>

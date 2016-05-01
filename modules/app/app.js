@@ -8,6 +8,7 @@ app.service("MatchService", require("./match_service"));
 app.service("SocketService", require("./socket_service"));
 app.controller("LobbyController", require("./lobby_controller"));
 app.controller("LoginFormController", require("./login_form_controller"));
+app.controller("UsernameChangeFromController", require("./username_change_form_controller"));
 app.controller("MatchControlPanelController", require("./match_control_panel_controller"));
 
 app.directive("asgMatch", ["MatchService", function(MatchService) {
@@ -75,6 +76,14 @@ app.directive("asgLogin", function($window) {
       s.src = "https://www.google.com/recaptcha/api.js";
       document.body.appendChild(s);
     }
+  };
+});
+
+app.directive("asgUsernameChange", function($window) {
+  return {
+    restrict: "E",
+    templateUrl: "/templates/username_change_form.html",
+    scope: {username: "@username"},
   };
 });
 

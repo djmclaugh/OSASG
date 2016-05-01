@@ -51,10 +51,33 @@ router.get("/", function(req, res) {
   });
 });
 
-router.get("/login", function(req, res) {
-  res.render("login", {
+router.get("/settings", function(req, res) {
+  res.render("settings", {
       username: req.session.username
   });
+});
+
+// Changes the username of the currently logged in user.
+// Will send a 400 response if the body is missing "desiredUsername".
+// Will send a 403 response if no user is logged in.
+// Will send a 500 response if this fails for any other reason.
+// body - {
+//     desiredUsername: The desired username.
+// }
+router.post("/settings/change_username", function(req, res) {
+  if (!req.body.desiredUsername) {
+    res.status(400).send("Please enter your desired username.");
+  } else if (!res.locals.user) {
+    res.status(403).send("You must be logged in to change your username.");
+  } else {
+    res.locals.user.changeUsername(req.body.desiredUsername, function(error, user) {
+      if (error) {
+        res.status(500).send(error.message);
+      } else {
+        res.send("Username successfully changed to " + user.username + ".");
+      }
+    });
+  }
 });
 
 router.get("/creatematch/:gameTitle", function(req, res) {

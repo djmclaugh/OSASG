@@ -5,7 +5,7 @@ module.exports = ["$http", function($http) {
   self.recaptchaKey = null;
   self.error = null;
   self.emailSent = false;
-  self.isSubmiting = false;
+  self.isSubmitting = false;
   self.successMessage = "";
   self.submit = function() {
     var body = {};
@@ -22,18 +22,18 @@ module.exports = ["$http", function($http) {
       return;
     }
     
-    self.isSubmiting = true;
+    self.isSubmitting = true;
 
     function onSuccess(response) {
       self.emailSent = true;
       self.error = null;
       self.successMessage = response.data;
-      self.isSubmiting = false;
+      self.isSubmitting = false;
     }
 
     function onError(response) {
       self.error = new Error(response.data);
-      self.isSubmiting = false;
+      self.isSubmitting = false;
     }
     $http.post("/sendToken", body).then(onSuccess, onError);
   };

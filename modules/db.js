@@ -36,7 +36,6 @@ userSchema.statics.getOrCreateWithEmail = function (email, callback) {
       // If the user doesn't already exist, try creating a username based on the email.
       baseUsername = email.split("@")[0];
       baseUsername = baseUsername.replace(/[^a-zA-Z0-9_\-]/g, "");
-      console.log("Trying to create new user: " + baseUsername);
       self.findOne({username: baseUsername}, onSameNameLookup);
     }
   };
@@ -48,10 +47,8 @@ userSchema.statics.getOrCreateWithEmail = function (email, callback) {
   // If the username was taken, change the suffix and try again.
   // Otherwise, just pass along the error or the user to the callback.
   var onSameNameLookup = function(error, user) {
-    console.log("Found:");
-    console.log(error);
-    console.log(user);
     if (!error && !user) {
+      // If we didn't encounter any errors and didn't find any other users with that user name, we'll use that username.
       var userData = {
         username: baseUsername,
         email: email
@@ -61,8 +58,10 @@ userSchema.statics.getOrCreateWithEmail = function (email, callback) {
       }
       self.create(userData, callback);
     } else if (error) {
+      // If we encountered an error, simply pass it to the callback.
       callback(error, null);
     } else {
+      // If we found a user with the desired username, try again with another one.
       ++suffixValue;
       self.findOne({username: baseUsername + "_" + suffixValue}, onSameNameLookup);
     }
@@ -80,7 +79,7 @@ userSchema.methods.changeUsername = function(newUsername, callback) {
   } else if (newUsername.length > 20) {
     callback(new Error("Username must be at most 20 characters long."));
   } else if (!new RegExp(/^[a-zA-Z0-9_\-]*$/).test(newUsername)) {
-    callback(new Error("Username must only contain characters, numbers, '-', or '_'."));
+    callback(new Error("Username must only contain letters, numbers, '-', or '_'."));
   } else {
     // If a user is found, then the username is not available.
     // Otherwise, procede with changeing the user's username.
