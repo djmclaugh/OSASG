@@ -22,10 +22,10 @@
       <p class="error" ng-show="lobby.error != null">{{ lobby.error.message }}</p>
       <div ng-repeat="match in lobby.matches">
         <p>
-          {{ match.id }} - 
-          {{ match.p1Username ? match.p1Username : "[no one]" }} vs 
-          {{ match.p2Username ? match.p2Username : "[no one]" }}: 
-          <button ng-click="lobby.openWindow(match.id)">JOIN</button>
+          {{ match.matchId }} - 
+          {{ match.p1 ? match.p1.username : "[no one]" }} vs 
+          {{ match.p2 ? match.p2.username : "[no one]" }}: 
+          <button ng-click="lobby.openWindow(match)">JOIN</button>
         </p>
       </div>
       <p><button ng-click="lobby.createMatch('Connect6')">New Connect6 Match</button></p>

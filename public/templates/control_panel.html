@@ -1,19 +1,19 @@
 <h3>{{match.id}}</h3>
 <p>P1: 
-  <span ng-if="match.p1 != null">{{match.p1}}</span>
+  <span ng-if="match.p1 != null">{{match.p1.username}}</span>
   <span ng-if="match.p1 == null">
     <button ng-click="match.sit(1)">Join as P1</button>
     <span ng-repeat="bot in cpCtrl.availableBots">
-      <button ng-click="match.requestBot(bot.id, 1)">Add {{bot.id}}</button>
+      <button ng-click="match.requestBot(bot.username, 1)">Add {{bot.username}}</button>
     </span>
   </span>
 </p>
 <p>P2: 
-  <span ng-if="match.p2 != null">{{match.p2}}</span>
+  <span ng-if="match.p2 != null">{{match.p2.username}}</span>
   <span ng-if="match.p2 == null">
     <button ng-click="match.sit(2)">Join as P2</button>
     <span ng-repeat="bot in cpCtrl.availableBots">
-      <button ng-click="match.requestBot(bot.id, 2)">Add {{bot.id}}</button>
+      <button ng-click="match.requestBot(bot.username, 2)">Add {{bot.username}}</button>
     </span>
   </span>
 </p>

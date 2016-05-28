@@ -1,253 +1,191 @@
 var assert = require("assert");
 var Matchup = require("../modules/matches/matchup");
 
-var mockServer = require("./utilities").mockServer;
+var MockPlayer = require("./mock/matches/mock_player");
 
 describe("Matchups", function() {
-  var serverSockets = {};
-  var clientSockets = {};
-  var matchup;
-  
-  beforeEach(function(done) {
-    matchup = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
-    
-    function onSocketAdded(clientSocket, serverSocket) {
-      var username = serverSocket.session.username;
-      serverSockets[username] = serverSocket;
-      clientSockets[username] = clientSocket;
-      if (Object.keys(serverSockets).length == 3) {
-        done();
-      }
-    }
-    mockServer.addClient("User_0", onSocketAdded);
-    mockServer.addClient("User_1", onSocketAdded);
-    mockServer.addClient("User_2", onSocketAdded);
-  });
-  
-  afterEach(function() {
-    mockServer.removeAllSockets();
-    serverSockets = {};
-    clientSOckets = {};
-  });
-  
   it("should send an error message if the user plays out of turn", function(done) {
-    var player1 = clientSockets["User_0"];
-    var player2 = clientSockets["User_1"];
-    var spectator = clientSockets["User_2"];
-
-    function player2_init(data) {
-      if (matchup.hasStarted()) {
-        player2.removeAllListeners(matchup.MESSAGES.UPDATE);
-        player2.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: {x: 0, y: 0}});
+    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
+    var p1SentAValidMove = false;
+    
+    var p1Callback = function(topic, payload) {
+      if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
+        // If the match has started, play a move.
+        player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 0});
+      } else if (topic == match.MESSAGES.PLAY) {
+        p1SentAValidMove = true;
+        // When I receive my move, try to play again.
+        player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 1});
+      } else if (topic == match.MESSAGES.ERROR) {
+        // Make sure that the first move went through successfully.
+        assert.equal(p1SentAValidMove, true);
+        // Make sure that the error message is appropriate.
+        assert.equal(payload.error, "It isn't your turn to play.");
+        done();
       }
     };
 
-    function expected_error_received(data) {
-      assert.equal(data.error, "It isn't your turn to play.");
-      // Wait a bit to make sure no one else receives an error.
-      setTimeout(done, 10);
-    }
+    var player1 = new MockPlayer("p1_name", "p1_id", p1Callback);
+    var player2 = new MockPlayer("p2_name", "p2_id", null);
     
-    function unexpected_error_received(data) {
-      assert(false, "Only the player playing out of turn should be receiving this message.");
-    }
-
-    player2.on(matchup.MESSAGES.UPDATE, player2_init);
-    player1.on(matchup.MESSAGES.ERROR, unexpected_error_received);
-    player2.on(matchup.MESSAGES.ERROR, expected_error_received);
-    spectator.on(matchup.MESSAGES.ERROR, unexpected_error_received);
-    
-    matchup.addPlayer(serverSockets["User_0"], 1);
-    matchup.addPlayer(serverSockets["User_1"], 2);
-    matchup.addPlayer(serverSockets["User_2"], 3);
+    match.addPlayer(player1, 1);
+    match.addPlayer(player2, 2);
   });
   
   it("should send an error message if the user makes an illegal move", function(done) {
-    var player1 = clientSockets["User_0"];
-    var player2 = clientSockets["User_1"];
-    var spectator = clientSockets["User_2"];
-
-    function player1_init(data) {
-      if (matchup.hasStarted()) {
-        player1.removeAllListeners(matchup.MESSAGES.UPDATE);
-        player1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: {x: 4, y: 4}});
+    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
+    
+    var p1Callback = function(topic, payload) {
+      if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
+        // If the match has started, play a move.
+        player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 10});
+      } else if (topic == match.MESSAGES.ERROR) {
+        assert.equal(payload.error.indexOf("Error while trying to make a move: "), 0);
+        done();
       }
-    }
+    };
 
-    function expected_error_received(data) {
-      assert.equal(data.error.indexOf("Error while trying to make a move: "), 0);
-      // Wait a bit to make sure no one else receives an error.
-      setTimeout(done, 10);
-    }
+    var player1 = new MockPlayer("p1_name", "p1_id", p1Callback);
+    var player2 = new MockPlayer("p2_name", "p2_id", null);
     
-    function unexpected_error_received(data) {
-      assert(false, "Only the player making the illegal move should be receiving this message.");
-    }
-
-    player1.on(matchup.MESSAGES.UPDATE, player1_init);
-    player1.on(matchup.MESSAGES.ERROR, expected_error_received);
-    player2.on(matchup.MESSAGES.ERROR, unexpected_error_received);
-    spectator.on(matchup.MESSAGES.ERROR, unexpected_error_received);
-    
-    matchup.addPlayer(serverSockets["User_0"], 1);
-    matchup.addPlayer(serverSockets["User_1"], 2);
-    matchup.addPlayer(serverSockets["User_2"], 3);
-  });
-  
-  it("should allow a user to join a private game they belong to", function(done) {
-    matchup.privateUsers = ["User_0", "User_1"];
-    
-    matchup.addPlayer(serverSockets["User_0"]);
-    clientSockets["User_0"].on(matchup.MESSAGES.UPDATE, function(data) {
-      done();
-    });
+    match.addPlayer(player1, 1);
+    match.addPlayer(player2, 2);
   });
   
   it("should not allow a user to sit in an occupied seat", function() {
-    matchup.addPlayer(serverSockets["User_0"], 1);
+    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
+    match.addPlayer(new MockPlayer("name_1", "id_1"), 1);
     assert.throws(function() {
-      matchup.addPlayer(serverSockets["User_1"], 1);
-    }, matchup.ERRORS.FAILED_TO_JOIN_MATCHUP);
+      match.addPlayer(new MockPlayer("name_2", "id_2"), 1);
+    }, match.ERRORS.FAILED_TO_JOIN_MATCHUP);
   });
   
-  it("should not allow a user to join a private game they do not belong to", function() {
-    matchup.privateUsers = ["User_0", "User_1"];
-    assert.throws(function() {
-      matchup.addPlayer(serverSockets["User_2"]);
-    }, matchup.ERRORS.FAILED_TO_JOIN_MATCHUP);
-  });
-  
-  it("should allow a user to reconnect", function(done) {
-    var player1 = clientSockets["User_0"];
-    var player2 = clientSockets["User_1"];
-    var reconnectedPlayer1 = null;
+ it("should allow a user to reconnect", function(done) {
+    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
     
-    function player1_init(data) {
-      if (data.p1 == "User_0" && data.p2 == "User_1") {
-        player1.removeAllListeners(matchup.MESSAGES.UPDATE);
-        player1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: 0});
+    var p1ReceivedFirstP2Move = false;
+    var p1ReceivedSecondP2Move = false;
+
+    var p1Callback = function(topic, payload) {
+      if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
+        // If the match has started, play a move.
+        player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 0});
+      } else if (topic == match.MESSAGES.PLAY) {
+        if (payload.move == 1) {
+          player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 2});
+        } else if (payload.move == 3) {
+          done();
+        }
       }
-    }
-    
-    function reconnected_init(data) {
-      assert.equal(data.matchId, matchup.id);
-      assert.equal(data.p1, "User_0");
-      assert.equal(data.p2, "User_1");
-      assert.equal(data.gameData.moves[0], 0);
-      assert.equal(data.gameData.moves[1], 4);
-      assert.equal(data.gameData.moves.length, 2);
-      reconnectedPlayer1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: 8});
-    }
-    
-    function reconnected_onPlay(data) {
-      assert.equal(data.matchId, matchup.id);
-      if (matchup.game.moves.length == 3) {
-        // The reconnected socket should receive the ack of its move.
-        assert.equal(data.move, 8);
+    };
+
+    var p2Callback1 = function(topic, payload) {
+      if (topic == match.MESSAGES.PLAY) {
+        if (payload.move == 0) {
+          player2_1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 1});
+          player2_1.disconnect();
+          match.addPlayer(player2_2, 2);
+        }
       }
-      if (matchup.game.moves.length == 4) {
-        // The reconnected socket should receive p2's move.
-        assert.equal(data.move, 3);
-        done();
+    };
+
+    var p2Callback2 = function(topic, payload) {
+      // Play the 4th move if you receive the 3rd move or if the 3rd move was already played when
+      // you joined.
+      if (topic == match.MESSAGES.PLAY) {
+        if (payload.move == 2) {
+          player2_2.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 3});
+        }
+      } else if (topic == match.MESSAGES.UPDATE) {
+        if (payload.gameData.moves.length == 3) {
+          player2_2.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 3});
+        }
       }
-    }
-    
-    function player2_onPlay(data) {
-      assert.equal(data.matchId, matchup.id);
-      if (matchup.game.moves.length == 1) {
-        player1.disconnect();
-        player2.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: 4});
-        setTimeout(reconnectP1, 10);
-      }
-      if (matchup.game.moves.length == 3) {
-        assert.equal(data.move, 8);
-        player2.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: 3});
-      }
-    }
-    
-    function reconnectP1() {
-      mockServer.addClient("User_0", function(clientSocket, serverSocket) {
-        reconnectedPlayer1 = clientSocket;
-        reconnectedPlayer1.on(matchup.MESSAGES.UPDATE, reconnected_init);
-        reconnectedPlayer1.on(matchup.MESSAGES.PLAY, reconnected_onPlay);
-        matchup.addPlayer(serverSocket);
-      });
-    }
-    
-    player1.on(matchup.MESSAGES.JOIN, player1_init);
-    player1.on(matchup.MESSAGES.UPDATE, player1_init);
-    player2.on(matchup.MESSAGES.PLAY, player2_onPlay);
-    
-    matchup.addPlayer(serverSockets["User_0"], 1);
-    matchup.addPlayer(serverSockets["User_1"], 2);
+    };
+
+    var player1 = new MockPlayer("p1_name", "p1_id", p1Callback);
+    var player2_1 = new MockPlayer("p2_1_name", "p2_id", p2Callback1);
+    var player2_2 = new MockPlayer("p2_2_name", "p2_id", p2Callback2);
+
+    match.addPlayer(player1, 1);
+    match.addPlayer(player2_1, 2);
   });
     
   it("should let two users join and play a full game while being spectated", function(done) {
-    var id = matchup.id;
+    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
 
-    var player1 = clientSockets["User_0"];
-    var player2 = clientSockets["User_1"];
-    var spectator = clientSockets["User_2"];
-      
+    // The sequence of moves the player should play.
     var moves = [4, 0, 2, 6, 3, 5, 7, 1, 8];
 
-    var movesReceivedByP1 = [];
-    var movesReceivedByP2 = [];
-    var movesReceivedBySpectator = [];
+    var p1ReceivedMoves = 0;
+    var p2ReceivedMoves = 0;
+    var spectatorReceivedMoves = 0;
 
-    function player1_update(data) {
-      assert.equal(data.matchId, matchup.id);
-      if (data.p1 == "User_0" && data.p2 == "User_1") {
-        player1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: moves[0]});
-      }
+    function isDone() {
+      return p1ReceivedMoves == moves.length
+          && p2ReceivedMoves == moves.length
+          && spectatorReceivedMoves == moves.length;
     }
-      
-    function p1_move_received(data) {
-      assert.equal(data.matchId, matchup.id);
-      assert.deepEqual(data.move, moves[movesReceivedByP1.length]);
-      movesReceivedByP1.push(data.move);
-      if (movesReceivedByP1.length % 2 == 0) {
-        var nextMove = moves[movesReceivedByP1.length];
-        player1.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: nextMove});
-      }
-    }  
-    function p2_move_received(data) {
-      assert.equal(data.matchId, matchup.id);
-      assert.deepEqual(data.move, moves[movesReceivedByP2.length]);
-      movesReceivedByP2.push(data.move);
-      if (movesReceivedByP2.length % 2 == 1) {
-        var nextMove = moves[movesReceivedByP2.length];
-        if (nextMove == null) {
-          // The last move has been received. We wait 10ms to ensure everyone else has also
-          // processed the last move.
-          setTimeout(onDone, 10);
-        } else {
-          player2.emit(matchup.MESSAGES.PLAY, {matchId: matchup.id, move: nextMove});
+
+    var p1Callback = function(topic, payload) {
+      if (topic == match.MESSAGES.UPDATE) {
+        if (payload.p2 != null) {
+          // If the match has started, play a move.
+          player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: moves[0]});
         }
+      } else if (topic == match.MESSAGES.PLAY) {
+        assert.equal(payload.move, moves[p1ReceivedMoves]);
+        ++p1ReceivedMoves;
+        if (p1ReceivedMoves % 2 == 0) {
+          player1.mockSocketSent(
+            match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: moves[p1ReceivedMoves]});
+        }
+      } else {
+        assert(false, "Unexpected message on topic '" + topic + "'.");
       }
-    }     
-    function spectator_move_received(data) {
-      assert.equal(data.matchId, matchup.id);
-      assert.deepEqual(data.move, moves[movesReceivedBySpectator.length]);
-      movesReceivedBySpectator.push(data.move);
-    }
-      
-    function onDone() {
-      assert.equal(movesReceivedByP1.length, 9);
-      assert.equal(movesReceivedByP2.length, 9);
-      assert.equal(movesReceivedBySpectator.length, 9);
-      assert.equal(matchup.game.getStatus(), matchup.game.STATUS_ENUM.DRAW);
-      done();
-    }
+      if (isDone()) {
+        done();
+      }
+    };
 
-    player1.on(matchup.MESSAGES.UPDATE, player1_update);
-    
-    player1.on(matchup.MESSAGES.PLAY, p1_move_received);
-    player2.on(matchup.MESSAGES.PLAY, p2_move_received);
-    spectator.on(matchup.MESSAGES.PLAY, spectator_move_received);
+    var p2Callback = function(topic, payload) {
+      if (topic == match.MESSAGES.UPDATE) {
+        // Do nothing
+      } else if (topic == match.MESSAGES.PLAY) {
+        assert.equal(payload.move, moves[p2ReceivedMoves]);
+        ++p2ReceivedMoves;
+        if (p2ReceivedMoves % 2 == 1) {
+          player2.mockSocketSent(
+            match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: moves[p2ReceivedMoves]});
+        }
+      } else {
+        assert(false, "Unexpected message on topic '" + topic + "'.");
+      }
+      if (isDone()) {
+        done();
+      }
+    };
+
+    var spectatorCallback = function(topic, payload) {
+      if (topic == match.MESSAGES.UPDATE) {
+        // Do nothing
+      } else if (topic == match.MESSAGES.PLAY) {
+        assert.equal(payload.move, moves[spectatorReceivedMoves]);
+        ++spectatorReceivedMoves;
+      } else {
+        assert(false, "Unexpected message on topic '" + topic + "'.");
+      }
+      if (isDone()) {
+        done();
+      }
+    };
+
+    var player1 = new MockPlayer("p1_name", "p1_id", p1Callback);
+    var player2 = new MockPlayer("p2_name", "p2_id", p2Callback);
+    var spectator = new MockPlayer("spectator_name", "spectator_id", spectatorCallback);
  
-    matchup.addPlayer(serverSockets["User_0"], 1);
-    matchup.addPlayer(serverSockets["User_1"], 2);
-    matchup.addPlayer(serverSockets["User_2"], 3);
+    match.addPlayer(spectator, 3);
+    match.addPlayer(player1, 1);
+    match.addPlayer(player2, 2);
   });
 });

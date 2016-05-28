@@ -70,7 +70,9 @@ io.use(function setSessionInfo(socket, next) {
         next(new Error("Authentication error"));
         return;
       } else {
-        socket.session = session;
+        socket.session = {};
+        socket.session.username = session.username;
+        socket.session.identifier = session.isGuest ? session.username : session.passwordless;
         socket.emit("session-info", socket.session);
       }
       next();

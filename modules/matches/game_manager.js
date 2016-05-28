@@ -49,15 +49,15 @@ GameManager.prototype.removeMatch = function(match) {
   }
 };
 
-GameManager.prototype.getMatchesUserCanJoin = function(username) {
+GameManager.prototype.getMatchesPlayerCanJoin = function(player) {
   return this.matchups.filter(function(matchup) {
-    return matchup.canJoin(username);
+    return true;
   });
 };
 
-GameManager.prototype.getMatchesUserIsPlaying = function(username) {
+GameManager.prototype.getMatchesPlayerIsIn = function(player) {
   return this.matchups.filter(function(matchup) {
-    return matchup.isCurrentlyPlaying(username);
+    return matchup.isCurrentlyPlaying(player);
   });
 };
 
@@ -71,17 +71,17 @@ GameManager.prototype.getMatchupById = function(matchId) {
   return null;
 };
 
-GameManager.prototype.createNewMatchup = function(gameTitle, gameSettings, privateUsers) {
+GameManager.prototype.createNewMatchup = function(gameTitle, gameSettings) {
   var self = this;
   var matchupId = gameTitle.toLowerCase() + "_" + this.counter;
-  var matchup = new Matchup(matchupId, gameTitle, gameSettings, privateUsers);
+  var matchup = new Matchup(matchupId, gameTitle, gameSettings);
   this.counter += 1;
-  matchup.onUpdate = function() {
+  matchup.onMatchUpdate(function() {
     self.dispatcher.dispatchEvent(MATCH_UPDATED, matchup);
-  };
-  matchup.onFinish = function() {
+  });
+  matchup.onMatchEnd(function() {
     self.removeMatch(matchup);
-  };
+  });
   this.addMatch(matchup);
   return matchup;
 };
@@ -92,4 +92,3 @@ GameManager.prototype.reset = function() {
 };
 
 module.exports = GameManager;
-

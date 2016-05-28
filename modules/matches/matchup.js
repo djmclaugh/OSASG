@@ -1,7 +1,8 @@
 var Games = require("./games");
+var EventDispatcher = require("../event_dispatcher");
 
-function FailedToJoinMatchupError(user, matchup, reason) {
-  this.message = "User '" + user.session.username + "' cannot join matchup '" + matchup.id + "'";
+function FailedToJoinMatchError(player, matchup, reason) {
+  this.message = "User '" + player.username + "' cannot join matchup '" + matchup.id + "'";
   if (reason) {
     this.message += " because " + reason + ".";
   } else {
@@ -9,167 +10,180 @@ function FailedToJoinMatchupError(user, matchup, reason) {
   }
   this.stack = (new Error()).stack;
 }
-FailedToJoinMatchupError.prototype = Object.create(Error.prototype);
+FailedToJoinMatchError.prototype = Object.create(Error.prototype);
 
 ////////////////////////////////////////
 
-function Matchup(id, gameTitle, gameSettings, privateUsers) {
-  var self = this;
-  this.id = id;
-  this.game = Games.newGame(gameTitle, gameSettings);
-  this.p1Username = null;
-  this.p2Username = null;
-  var spectators = [];
-  var players = [];
-  // List of usernames that can interact with this matchup. If null, this matchup is public.
-  this.privateUsers = privateUsers;
-  
-  this.onFinish = function() {};
-  this.onUpdate = function() {};
+// Possible player messages
+const PLAY = "play";
+const UPDATE = "update";
+const ERROR = "error-message";
 
-  this.broadcast = function(message, data) {
-    for (var i = 0; i < spectators.length; ++i) {
-      spectators[i].emit(message, data);
+// Possible events
+const EVENT_UPDATE = "match_event_update"
+const EVENT_END = "match_event_end"
+
+function onPlay(match, player) {
+  return function(data) {
+    if (data.matchId != match.id) {
+      return;
     }
-  };
-  this.addToSpectatorsList = function(player) {
-    for (var i = 0; i < spectators.length; ++i) {
-      if (spectators[i] == player) {
-        // I am already in the spectators list.
+    if (!match.hasStarted()) {
+      player.emit(ERROR, {error: "The game hasn't started yet."});
+      return;
+    }
+    var game = match._game;
+    if ((game.whosTurnIsIt() == game.PLAYER_ENUM.P1 && player.isSameUser(match._p1)) ||
+        (game.whosTurnIsIt() == game.PLAYER_ENUM.P2 && player.isSameUser(match._p2))) {
+      try {
+        game.makeMove(data.move);
+      } catch (error) {
+        player.emit(ERROR, {error: "Error while trying to make a move: " + error.message});
         return;
       }
+      match._broadcast(PLAY, {matchId:match.id, move:data.move});
+      match._checkIfOver();
+    } else {
+      player.emit(ERROR, {error: "It isn't your turn to play."});
     }
-    spectators.push(player);
-  };
-  this.addToPlayersList = function(player) {
-    for (var i = 0; i < players.length; ++i) {
-      if (players[i] == player) {
-        // I am already in the players list.
-        return;
-      }
-    }
-    players.push(player);
-    player.on(self.MESSAGES.PLAY, onPlay(self, player));
   };
 }
 
-Matchup.prototype.ERRORS = {
-  FAILED_TO_JOIN_MATCHUP: FailedToJoinMatchupError
-};
+function Matchup(id, gameTitle, gameSettings) {
+  var self = this;
+  this.id = id;
+
+  this._game = Games.newGame(gameTitle, gameSettings);  
+  this._p1 = null;
+  this._p2 = null;
+  this._spectators = [];
+  // List of players that we are currently listening to for moves.
+  this._players = [];
+  this._dispatcher = new EventDispatcher();
+}
 
 Matchup.prototype.MESSAGES = {
-  JOIN: "join",
-  PLAY: "play",
-  UPDATE: "update",
-  ERROR: "error-message"
+  PLAY: PLAY,
+  UPDATE: UPDATE,
+  ERROR: ERROR
 };
 
-Matchup.prototype.canJoin = function(username) {
-  return this.privateUsers == null || this.privateUsers.indexOf(username) != -1;
+Matchup.prototype.ERRORS = {
+  FAILED_TO_JOIN_MATCH : FailedToJoinMatchError
+}
+
+Matchup.prototype.onMatchUpdate = function(callback) {
+  return this._dispatcher.on(EVENT_UPDATE, callback);  
 };
 
-Matchup.prototype.isCurrentlyPlaying = function(username) {
-  return this.p1Username == username || this.p2Username == username;
+Matchup.prototype.onMatchEnd = function(callback) {
+  return this._dispatcher.on(EVENT_END, callback);  
+};
+
+Matchup.prototype.isCurrentlyPlaying = function(player) {
+  return player.isSameUser(this._p1) || player.isSameUser(this._p2);
 };
 
 Matchup.prototype.hasStarted = function() {
-  return this.p1Username != null && this.p2Username != null;
+  return this._p1 != null && this._p2 != null;
 };
 
-Matchup.prototype.checkIfOver = function() {
-  if (this.game.getStatus() != this.game.STATUS_ENUM.UNDECIDED) {
-    // TODO(djmclaugh): Save game to database or something.
-    this.onFinish();
+Matchup.prototype.addPlayer = function(player, seat) {
+  if (!player) {
+    throw new FailedToJoinMatchError(player, this, "player must not be null");
   }
-};
-
-Matchup.prototype.addPlayer = function(player, seat) {  
-  var username = player.session.username;
-  if (!this.canJoin(username)) {
-    throw new FailedToJoinMatchupError(player, this, "this is a private game");
-  }
-  this.addToSpectatorsList(player);
-  if (!seat) {
-    // If the user has not specified a seat, let's chose one for them.
-    if (this.p1Username == username) {
-      seat = 1;
-    } else if (this.p2Username == username) {
-      seat = 2;
-    } else {
-      seat = 3;
-    }
+  if (seat != 1 && seat != 2 && seat != 3) {
+    throw new Error("'seat' must be 1, 2, or 3.");
   }
   if (seat == 3) {
-    // 'player' just wants to spectate.
-    player.emit(this.MESSAGES.UPDATE, this.dataForUpdate());
-  } else if (seat == 1) {
-    if (this.p1Username == username) {
-      // 'player' simply wants to reconect. Send them an update of the game.
-      this.addToPlayersList(player);
-      player.emit(this.MESSAGES.UPDATE, this.dataForUpdate());
-    } else if (!this.p1Username) {
-      // 'player' wants to join as P1. Make them join and tell everyone.
-      this.p1Username = username;
-      this.onUpdate();
-      this.addToPlayersList(player);
-      this.broadcast(this.MESSAGES.UPDATE, this.dataForUpdate());
+    this._addPlayerToSpectators(player, true);
+  } else {
+    var sittingPlayer = seat == 1 ? this._p1 : this._p2;
+    if (!sittingPlayer) {
+      this._setPlayer(player, seat);
+    } else if (player.isSameUser(sittingPlayer)) {
+      this._addPlayerToSpectators(player, true)
     } else {
-      // The P1 seat is already taken.
-      throw new FailedToJoinMatchupError(player, this, "the P1 seat is already occupied");
-    }
-  } else if (seat == 2) {
-    if (this.p2Username == username) {
-      // 'player' simply wants to reconect. Send them an update of the game.
-      this.addToPlayersList(player);
-      player.emit(this.MESSAGES.UPDATE, this.dataForUpdate());
-    } else if (!this.p2Username) {
-      // 'player' wants to join as P2. Make them join and tell everyone.
-      this.p2Username = username;
-      this.onUpdate();
-      this.addToPlayersList(player);
-      this.broadcast(this.MESSAGES.UPDATE, this.dataForUpdate());
-    } else {
-      // The P2 seat is already taken.
-      throw new FailedToJoinMatchupError(player, this, "the P2 seat is already occupied");
-    }
+      // The seat is already taken.
+      throw new FailedToJoinMatchError(player, this, "seat " + seat + " is already occupied.");
+    }  
   }
 };
 
-Matchup.prototype.dataForUpdate = function() {
+Matchup.prototype.matchInfo = function() {
+  return this._dataForUpdate();
+}
+
+////////// Private
+
+Matchup.prototype._dataForUpdate = function() {
   var data = {};
-  data.gameData = this.game.generateGameData();
-  data.p1 = this.p1Username;
-  data.p2 = this.p2Username;
+  data.gameData = this._game.generateGameData();
+  if (this._p1) {
+    data.p1 = {
+      username: this._p1.username,
+      identifier: this._p1.identifier
+    };
+  } else {
+    data.p1 = null;
+  }
+  if (this._p2) {
+    data.p2 = {
+      username: this._p2.username,
+      identifier: this._p2.identifier
+    };
+  } else {
+    data.p2 = null;
+  } 
   data.matchId = this.id;
   return data;
 };
 
-function onPlay(matchup, player) {
-  return function(data) {
-    if (data.matchId != matchup.id) {
-      return;
+Matchup.prototype._addPlayerToSpectators = function(player, shouldSendUpdtate) {
+  if (this._spectators.indexOf(player) == -1) {
+    this._spectators.push(player);
+  }
+  if (player.isSameUser(this._p1) || player.isSameUser(this._p2)) {
+    if (this._players.indexOf(player) == -1) {
+      player.on(PLAY, onPlay(this, player));
+      this._players.push(player);
     }
-    if (!matchup.hasStarted()) {
-      player.emit(matchup.MESSAGES.ERROR, {error: "The game hasn't started yet."});
-      return;
-    }
-    var username = player.session.username;
-    var game = matchup.game;
-    if ((game.whosTurnIsIt() == game.PLAYER_ENUM.P1 && matchup.p1Username == username) ||
-        (game.whosTurnIsIt() == game.PLAYER_ENUM.P2 && matchup.p2Username == username)) {
-      try {
-        game.makeMove(data.move);
-      } catch (error) {
-        player.emit(matchup.MESSAGES.ERROR,
-            {error: "Error while trying to make a move: " + error.message});
-        return;
-      }
-      matchup.broadcast(matchup.MESSAGES.PLAY, {matchId:matchup.id, move:data.move});
-      matchup.checkIfOver();
-    } else {
-      player.emit(matchup.MESSAGES.ERROR, {error: "It isn't your turn to play."});
-    }
-  };
-}
+  }
+  if (shouldSendUpdtate) {
+    player.emit(UPDATE, this._dataForUpdate());
+  }
+};
+
+Matchup.prototype._setPlayer = function(player, seat) {
+  if (seat != 1 && seat != 2) {
+    throw new Error("'seat' should be 1 or 2.");
+  }
+  if (seat == 1) {
+    this._p1 = player;
+  } else if (seat == 2) {
+    this._p2 = player;
+  }
+  this._addPlayerToSpectators(player, false);
+  this._triggerUpdate();
+};
+
+// Notify everyone that the status of this match has changed
+Matchup.prototype._triggerUpdate = function() {
+  var updateObject = this._dataForUpdate();
+  this._broadcast(UPDATE, updateObject);
+  this._dispatcher.dispatchEvent(EVENT_UPDATE, updateObject);
+};
+
+Matchup.prototype._broadcast = function(message, data) {
+  for (var i = 0; i < this._spectators.length; ++i) {
+    this._spectators[i].emit(message, data);
+  }
+};
+
+Matchup.prototype._checkIfOver = function() {
+  if (this._game.getStatus() != this._game.STATUS_ENUM.UNDECIDED) {
+    this._dispatcher.dispatchEvent(EVENT_END, this._game.getStatus);
+  }
+};
 
 module.exports = Matchup;

@@ -22,9 +22,9 @@ ClientMatch.prototype.isMyTurn = function() {
     return false;
   }
   if (this.game.whosTurnIsIt() == this.game.PLAYER_ENUM.P1) {
-    return this.socket.session.username == this.p1;
+    return this.socket.session.identifier == this.p1.identifier;
   } else {
-    return this.socket.session.username == this.p2;
+    return this.socket.session.identifier == this.p2.identifier;
   }
 }
 
@@ -36,15 +36,9 @@ ClientMatch.prototype.receiveMove = function(move) {
 };
 
 ClientMatch.prototype.update = function(data) {
-  if (typeof data.p1 != 'undefined') {
-    this.p1 = data.p1;
-  }
-  if (typeof data.p2 != 'undefined') {
-    this.p2 = data.p2;
-  }
-  if (typeof data.gameData != 'undefined') {
-    this.game.initFromGameData(data.gameData);
-  }
+  this.p1 = data.p1;
+  this.p2 = data.p2;
+  this.game.initFromGameData(data.gameData);
   for (var i = 0; i < this.onChangeCallbacks.length; ++i) {
     this.onChangeCallbacks[i]();
   }
@@ -62,10 +56,10 @@ ClientMatch.prototype.submitMove = function() {
 };
 
 ClientMatch.prototype.requestBot = function(botName, seat) {
-  this.socket.emit("request-bot", {matchId: this.id, username: botName, seat: seat});
+  this.socket.emit("api-invite-player", {matchId: this.id, playerId: botName, seat: seat});
 };
 
 ClientMatch.prototype.sit = function(seat) {
-  this.socket.emit("join", {matchId: this.id, seat: seat});
+  this.socket.emit("api-join-match", {matchId: this.id, seat: seat});
 };
 

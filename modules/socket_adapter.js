@@ -2,6 +2,10 @@ var EventDispatcher = require("./event_dispatcher");
 
 // Adds the .on, .emit, and .session functionality to a TCP socket using new line delemited JSON.
 function SocketAdapter(socket, bufferSize) {
+  if (!bufferSize) {
+    bufferSize = 100000;
+  }
+  this.isLogging = false;
   this.socket = socket;
   this.dispatcher = new EventDispatcher();
   this.session = {};
@@ -22,6 +26,7 @@ function SocketAdapter(socket, bufferSize) {
       index = incompleteLine.indexOf("\n");
     }
     if (incompleteLine.length + incompleteJSON.legnth > bufferSize) {
+      console.log("Error: Trying to parse message larger than allocated buffer size.");
       socket.destroy();
     }
   });
@@ -43,6 +48,10 @@ function SocketAdapter(socket, bufferSize) {
   function onMessage(message) {
     var type = message.type;
     delete message.type;
+    if (self.isLogging) {
+      console.log("Received " + type);
+      console.log(JSON.stringify(message));
+    }
     self.dispatcher.dispatchEvent(type, message);
   }
 
@@ -63,6 +72,10 @@ SocketAdapter.prototype.on = function(type, callback) {
 };
 
 SocketAdapter.prototype.emit = function(type, message) {
+  if (this.isLogging) {
+    console.log("Sending " + type);
+    console.log(JSON.stringify(message));
+  }
   message.type = type;
   this.socket.write(JSON.stringify(message) + "\n");
 };

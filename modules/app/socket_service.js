@@ -4,9 +4,9 @@ module.exports = ["$rootScope", function($rootScope) {
   
   self.session = {};
   var socket = socketIO();
-  function wrappedCallback(callback) {
+  function wrappedCallback(callback, message) {
     return function wrapperMethod(data) {
-      console.log("Received: ");
+      console.log("Received: " + message);
       console.log(data);
       $rootScope.$apply(function() {
         callback(data);
@@ -14,7 +14,7 @@ module.exports = ["$rootScope", function($rootScope) {
     };
   }
   self.on = function(message, callback) {
-    socket.on(message, wrappedCallback(callback));
+    socket.on(message, wrappedCallback(callback, message));
   };
   self.emit = function(message, data) {
     socket.emit(message, data);

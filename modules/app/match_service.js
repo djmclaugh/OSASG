@@ -15,7 +15,7 @@ module.exports = ["SocketService", "$http", function(SocketService, $http) {
   self.getMatch = function(matchId) {
     if (!matches[matchId]) {
       matches[matchId] = new ClientMatch(matchId, SocketService);
-      SocketService.emit("join", {matchId: matchId});
+      SocketService.emit("api-join-match", {matchId: matchId, seat: 3});
     }
     return matches[matchId];
   };

@@ -10,9 +10,12 @@ function SocketServer(port) {
   
   this.server = net.createServer(function(socket) {
     var adapter = new SocketAdapter(socket);
+    //adapter.isLogging = true;
     self.sockets.push(adapter);
     adapter.on("authorization", function(data) {
       adapter.session.username = data.name;
+      // TODO(djmclaugh): add the appropriate identifier once implemented.
+      adapter.session.identifier = data.name;
       adapter.session.gameList = data.gameList;
       self.dispatcher.dispatchEvent("connection", adapter);
     });

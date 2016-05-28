@@ -10,7 +10,7 @@ module.exports = ["$window", "LobbyService", function($window, LobbyService) {
     });
   };
 
-  self.openWindow = function(matchId) {
-    $window.open('/match/' + matchId, matchId, 'width=800, height=500');
+  self.openWindow = function(match) {
+    $window.open('/match/' + match.matchId, match.matchId, 'width=800, height=500');
   };
 }];

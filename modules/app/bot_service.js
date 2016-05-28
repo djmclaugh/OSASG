@@ -13,20 +13,24 @@ module.exports = ["SocketService", function(SocketService) {
   SocketService.emit("api-active-bots");  
 
   SocketService.on("api-active-bots", function(data) {
-    if ("set" in data) {
-      self.activeBots.splice.apply(self.activeBots, [0, self.activeBots.length].concat(data.set));  
-    }
-    if ("add" in data) {
-      self.activeBots.push(data.add);
-    }
-    if ("remove" in data) {
-      for (var i = 0; i < self.activeBots.length; ++i) {
-        if (self.activeBots[i].id == data.remove) {
-          self.activeBots.splice(i, 1);
-          break;
+    if (data.action == "set") {
+      self.activeBots.splice.apply(self.activeBots, [0, self.activeBots.length].concat(data.bots));
+    } else if (data.action == "add") {
+      for (var i = 0; i < data.bots.length; ++i) {
+        self.activeBots.push(data.bots[i]);
+      }
+    } else if (data.action == "remove") {
+      for (var i = 0; i < data.bots.length; ++i) {
+        var username = data.bots[i].username;
+        for (var j = 0; j < self.activeBots.length; ++j) {
+          if (self.activeBots[j].username == username) {
+            self.activeBots.splice(j, 1);
+            break;
+          }
         }
       }
     }
+
     changeHappened();
   });
 

@@ -14,7 +14,8 @@ var config = require("../../config.json");
 
 // All of the message types I can send or receive.
 const AUTHORIZATION = "authorization";
-const JOIN = "join";
+const JOIN_MATCH = "api-join-match";
+const INVITE_PLAYER = "api-invite-player";
 const UPDATE = "update";
 const PLAY = "play";
 const ERROR = "error-message";
@@ -24,10 +25,11 @@ function Bot(name, password, gameList) {
   this.password = password;
   this.gameList = gameList;
   this.socket = new net.Socket();
-  this.client = new SocketAdapter(this.socket, 100000);
+  this.client = new SocketAdapter(this.socket);
+  this.client.isLogging = true;
   this.matches = {};
   
-  this.client.on(JOIN, this.onJoin.bind(this));
+  this.client.on(INVITE_PLAYER, this.onInvite.bind(this));
   this.client.on(UPDATE, this.onUpdate.bind(this));
   this.client.on(PLAY, this.onPlay.bind(this));
   this.client.on(ERROR, this.onError.bind(this));
@@ -59,12 +61,12 @@ Bot.prototype.wantToJoin = function(matchId, settings) {
 // If you want to join, just reply with the appropriate message within 1 second (after 1 second, the
 // server will assume that you are not interested or that your connection is not stable enough to 
 // play a game right now).
-Bot.prototype.onJoin = function(message) {
+Bot.prototype.onInvite = function(message) {
   if (this.wantToJoin(message.matchId, message.settings)) {
     // IMPORTANT: Sending this message doesn't guaranty that I will join the match.
     // If someone else joined before the server received this, the server will ignore this message.
     // You can only know if you successfully joined a match via the "update" messages.
-    this.client.emit(JOIN, {matchId: message.matchId, seat: message.seat});
+    this.client.emit(JOIN_MATCH, {matchId: message.matchId});
   }
 };
 
@@ -112,8 +114,8 @@ Bot.prototype.onError = function(message) {
 
 // Here, I figure out what I need to do in response to new information about a particular match.
 Bot.prototype.takeAction = function(match) {
-  var amP1 = match.p1 == this.name;
-  var amP2 = match.p2 == this.name;
+  var amP1 = match.p1 ? match.p1.identifier == this.name : false;
+  var amP2 = match.p2 ? match.p2.identifier == this.name : false;
   if (!amP1 && !amP2) {
     // If I'm not even part of this match, just forget about it.
     delete this.matches[match.id];
@@ -136,4 +138,3 @@ Bot.prototype.takeAction = function(match) {
 Bot.prototype.getMove = function(match) {
   throw new Error("Must be implemented by the subclass.");
 }
-
