@@ -1,0 +1,33 @@
+<span ng-if="botCtrl.bot != null">
+  <h1>{{ botCtrl.bot.username }}[bot]</h1>
+  <span ng-if="botCtrl.bot.isMyBot">
+    <form ng-submit="botCtrl.submitName()">
+      <p>
+        <input type="text" ng-model="botCtrl.nameEdit">
+        <input type="submit" value="Change Name"></input>
+      </p>
+    </form>
+  </span>
+  <p>Owner: {{ botCtrl.bot.owner.username }}</p>
+  <span ng-if="botCtrl.bot.isMyBot">
+    <h2>Login Info: </h2>
+    <p>Identifier: {{ botCtrl.bot.identifier }}</p>
+    <p>Password: {{ botCtrl.bot.password }}</p>
+    <p><button ng-click="botCtrl.changePassword()">Generate New Password</button></p>
+  </span>
+  <h2>Description: </h2>
+  <span ng-hide="botCtrl.isEditingDescription">
+    <p>{{ botCtrl.bot.description }}</p>
+    <p ng-if="botCtrl.bot.isMyBot"><button ng-click="botCtrl.startDescriptionEdit()">Edit</button></p>
+  </span>
+  <span ng-show="botCtrl.isEditingDescription">
+    <p>
+      <textarea ng-model="botCtrl.descriptionEdit" rows="4" cols="50"></textarea>
+    </p>
+    <p>
+      <button ng-click="botCtrl.cancelDescriptionEdit()">Cancel</button>
+      <button ng-click="botCtrl.finishDescriptionEdit()">Submit</button>
+    </p>
+  </span>
+</span>
+<p class="error" ng-show="botCtrl.error != null">{{ botCtrl.error.message }}</p>

@@ -45,6 +45,6 @@ module.exports = ["SocketService", "$http", function(SocketService, $http) {
         callback(new Error(response.data ? response.data : "Failed to create a new match."));
       }
     }
-    $http.get("/createMatch/" + gameTitle).then(onSuccess, onError);
+    $http.get("/api/createMatch/" + gameTitle).then(onSuccess, onError);
   };
 }];

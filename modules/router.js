@@ -57,6 +57,20 @@ router.get("/settings", function(req, res) {
   });
 });
 
+router.get("/bot/:botId", function(req, res) {
+  res.render("bot", {
+      botId: req.params.botId
+  });
+});
+
+router.get("/match/:gameId", function(req, res) {
+  res.render("match", {
+      title: req.params.gameId,
+      username: req.session.username,
+      id: req.params.gameId
+  });
+});
+
 // Changes the username of the currently logged in user.
 // Will send a 400 response if the body is missing "desiredUsername".
 // Will send a 403 response if no user is logged in.
@@ -64,7 +78,7 @@ router.get("/settings", function(req, res) {
 // body - {
 //     desiredUsername: The desired username.
 // }
-router.post("/settings/change_username", function(req, res) {
+router.post("/api/settings/change_username", function(req, res) {
   if (!req.body.desiredUsername) {
     res.status(400).send("Please enter your desired username.");
   } else if (!res.locals.user) {
@@ -80,17 +94,154 @@ router.post("/settings/change_username", function(req, res) {
   }
 });
 
-router.get("/creatematch/:gameTitle", function(req, res) {
-  gameManager.createNewMatchup(req.params.gameTitle, {}, null);
-  res.redirect("/");
+// Creates a new bot for the user.
+// Will send a 403 response if no user is logged in.
+// Will send a 500 response if this fails for any other reason.
+router.post("/api/bots/create_bot", function(req, res) {
+  if (!res.locals.user) {
+    res.status(403).send("you must be logged in to create a bot.");
+  } else {
+    db.Bot.createBotForUser(res.locals.user, function(error, bot) {
+      if (error) {
+        res.status(500).send(error.message);
+      } else {
+        res.send(bot);
+      }
+    });
+  }
 });
 
-router.get("/match/:gameId", function(req, res) {
-  res.render("match", {
-      title: req.params.gameId,
-      username: req.session.username,
-      id: req.params.gameId
-  });
+// Sends a list of all bots belonging to the currently signed in user.
+// Will send a 403 response if no user is logged in.
+// Will send a 500 response if this fails for any other reason.
+router.get("/api/bots", function(req, res) {
+  if (!res.locals.user) {
+    res.status(403).send("you must be logged in to request your bots.");
+  } else {
+    db.Bot.find({owner: res.locals.user}, function(error, bots) {
+      if (error) {
+        res.status(500).send(error.message);
+      } else {
+        res.send(bots);
+      }
+    });
+  }
+});
+
+function botData(bot, user) {
+  var botData = {
+    identifier: bot.id,
+    owner: {
+      identifier: bot.owner.id,
+      username: bot.owner.username
+    },
+    username: bot.username,
+    description: bot.description,
+  };
+  if (user && user.id == bot.owner.id) {
+    botData.password = bot.password;
+    botData.isMyBot = true;
+  } else {
+    botData.isMyBot = false;
+  }
+  return botData;
+}
+
+// Get information about the bot with the specified id.
+// If the owner of the bot is the one making the request, the response will include the password.
+// Will send a 500 response if this fails for any reason.
+router.get("/api/bots/:botId", function(req, res) {
+  db.Bot.findById(req.params.botId)
+      .populate("owner")
+      .exec(function(error, bot) {
+        if (error) {
+          res.status(500).send(error.message);
+        } else {
+          res.send(botData(bot, res.locals.user));
+        }
+      });
+});
+
+// Change the username of the bot.
+// Will send a 403 response if someone other than the owner is making the request.
+// Will send a 500 response if this fails for any other reason.
+// body - {
+//     desiredUsername: The desired username.
+// }
+router.post("/api/bots/:botId/change_username", function(req, res) {
+  db.Bot.findById(req.params.botId)
+      .populate("owner")
+      .exec(function(error, bot) {
+        if (error) {
+          res.status(500).send(error.message);
+        } else if (!res.locals.user || res.locals.user.id != bot.owner.id) {
+          res.status(403).send("You cannot change the name of a bot you don't own.");
+        } else {
+          bot.changeUsername(req.body.desiredUsername, function(error) {
+            if (error) {
+              res.status(500).send(error.message);
+            } else {
+              res.send(botData(bot, res.locals.user));
+            }
+          });
+        }
+      });
+});
+
+// Change the description of the bot.
+// Will send a 403 response if someone other than the owner is making the request.
+// Will send a 500 response if this fails for any other reason.
+// body - {
+//     desiredDescription: The desired description.
+// }
+router.post("/api/bots/:botId/change_description", function(req, res) {
+  db.Bot.findById(req.params.botId)
+      .populate("owner")
+      .exec(function(error, bot) {
+        if (error) {
+          res.status(500).send(error.message);
+        } else if (!res.locals.user || res.locals.user.id != bot.owner.id) {
+          res.status(403).send("You cannot change the password of a bot you don't own.");
+        } else {
+          bot.description = req.body.desiredDescription;
+          bot.save(function(error) {
+            if (error) {
+              res.status(500).send(error.message);
+            } else {
+              res.send(botData(bot, res.locals.user));
+            }
+          });
+        }
+      });
+});
+
+// Generate and assing a new password for the bot.
+// Will send a 403 response if someone other than the owner is making the request.
+// Will send a 500 response if this fails for any other reason.
+// body - {}
+router.post("/api/bots/:botId/change_password", function(req, res) {
+  db.Bot.findById(req.params.botId)
+      .populate("owner")
+      .exec(function(error, bot) {
+        if (error) {
+          res.status(500).send(error.message);
+        } else if (!res.locals.user || res.locals.user.id != bot.owner.id) {
+          res.status(403).send("You cannot change the password of a bot you don't own.");
+        } else {
+          bot.generateNewPassword(function(error) {
+            if (error) {
+              res.status(500).send(error.message);
+            } else {
+              res.send(botData(bot, res.locals.user));
+            }
+          });
+        }
+      });
+});
+
+router.get("/api/creatematch/:gameTitle", function(req, res) {
+  gameManager.createNewMatchup(req.params.gameTitle, {}, null);
+  res.redirect("/");
 });
 
 router.get("/api/activeMatches", function(req, res) {

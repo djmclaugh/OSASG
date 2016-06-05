@@ -7,11 +7,9 @@ module.exports = ["$http", function($http) {
   self.successMessage = null;
 
   self.submit = function() {
-    console.log("submit");
     self.isSubmitting = true;
 
     function onSuccess(response) {
-      console.log("success");
       self.error = null;
       self.successMessage = response.data;
       self.isSubmitting = false;
@@ -19,13 +17,12 @@ module.exports = ["$http", function($http) {
     }
 
     function onError(response) {
-      console.log("error");
       self.error = new Error(response.data);
       self.successMessage = null;
       self.isSubmitting = false;
     }
 
     var body = {desiredUsername: self.desiredUsername};
-    $http.post("/settings/change_username", body).then(onSuccess, onError);
+    $http.post("/api/settings/change_username", body).then(onSuccess, onError);
   };
 }];

@@ -6,6 +6,8 @@ app.service("BotService", require("./bot_service"));
 app.service("LobbyService", require("./lobby_service"));
 app.service("MatchService", require("./match_service"));
 app.service("SocketService", require("./socket_service"));
+app.controller("BotController", require("./bot_controller"));
+app.controller("BotSettingsController", require("./bot_settings_controller"));
 app.controller("LobbyController", require("./lobby_controller"));
 app.controller("LoginFormController", require("./login_form_controller"));
 app.controller("UsernameChangeFromController", require("./username_change_form_controller"));
@@ -66,7 +68,7 @@ app.directive("asgMatchControlPanel", function() {
   };
 });
 
-app.directive("asgLogin", function($window) {
+app.directive("asgLogin", function() {
   return {
     restrict: "E",
     templateUrl: "/templates/login_form.html",
@@ -79,11 +81,31 @@ app.directive("asgLogin", function($window) {
   };
 });
 
-app.directive("asgUsernameChange", function($window) {
+app.directive("asgUsernameChange", function() {
   return {
     restrict: "E",
     templateUrl: "/templates/username_change_form.html",
     scope: {username: "@username"},
+  };
+});
+
+app.directive("asgMyBots", function() {
+  return {
+    restrict: "E",
+    templateUrl: "/templates/bots_settings.html",
+    scope: {username: "@username"},
+  };
+});
+
+app.directive("asgBotInfo", function() {
+  return {
+    restrict: 'E',
+    templateUrl: "/templates/bot_info.html",
+    controller: "BotController",
+    controllerAs: "botCtrl",
+    link: function(scope, element, attrs) {
+      scope.botCtrl.fetchBot(attrs.identifier);
+    }
   };
 });
 

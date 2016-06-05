@@ -2,8 +2,11 @@ var config = require("../config.json");
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
+var uuid = require('node-uuid');
+
 const sessionModelName = "Session";
 const userModelName = "User";
+const botModelName = "Bot";
 
 // --- Sessions ---
 var SessionSchema = new Schema({
@@ -98,5 +101,97 @@ userSchema.methods.changeUsername = function(newUsername, callback) {
 };
 
 exports.User = mongoose.model(userModelName, userSchema);
+
+// --- Bots ---
+var botSchema = Schema({
+  username: {type: String, unique: true},
+  password: String,
+  description: {type: String, maxlength: 1000},
+  owner: {type: Schema.Types.ObjectId, ref: userModelName}
+});
+
+
+// Statics
+// callback - function(error, user)
+botSchema.statics.createBotForUser = function (user, callback) {
+  var self = this;
+
+  var baseUsername = user.username;
+  var suffixValue = 0;
+
+  var onSameNameLookup = function(error, bot) {
+    console.log("Found the following bot for the username: ");
+    console.log(bot);
+    if (error) {
+      callback(error, null);
+    } else if (!bot) {
+      // If we didn't encounter any errors and didn't find any other bots with that username, we'll
+      // use that username.
+      var botData = {
+        username: baseUsername,
+        password: uuid.v4(),
+        owner: user
+      };
+      if (suffixValue > 0) {
+        botData.username += "_" + suffixValue;
+      }
+      self.create(botData, callback);
+    } else {
+      // If we found a user with the desired username, try again with another one.
+      ++suffixValue;
+      self.findOne({username: baseUsername + "_" + suffixValue}, onSameNameLookup);
+    }
+  }
+
+  var onUserLookup = function(error, bots) {
+    console.log("found the following bots for the user: ");
+    console.log(bots);
+    if (error) {
+      callback(error, null);
+    } else if (bots.length >= 5) {
+      var error = new Error("Only 5 bots per user.");
+      callback(error, null);
+    } else {
+      self.findOne({username: baseUsername}, onSameNameLookup);
+    }
+  };
+
+  self.find({owner: user}, onUserLookup);
+};
+
+// Methods
+// callback - function(error, bot)
+botSchema.methods.changeUsername = function(newUsername, callback) {
+  var self = this;
+  if (newUsername == null || newUsername.length < 3) {
+    callback(new Error("Username must be at least 3 charaters long."));
+  } else if (newUsername.length > 20) {
+    callback(new Error("Username must be at most 20 characters long."));
+  } else if (!new RegExp(/^[a-zA-Z0-9_\-]*$/).test(newUsername)) {
+    callback(new Error("Username must only contain letters, numbers, '-', or '_'."));
+  } else {
+    // If a user is found, then the username is not available.
+    // Otherwise, procede with changeing the user's username.
+    var onLookup = function(error, bot) {
+      if (error) {
+        callback(error, null);
+      } else if (bot && bot.username.toLowerCase() != self.username.toLowerCase()) {
+        callback(new Error("The username \"" + bot.username + "\" is already taken."), null);
+      } else {
+        self.username = newUsername;
+        self.save(callback);
+      }
+    };
+    self.model(botModelName).findOne({username:  new RegExp(newUsername, "i")}, onLookup);
+  }
+};
+
+// callback - function(error, bot)
+botSchema.methods.generateNewPassword = function(callback) {
+  this.password = uuid.v4();
+  this.save(callback);
+};
+
+exports.Bot = mongoose.model(botModelName, botSchema);
 
 mongoose.connect(config.databaseLocation);

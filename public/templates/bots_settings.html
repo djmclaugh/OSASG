@@ -1,0 +1,12 @@
+<span ng-hide="username | isGuest">
+  <div ng-controller="BotSettingsController as botCtrl">
+    <h3>Bots</h3>
+    <p>
+      <span ng-repeat="bot in botCtrl.bots">
+        <a href="/bot/{{bot._id}}">{{ bot.username }}</a>
+      </span>
+    </p>
+    <p><button ng-click="botCtrl.createBot()">Create New Bot</button></p>
+    <p class="error" ng-show="botCtrl.error != null">{{ botCtrl.error.message }}</p>
+  </div>
+</span>
