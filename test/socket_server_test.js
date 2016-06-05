@@ -1,6 +1,26 @@
 var assert = require("assert");
-var SocketServer = require("../modules/socket_server");
+var proxyquire = require("proxyquire");
+var dbStub = {};
+var SocketServer = proxyquire("../modules/socket_server", {"./db": dbStub});
 var net = require("net");
+
+dbStub.Bot = {};
+var registeredBots = {
+  id_123: {
+    id: "id_123",
+    username: "username_123",
+    password: "password_123"
+  }
+};
+dbStub.Bot.findById = function(id, callback) {
+  process.nextTick(function() {
+    if (id in registeredBots) {
+      callback(null, registeredBots[id]);
+    } else {
+      callback(new Error("Bot not found"), null);
+    }
+  });
+};
 
 const PORT = 12345;
 
@@ -22,17 +42,35 @@ describe("Socket Server", function() {
   
   it("should notify its listeners when a new connection has been authenticated", function(done) {
     server.onConnection(function(socket) {
-      assert.equal(socket.session.username, "username");
+      assert.equal(socket.session.username, "username_123");
       done();
     });
-    var client = new net.Socket();
-    client.connect(PORT, "localhost", function() {
+    var socket = new net.Socket();
+    socket.connect(PORT, "localhost", function() {
       var message = {
         type: "authorization",
-        name: "username",
-        passsword: "not yet implemented"
+        identifier: "id_123",
+        password: "password_123"
       };
-      client.write(JSON.stringify(message) + "\n");
+      socket.write(JSON.stringify(message) + "\n");
+    });
+  });
+
+  it("should not allow sockets to connect without the right password", function(done) {
+    var socket = new net.Socket();
+    socket.on("close", function(data){
+      done();
+    });
+    server.onConnection(function(socket) {
+      assert(false, "Should not accept connection.");
+    });
+    socket.connect(PORT, "localhost", function() {
+      var message = {
+        type: "authorization",
+        identifier: "id_123",
+        password: "password_1234"
+      };
+      socket.write(JSON.stringify(message) + "\n");
     });
   });
   
@@ -50,8 +88,8 @@ describe("Socket Server", function() {
       clientSocket.connect(PORT, "localhost", function() {
         var message = {
           type: "authorization",
-          name: "username",
-          passsword: "not yet implemented"
+          identifier: "id_123",
+          password: "password_123"
         };
         clientSocket.write(JSON.stringify(message) + "\n");
       });

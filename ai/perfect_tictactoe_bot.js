@@ -1,5 +1,6 @@
 var Bot = require("./bot");
-var Games = require("../matches/games");
+var Games = require("../modules/matches/games");
+var credentials = require("./bot_config.json").perfect_tictactoe;
 
 // Since tictactoe is such a small game, we can just compute the game tree.
 
@@ -81,7 +82,7 @@ function getValueForCurrentPosition() {
 getValueForCurrentPosition();
 
 function PerfectTictactoeBot() {
-  Bot.call(this, "OSASG-TictactoeMasterBot", "not yet implemented", ["Tictactoe"]);
+  Bot.call(this, credentials.identifier, credentials.password, ["Tictactoe"]);
 }
 
 module.exports = PerfectTictactoeBot;

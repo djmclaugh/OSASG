@@ -55,8 +55,8 @@ ClientMatch.prototype.submitMove = function() {
   }
 };
 
-ClientMatch.prototype.requestBot = function(botName, seat) {
-  this.socket.emit("api-invite-player", {matchId: this.id, playerId: botName, seat: seat});
+ClientMatch.prototype.requestBot = function(botId, seat) {
+  this.socket.emit("api-invite-player", {matchId: this.id, playerId: botId, seat: seat});
 };
 
 ClientMatch.prototype.sit = function(seat) {

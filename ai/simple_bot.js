@@ -3,12 +3,13 @@
 // Feel free to use this as a framework to make your own bot.
 
 var Bot = require("./bot");
-var Games = require("../matches/games");
+var Games = require("../modules/matches/games");
+var credentials = require("./bot_config.json").simple;
 
 const GAMES_I_CAN_PLAY = [Games.Tictactoe, Games.Connect6];
 
 function SimpleBot() {
-  Bot.call(this, "OSASG-SimpleBot", "not yet implemented", ["Tictactoe", "Connect6"]);
+  Bot.call(this, credentials.identifier, credentials.password, ["Tictactoe", "Connect6"]);
 }
 
 module.exports = SimpleBot;

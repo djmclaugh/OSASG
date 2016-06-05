@@ -62,7 +62,7 @@ function SocketAdapter(socket, bufferSize) {
   });
 
   this.socket.on("end", function() {
-    socket.destroy();
+    socket.end();
     onMessage({type: "disconnect"});
   });
 }
@@ -72,6 +72,9 @@ SocketAdapter.prototype.on = function(type, callback) {
 };
 
 SocketAdapter.prototype.emit = function(type, message) {
+  if (message == null) {
+    message = {};
+  }
   if (this.isLogging) {
     console.log("Sending " + type);
     console.log(JSON.stringify(message));
@@ -81,7 +84,7 @@ SocketAdapter.prototype.emit = function(type, message) {
 };
 
 SocketAdapter.prototype.close = function() {
-  this.socket.destroy();
+  this.socket.end();
 };
 
 module.exports = SocketAdapter;

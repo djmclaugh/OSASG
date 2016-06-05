@@ -120,8 +120,6 @@ botSchema.statics.createBotForUser = function (user, callback) {
   var suffixValue = 0;
 
   var onSameNameLookup = function(error, bot) {
-    console.log("Found the following bot for the username: ");
-    console.log(bot);
     if (error) {
       callback(error, null);
     } else if (!bot) {
@@ -144,8 +142,6 @@ botSchema.statics.createBotForUser = function (user, callback) {
   }
 
   var onUserLookup = function(error, bots) {
-    console.log("found the following bots for the user: ");
-    console.log(bots);
     if (error) {
       callback(error, null);
     } else if (bots.length >= 5) {

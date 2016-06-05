@@ -239,8 +239,8 @@ ConnectionHandler.prototype._listenForEventsOnPlayer = function(player) {
       self._sentInvites.push(data);
       var players = self._players[data.playerId];
       for (var i = 0; i < players.length; ++i) {
-        var player = players[i];
-        player.emit(INVITE_PLAYER, {matchId: data.matchId});
+        var invitee = players[i];
+        invitee.emit(INVITE_PLAYER, {matchId: data.matchId});
       }
     } else {
       player.emit(ERROR_MESSAGE, {error: "User '" + data.playerId + "' is currently not online."});

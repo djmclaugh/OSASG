@@ -4,7 +4,7 @@
   <span ng-if="match.p1 == null">
     <button ng-click="match.sit(1)">Join as P1</button>
     <span ng-repeat="bot in cpCtrl.availableBots">
-      <button ng-click="match.requestBot(bot.username, 1)">Add {{bot.username}}</button>
+      <button ng-click="match.requestBot(bot.identifier, 1)">Add {{bot.username}}</button>
     </span>
   </span>
 </p>
@@ -13,7 +13,7 @@
   <span ng-if="match.p2 == null">
     <button ng-click="match.sit(2)">Join as P2</button>
     <span ng-repeat="bot in cpCtrl.availableBots">
-      <button ng-click="match.requestBot(bot.username, 2)">Add {{bot.username}}</button>
+      <button ng-click="match.requestBot(bot.identifier, 2)">Add {{bot.username}}</button>
     </span>
   </span>
 </p>

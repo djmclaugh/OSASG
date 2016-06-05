@@ -3,12 +3,13 @@
 // Feel free to use this as a framework to make your own bot.
 
 var Bot = require("./bot");
-var Games = require("../matches/games");
+var Games = require("../modules/matches/games");
+var credentials = require("./bot_config.json").random;
 
 const GAMES_I_CAN_PLAY = [Games.Tictactoe, Games.Connect6, Games.Hex];
 
 function RandomBot() {
-  Bot.call(this, "OSASG-RandomBot", "not yet implemented", ["Tictactoe", "Connect6", "Hex"]);
+  Bot.call(this, credentials.identifier, credentials.password, ["Tictactoe", "Connect6", "Hex"]);
 }
 
 module.exports = RandomBot;

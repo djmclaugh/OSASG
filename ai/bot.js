@@ -6,11 +6,11 @@
 var net = require("net");
 
 // Helper class that handles new line delimited json TCP sockets.
-var SocketAdapter = require("../socket_adapter");
+var SocketAdapter = require("../modules/socket_adapter");
 // Helper class that can return Game objects from a match id.
-var Games = require("../matches/games");
+var Games = require("../modules/matches/games");
 
-var config = require("../../config.json");
+var config = require("../config.json");
 
 // All of the message types I can send or receive.
 const AUTHORIZATION = "authorization";
@@ -20,8 +20,8 @@ const UPDATE = "update";
 const PLAY = "play";
 const ERROR = "error-message";
 
-function Bot(name, password, gameList) {
-  this.name = name;
+function Bot(identifier, password, gameList) {
+  this.identifier = identifier;
   this.password = password;
   this.gameList = gameList;
   this.socket = new net.Socket();
@@ -41,7 +41,7 @@ Bot.prototype.start = function() {
   var self = this;
   self.socket.connect(config.botPort, config.appURL, function() {
     self.client.emit(AUTHORIZATION, {
-        name: self.name,
+        identifier: self.identifier,
         password: self.password,
         gameList: self.gameList
     });
@@ -114,8 +114,8 @@ Bot.prototype.onError = function(message) {
 
 // Here, I figure out what I need to do in response to new information about a particular match.
 Bot.prototype.takeAction = function(match) {
-  var amP1 = match.p1 ? match.p1.identifier == this.name : false;
-  var amP2 = match.p2 ? match.p2.identifier == this.name : false;
+  var amP1 = match.p1 ? match.p1.identifier == this.identifier : false;
+  var amP2 = match.p2 ? match.p2.identifier == this.identifier : false;
   if (!amP1 && !amP2) {
     // If I'm not even part of this match, just forget about it.
     delete this.matches[match.id];
