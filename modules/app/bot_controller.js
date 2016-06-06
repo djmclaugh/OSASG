@@ -1,4 +1,7 @@
-module.exports = ["$http", function($http) {
+var MarkdownIt = require('markdown-it'),
+md = new MarkdownIt();
+
+module.exports = ["$http", "$sce", function($http, $sce) {
   var self = this;
 
   var urlPrefix = null;
@@ -16,6 +19,14 @@ module.exports = ["$http", function($http) {
   function onError(response) {
     self.error = new Error(response.data);
   }
+
+  self.htmlFromMarkdown = function(markdown) {
+    if (markdown) {
+      return $sce.trustAsHtml(md.render(markdown));
+    } else {
+      return "";
+    }
+  };
 
   self.fetchBot = function(identifier) {
     urlPrefix = "/api/bots/" + identifier; 

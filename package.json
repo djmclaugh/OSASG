@@ -28,6 +28,7 @@
     "emailjs": "^1.0.4",
     "express": "^4.9.5",
     "express-session": "^1.11.3",
+    "markdown-it": "^6.0.5",
     "mocha": "^2.3.3",
     "mongoose": "^4.4.12",
     "node-uuid": "^1.4.1",

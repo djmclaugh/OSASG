@@ -73,8 +73,8 @@ app.directive("asgLogin", function() {
     restrict: "E",
     templateUrl: "/templates/login_form.html",
     scope: {username: "@username"},
-    link: function (scope, element, attrs) {
-      var s = document.createElement('script');
+    link: function(scope, element, attrs) {
+      var s = document.createElement("script");
       s.src = "https://www.google.com/recaptcha/api.js";
       document.body.appendChild(s);
     }
@@ -99,7 +99,7 @@ app.directive("asgMyBots", function() {
 
 app.directive("asgBotInfo", function() {
   return {
-    restrict: 'E',
+    restrict: "E",
     templateUrl: "/templates/bot_info.html",
     controller: "BotController",
     controllerAs: "botCtrl",

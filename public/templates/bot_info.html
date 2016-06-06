@@ -17,7 +17,7 @@
   </span>
   <h2>Description: </h2>
   <span ng-hide="botCtrl.isEditingDescription">
-    <p>{{ botCtrl.bot.description }}</p>
+    <div ng-bind-html="botCtrl.htmlFromMarkdown(botCtrl.bot.description)"></div>
     <p ng-if="botCtrl.bot.isMyBot"><button ng-click="botCtrl.startDescriptionEdit()">Edit</button></p>
   </span>
   <span ng-show="botCtrl.isEditingDescription">

@@ -129,6 +129,9 @@ router.get("/api/bots", function(req, res) {
 });
 
 function botData(bot, user) {
+  if (!bot) {
+    return null;
+  }
   var botData = {
     identifier: bot.id,
     owner: {
@@ -156,6 +159,8 @@ router.get("/api/bots/:botId", function(req, res) {
       .exec(function(error, bot) {
         if (error) {
           res.status(500).send(error.message);
+        } else if(!bot) {
+          res.status(404).send("Bot not found.");
         } else {
           res.send(botData(bot, res.locals.user));
         }
