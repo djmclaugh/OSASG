@@ -10,14 +10,12 @@ module.exports = ["$http", function($http) {
   self.submit = function() {
     var body = {};
     if (grecaptcha == null) {
-      console.log("No recaptcha");
       self.error = new Error("ReCaptcha has not finished loading. Please try again.");
       return;
     }
     body.user = self.email;
     body["g-recaptcha-response"] = grecaptcha.getResponse();
     if (body["g-recaptcha-response"].length == 0) {
-      console.log("bad recaptcha");
       self.error = new Error("Please answer the ReCaptcha.");
       return;
     }
