@@ -1,4 +1,6 @@
 var Games = require("./games");
+var MatchClock = require("../utilities/timer/match_clock");
+var Timers = require("../utilities/timer/timers");
 var EventDispatcher = require("../event_dispatcher");
 
 function FailedToJoinMatchError(player, matchup, reason) {
@@ -25,6 +27,7 @@ const EVENT_END = "match_event_end"
 
 function onPlay(match, player) {
   return function(data) {
+    var timestamp = Date.now();
     if (data.matchId != match.id) {
       return;
     }
@@ -35,13 +38,18 @@ function onPlay(match, player) {
     var game = match._game;
     if ((game.whosTurnIsIt() == game.PLAYER_ENUM.P1 && player.isSameUser(match._p1)) ||
         (game.whosTurnIsIt() == game.PLAYER_ENUM.P2 && player.isSameUser(match._p2))) {
+      if (match._clock.currentPlayerIsOutOfTime(timestamp)) {
+        player.emit(ERROR, {error: "Move received after time ran out."});
+        return;
+      }
       try {
         game.makeMove(data.move);
       } catch (error) {
         player.emit(ERROR, {error: "Error while trying to make a move: " + error.message});
         return;
       }
-      match._broadcast(PLAY, {matchId:match.id, move:data.move});
+      match._clock.toggle(timestamp);
+      match._broadcast(PLAY, {matchId: match.id, move: data.move, timestamp: timestamp});
       match._checkIfOver();
     } else {
       player.emit(ERROR, {error: "It isn't your turn to play."});
@@ -49,17 +57,22 @@ function onPlay(match, player) {
   };
 }
 
-function Matchup(id, gameTitle, gameSettings) {
+function Matchup(id, gameTitle, settings) {
   var self = this;
   this.id = id;
 
-  this._game = Games.newGame(gameTitle, gameSettings);  
+  this._settings = settings;
+  this._p1Timer = Timers.newTimer(settings.p1Timer);
+  this._p2Timer = Timers.newTimer(settings.p2Timer);
+  this._clock = new MatchClock(this._p1Timer, this._p2Timer);
+  this._game = Games.newGame(gameTitle, settings.gameSettings);  
   this._p1 = null;
   this._p2 = null;
   this._spectators = [];
   // List of players that we are currently listening to for moves.
   this._players = [];
   this._dispatcher = new EventDispatcher();
+  
 }
 
 Matchup.prototype.MESSAGES = {
@@ -119,6 +132,11 @@ Matchup.prototype.matchInfo = function() {
 Matchup.prototype._dataForUpdate = function() {
   var data = {};
   data.gameData = this._game.generateGameData();
+  data.settings = this._settings;
+  data.timers = {
+    p1: this._p1Timer.exportState(),
+    p2: this._p2Timer.exportState(),
+  }
   if (this._p1) {
     data.p1 = {
       username: this._p1.username,
@@ -163,6 +181,10 @@ Matchup.prototype._setPlayer = function(player, seat) {
   } else if (seat == 2) {
     this._p2 = player;
   }
+  if (this.hasStarted() && !this._clock.hasStarted()) {
+    this._clock.start(Date.now());
+    this._checkTime();
+  }
   this._addPlayerToSpectators(player, false);
   this._triggerUpdate();
 };
@@ -182,7 +204,16 @@ Matchup.prototype._broadcast = function(message, data) {
 
 Matchup.prototype._checkIfOver = function() {
   if (this._game.getStatus() != this._game.STATUS_ENUM.UNDECIDED) {
-    this._dispatcher.dispatchEvent(EVENT_END, this._game.getStatus);
+    this._dispatcher.dispatchEvent(EVENT_END, this._game.getStatus());
+  }
+};
+
+Matchup.prototype._checkTime = function() {
+  if (this._clock.currentPlayerIsOutOfTime(Date.now())) {
+    // TODO(djmclaugh): report winner when it will matter.
+    this._dispatcher.dispatchEvent(EVENT_END, {});
+  } else {
+    setTimeout(this._checkTime.bind(this), 1000);
   }
 };
 

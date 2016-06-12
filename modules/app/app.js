@@ -20,6 +20,12 @@ app.directive("asgMatch", ["MatchService", function(MatchService) {
         "<asg-match-control-panel class=control-panel></asg-match-control-panel>",
     link: function(scope, element, attrs) {
       scope.match = MatchService.getMatch(attrs.matchId);
+      scope.p1TimeRemaining = function() {
+        return scope.match.p1Timer.timeLeft(Date.now() - MatchService.clockOffset);
+      };
+      scope.p2TimeRemaining = function() {
+        return scope.match.p2Timer.timeLeft(Date.now() - MatchService.clockOffset);
+      };
     }
   };
 }]);
@@ -108,6 +114,43 @@ app.directive("asgBotInfo", function() {
     }
   };
 });
+
+app.directive("asgTimer", ["$interval", function($interval) {
+  return {
+    restrict: "E",
+    link: function(scope, element, attrs) {
+      var timeSource = scope[attrs.timeSource];
+      var timeoutId;
+
+      function stringForSeconds(seconds) {
+        return (seconds < 10 ? "0" : "") + seconds;
+      }
+
+      function stringForTime(time) {
+        if (time <= 0) {
+          return "0:00";
+        }
+        var numberOfSeconds = Math.floor(time / 1000);
+        var numberOfMinutes = Math.floor(numberOfSeconds / 60);
+        return numberOfMinutes + ":" + stringForSeconds(numberOfSeconds % 60);
+      }
+
+      function updateTime() {
+        element.text(stringForTime(timeSource()));
+      }
+
+      element.on("$destroy", function() {
+        $interval.cancel(timeoutId);
+      });
+
+      timeoutId = $interval(function() {
+        updateTime();
+      }, 1000);
+
+      updateTime();
+    }
+  };
+}]);
 
 app.filter("isGuest", function() {
   return function(username) {

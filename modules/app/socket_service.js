@@ -3,6 +3,7 @@ module.exports = ["$rootScope", function($rootScope) {
   var self = this;
   
   self.session = {};
+
   var socket = socketIO();
   function wrappedCallback(callback, message) {
     return function wrapperMethod(data) {
@@ -24,5 +25,9 @@ module.exports = ["$rootScope", function($rootScope) {
     
   self.on("session-info", function(data) {
     self.session = data;
+  });
+
+  self.on("error-message", function(data) {
+    console.log(data.error);
   });
 }];

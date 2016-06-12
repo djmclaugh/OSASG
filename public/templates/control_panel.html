@@ -1,22 +1,28 @@
 <h3>{{match.id}}</h3>
-<p>P1: 
-  <span ng-if="match.p1 != null">{{match.p1.username}}</span>
-  <span ng-if="match.p1 == null">
+<span ng-if="match.p1 != null">
+  <p>P1: {{match.p1.username}}</p>
+  <p><asg-timer time-source="p1TimeRemaining"></asg-timer></p>
+</span>
+<span ng-if="match.p1 == null">
+  <p>P1:
     <button ng-click="match.sit(1)">Join as P1</button>
     <span ng-repeat="bot in cpCtrl.availableBots">
       <button ng-click="match.requestBot(bot.identifier, 1)">Add {{bot.username}}</button>
     </span>
-  </span>
-</p>
-<p>P2: 
-  <span ng-if="match.p2 != null">{{match.p2.username}}</span>
-  <span ng-if="match.p2 == null">
+  </p>
+</span>
+<span ng-if="match.p2 != null">
+  <p>P2: {{match.p2.username}}</p>
+  <p><asg-timer time-source="p2TimeRemaining"></asg-timer></p>
+</span>
+<span ng-if="match.p2 == null">
+  <p>P2:
     <button ng-click="match.sit(2)">Join as P2</button>
     <span ng-repeat="bot in cpCtrl.availableBots">
       <button ng-click="match.requestBot(bot.identifier, 2)">Add {{bot.username}}</button>
     </span>
-  </span>
-</p>
+  </p>
+</span>
 <p ng-if="match.p1 && match.p2" ng-switch="match.game.getStatus()">
   <span ng-switch-when="GAME_STATUS_UNDECIDED">
     {{match.game.whosTurnIsIt() == match.game.PLAYER_ENUM.P1 ? "P1" : "P2"}} to play

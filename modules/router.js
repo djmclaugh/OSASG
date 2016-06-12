@@ -245,8 +245,24 @@ router.post("/api/bots/:botId/change_password", function(req, res) {
 });
 
 router.get("/api/creatematch/:gameTitle", function(req, res) {
-  gameManager.createNewMatchup(req.params.gameTitle, {}, null);
+  gameManager.createNewMatchup(req.params.gameTitle, {
+    gameSettings: {},
+    p1Timer: {
+      type: "Fisher",
+      initialTime: 10 * 60 * 100,
+      extraTime: 5 * 60 * 100
+    },
+    p2Timer: {
+      type: "Fisher",
+      initialTime: 10 * 60 * 100,
+      extraTime: 5 * 60 * 100
+    }
+  });
   res.redirect("/");
+});
+
+router.get("/api/server_time", function(req, res) {
+  res.send({time: Date.now()});
 });
 
 router.get("/api/activeMatches", function(req, res) {

@@ -71,10 +71,10 @@ GameManager.prototype.getMatchupById = function(matchId) {
   return null;
 };
 
-GameManager.prototype.createNewMatchup = function(gameTitle, gameSettings) {
+GameManager.prototype.createNewMatchup = function(gameTitle, settings) {
   var self = this;
   var matchupId = gameTitle.toLowerCase() + "_" + this.counter;
-  var matchup = new Matchup(matchupId, gameTitle, gameSettings);
+  var matchup = new Matchup(matchupId, gameTitle, settings);
   this.counter += 1;
   matchup.onMatchUpdate(function() {
     self.dispatcher.dispatchEvent(MATCH_UPDATED, matchup);

@@ -1,8 +1,11 @@
 var Games = require("../matches/games");
+var Timers = require("../utilities/timer/timers");
 
 function ClientMatch(matchId, socket) {
   this.id = matchId;
   this.socket = socket;
+  this.p1Timer = null;
+  this.p2Timer = null;
   this.p1 = null;
   this.p2 = null;
   this.availableBot = [];
@@ -26,10 +29,17 @@ ClientMatch.prototype.isMyTurn = function() {
   } else {
     return this.socket.session.identifier == this.p2.identifier;
   }
-}
+};
 
-ClientMatch.prototype.receiveMove = function(move) {
+ClientMatch.prototype.receiveMove = function(move, timestamp) {
   this.game.makeMove(move);
+  if (this.p1Timer.isRunning) {
+    this.p1Timer.stop(timestamp);
+    this.p2Timer.start(timestamp);
+  } else {
+    this.p1Timer.start(timestamp);
+    this.p2Timer.stop(timestamp);
+  }
   for (var i = 0; i < this.onChangeCallbacks.length; ++i) {
     this.onChangeCallbacks[i]();
   }
@@ -39,6 +49,10 @@ ClientMatch.prototype.update = function(data) {
   this.p1 = data.p1;
   this.p2 = data.p2;
   this.game.initFromGameData(data.gameData);
+  this.p1Timer = Timers.newTimer(data.settings.p1Timer);
+  this.p1Timer.importState(data.timers.p1);
+  this.p2Timer = Timers.newTimer(data.settings.p1Timer);
+  this.p2Timer.importState(data.timers.p2);
   for (var i = 0; i < this.onChangeCallbacks.length; ++i) {
     this.onChangeCallbacks[i]();
   }
