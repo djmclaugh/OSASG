@@ -20,11 +20,14 @@ app.directive("asgMatch", ["MatchService", function(MatchService) {
         "<asg-match-control-panel class=control-panel></asg-match-control-panel>",
     link: function(scope, element, attrs) {
       scope.match = MatchService.getMatch(attrs.matchId);
+      scope.match.matchService = MatchService;
       scope.p1TimeRemaining = function() {
-        return scope.match.p1Timer.timeLeft(Date.now() - MatchService.clockOffset);
+        now = Math.max(Date.now() - MatchService.clockOffset, scope.match.p1Timer.lastTimestamp);
+        return scope.match.p1Timer.timeLeft(now);
       };
       scope.p2TimeRemaining = function() {
-        return scope.match.p2Timer.timeLeft(Date.now() - MatchService.clockOffset);
+        now = Math.max(Date.now() - MatchService.clockOffset, scope.match.p2Timer.lastTimestamp);
+        return scope.match.p2Timer.timeLeft(now);
       };
     }
   };

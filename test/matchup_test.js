@@ -3,9 +3,22 @@ var Matchup = require("../modules/matches/matchup");
 
 var MockPlayer = require("./mock/matches/mock_player");
 
+var defaultSettings = {
+  p1Timer: {
+    type: "Fisher",
+    initialTime: 100,
+    extraTime: 10
+  },
+  p2Timer: {
+    type: "Fisher",
+    initialTime: 100,
+    extraTime: 10
+  }
+};
+
 describe("Matchups", function() {
   it("should send an error message if the user plays out of turn", function(done) {
-    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
+    var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
     var p1SentAValidMove = false;
     
     var p1Callback = function(topic, payload) {
@@ -33,7 +46,7 @@ describe("Matchups", function() {
   });
   
   it("should send an error message if the user makes an illegal move", function(done) {
-    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
+    var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
     
     var p1Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
@@ -53,7 +66,7 @@ describe("Matchups", function() {
   });
   
   it("should not allow a user to sit in an occupied seat", function() {
-    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
+    var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
     match.addPlayer(new MockPlayer("name_1", "id_1"), 1);
     assert.throws(function() {
       match.addPlayer(new MockPlayer("name_2", "id_2"), 1);
@@ -61,7 +74,7 @@ describe("Matchups", function() {
   });
   
  it("should allow a user to reconnect", function(done) {
-    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
+    var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
     
     var p1ReceivedFirstP2Move = false;
     var p1ReceivedSecondP2Move = false;
@@ -112,7 +125,7 @@ describe("Matchups", function() {
   });
     
   it("should let two users join and play a full game while being spectated", function(done) {
-    var match = new Matchup("Tictactoe_0", "Tictactoe", {}, null);
+    var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
 
     // The sequence of moves the player should play.
     var moves = [4, 0, 2, 6, 3, 5, 7, 1, 8];

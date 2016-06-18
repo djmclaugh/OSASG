@@ -3,6 +3,19 @@ var GameManager = require("../modules/matches/game_manager");
 var Matchup = require("../modules/matches/matchup");
 var MockPlayer = require("./mock/matches/mock_player");
 
+var defaultSettings = {
+  p1Timer: {
+    type: "Fisher",
+    initialTime: 100,
+    extraTime: 10
+  },
+  p2Timer: {
+    type: "Fisher",
+    initialTime: 100,
+    extraTime: 10
+  }
+};
+
 describe("Game Manager", function() {
   var manager;
   
@@ -11,8 +24,8 @@ describe("Game Manager", function() {
   });
   
   it("should be able to create new matchups", function() {
-    var matchup_0 = manager.createNewMatchup("Tictactoe", {});
-    var matchup_1 = manager.createNewMatchup("Connect6", {});
+    var matchup_0 = manager.createNewMatchup("Tictactoe", defaultSettings);
+    var matchup_1 = manager.createNewMatchup("Connect6", defaultSettings);
     assert.equal(manager.matchups.length, 2);
     
     var matchup;
@@ -29,10 +42,10 @@ describe("Game Manager", function() {
   it("should store completed games");
   
   it("should show which matchups the user is currently playing", function() {
-    var matchup_0 = manager.createNewMatchup("Tictactoe", {});
-    var matchup_1 = manager.createNewMatchup("Tictactoe", {});
-    var matchup_2 = manager.createNewMatchup("Tictactoe", {});
-    var matchup_3 = manager.createNewMatchup("Tictactoe", {});
+    var matchup_0 = manager.createNewMatchup("Tictactoe", defaultSettings);
+    var matchup_1 = manager.createNewMatchup("Tictactoe", defaultSettings);
+    var matchup_2 = manager.createNewMatchup("Tictactoe", defaultSettings);
+    var matchup_3 = manager.createNewMatchup("Tictactoe", defaultSettings);
 
     var player = new MockPlayer("player_name", "player_id", null);
     
@@ -47,11 +60,11 @@ describe("Game Manager", function() {
   });
   
   it("should be able to fetch specific matchups", function() {
-    var matchup_abc = manager.createNewMatchup("Tictactoe", {});
+    var matchup_abc = manager.createNewMatchup("Tictactoe", defaultSettings);
     matchup_abc.id = "abc";
-    var matchup_efg = manager.createNewMatchup("Tictactoe", {});
+    var matchup_efg = manager.createNewMatchup("Tictactoe", defaultSettings);
     matchup_efg.id = "efg";
-    var matchup_hij = manager.createNewMatchup("Tictactoe", {});
+    var matchup_hij = manager.createNewMatchup("Tictactoe", defaultSettings);
     matchup_hij.id = "hij";
     
     assert.equal(manager.getMatchupById("efg"), matchup_efg);
