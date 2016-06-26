@@ -65,7 +65,8 @@ function Matchup(id, gameTitle, settings) {
   this._p1Timer = Timers.newTimer(settings.p1Timer);
   this._p2Timer = Timers.newTimer(settings.p2Timer);
   this._clock = new MatchClock(this._p1Timer, this._p2Timer);
-  this._game = Games.newGame(gameTitle, settings.gameSettings);  
+  this._game = Games.newGame(gameTitle, settings.gameSettings);
+  this._gameTitle = gameTitle;
   this._p1 = null;
   this._p2 = null;
   this._spectators = [];
@@ -83,7 +84,7 @@ Matchup.prototype.MESSAGES = {
 
 Matchup.prototype.ERRORS = {
   FAILED_TO_JOIN_MATCH : FailedToJoinMatchError
-}
+};
 
 Matchup.prototype.onMatchUpdate = function(callback) {
   return this._dispatcher.on(EVENT_UPDATE, callback);  
@@ -203,17 +204,27 @@ Matchup.prototype._broadcast = function(message, data) {
 };
 
 Matchup.prototype._checkIfOver = function() {
-  if (this._game.getStatus() != this._game.STATUS_ENUM.UNDECIDED) {
-    this._dispatcher.dispatchEvent(EVENT_END, this._game.getStatus());
+  var status = this._game.getStatus();
+  if (status != this._game.STATUS_ENUM.UNDECIDED) {
+    var result
+    if (status == this._game.STATUS_ENUM.P1_WIN) {
+      result = "P1";
+    } else if (status == this._game.STATUS_ENUM.P2_WIN) {
+      result = "P2";
+    } else {
+      result = "DRAW";
+    }
+    clearTimeout(this._timeoutId);
+    this._dispatcher.dispatchEvent(EVENT_END, {result: result});
   }
 };
 
 Matchup.prototype._checkTime = function() {
   if (this._clock.currentPlayerIsOutOfTime(Date.now())) {
-    // TODO(djmclaugh): report winner when it will matter.
-    this._dispatcher.dispatchEvent(EVENT_END, {});
+    var result = this._game.whosTurnIsIt() == this._game.PLAYER_ENUM.P1 ? "P2" : "P1";
+    this._dispatcher.dispatchEvent(EVENT_END, {result: result});
   } else {
-    setTimeout(this._checkTime.bind(this), 1000);
+    this._timeoutId = setTimeout(this._checkTime.bind(this), 1000);
   }
 };
 

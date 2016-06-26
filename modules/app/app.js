@@ -114,6 +114,7 @@ app.directive("asgBotInfo", function() {
     controllerAs: "botCtrl",
     link: function(scope, element, attrs) {
       scope.botCtrl.fetchBot(attrs.identifier);
+      scope.botCtrl.fetchMatches(attrs.identifier);
     }
   };
 });

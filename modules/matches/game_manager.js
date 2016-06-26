@@ -1,5 +1,6 @@
 var Matchup = require("./matchup");
 var EventDispatcher = require("../event_dispatcher");
+var db = require("../db");
 
 const MATCH_ADDED = "match-added";
 const MATCH_REMOVED = "match-removed";
@@ -79,7 +80,15 @@ GameManager.prototype.createNewMatchup = function(gameTitle, settings) {
   matchup.onMatchUpdate(function() {
     self.dispatcher.dispatchEvent(MATCH_UPDATED, matchup);
   });
-  matchup.onMatchEnd(function() {
+  matchup.onMatchEnd(function(data) {
+    if (settings.isRated) {
+      db.Match.addMatchToDatabase(matchup, data.result, function(error, addedMatch) {
+        if (error) {
+          console.log("Error while trying to add match to database:");
+          console.log(error);
+        }
+      });
+    }
     self.removeMatch(matchup);
   });
   this.addMatch(matchup);

@@ -248,17 +248,28 @@ router.get("/api/creatematch/:gameTitle", function(req, res) {
   gameManager.createNewMatchup(req.params.gameTitle, {
     gameSettings: {},
     p1Timer: {
-      type: "Fisher",
-      initialTime: 10 * 60 * 100,
-      extraTime: 5 * 60 * 100
+      type: "Bronstein",
+      initialTime: 10 * 1000,
+      bonusTime: 5 * 1000
     },
     p2Timer: {
-      type: "Fisher",
-      initialTime: 10 * 60 * 100,
-      extraTime: 5 * 60 * 100
-    }
+      type: "Bronstein",
+      initialTime: 10 * 1000,
+      bonusTime: 5 * 1000
+    },
+    isRated: true
   });
   res.redirect("/");
+});
+
+router.get("/api/matches/player/:playerId", function(req, res) {
+  db.Match.getMatchesForPlayer(req.params.playerId, function(error, matches) {
+    if (error) {
+      res.status(500).send(error.message);
+    } else {
+      res.send(matches);
+    }
+  });
 });
 
 router.get("/api/server_time", function(req, res) {

@@ -7,6 +7,7 @@ var uuid = require('node-uuid');
 const sessionModelName = "Session";
 const userModelName = "User";
 const botModelName = "Bot";
+const matchModelName = "Match";
 
 // --- Sessions ---
 var SessionSchema = new Schema({
@@ -133,11 +134,12 @@ botSchema.statics.createBotForUser = function (user, callback) {
       if (suffixValue > 0) {
         botData.username += "_" + suffixValue;
       }
+      botData.username += "[bot]"
       self.create(botData, callback);
     } else {
       // If we found a user with the desired username, try again with another one.
       ++suffixValue;
-      self.findOne({username: baseUsername + "_" + suffixValue}, onSameNameLookup);
+      self.findOne({username: baseUsername + "_" + suffixValue + "[bot]"}, onSameNameLookup);
     }
   }
 
@@ -168,6 +170,7 @@ botSchema.methods.changeUsername = function(newUsername, callback) {
   } else {
     // If a user is found, then the username is not available.
     // Otherwise, procede with changeing the user's username.
+    newUsername += "[bot]"
     var onLookup = function(error, bot) {
       if (error) {
         callback(error, null);
@@ -189,5 +192,66 @@ botSchema.methods.generateNewPassword = function(callback) {
 };
 
 exports.Bot = mongoose.model(botModelName, botSchema);
+
+// --- Matches ---
+var matchSchema = Schema({
+  p1: {type: Schema.Types.ObjectId, refPath: "p1Kind"},
+  p1Kind: {type: String, enum: [userModelName, botModelName]},
+  p2: {type: Schema.Types.ObjectId, refPath: "p2Kind"},
+  p2Kind: {type: String, enum: [userModelName, botModelName]},
+  result: {type: String, enum: ["P1", "P2", "DRAW"]},
+  game: String,
+  timeControls: {type: String, enum: ["Bullet", "Rapid", "Long"]},
+});
+
+
+// Statics
+// callback - function(error, match)
+matchSchema.statics.addMatchToDatabase = function(match, result, callback) {
+  // Time controls in a ranked match are the same for both players so we only have to check the 
+  // p1 time controls. We also assume a Bronstein timer.
+  if (match._settings.p1Timer.type != "Bronstein") {
+    callback(new Error("Invalid timer type for ranked match."), null);
+    return;
+  }
+
+  if (match._p1.identifier == match._p2.identifier) {
+    callback(new Error("Ranked matches should be between two different players."), null);
+    return;
+  }
+
+  var timePerTurn = match._settings.p1Timer.bonusTime;
+  var timeControls = "Long";
+  if (timePerTurn <= 30 * 1000) {
+    timeControls = "Rapid";
+  }
+  if (timePerTurn <= 5 * 1000) {
+    timeControls = "Bullet";
+  }
+  matchData = {
+    p1: match._p1.identifier,
+    p1Kind: match._p1.username.indexOf("[bot]") == -1 ? userModelName : botModelName,
+    p2: match._p2.identifier,
+    p2Kind: match._p2.username.indexOf("[bot]") == -1 ? userModelName : botModelName,
+    result: result,
+    game: match._gameTitle,
+    timeControls: timeControls
+  };
+
+  this.create(matchData, callback);
+};
+
+// callback - function(error, matches)
+matchSchema.statics.getMatchesForPlayer = function(identifier, callback) {
+  this.find({$or: [{"p1": identifier}, {"p2": identifier}]})
+      .populate("p1", "username")
+      .populate("p2", "username")
+      .exec(function(error, matches) {
+        callback(error, matches);
+      });
+};
+
+
+exports.Match = mongoose.model(matchModelName, matchSchema);
 
 mongoose.connect(config.databaseLocation);

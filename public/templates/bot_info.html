@@ -1,5 +1,5 @@
 <span ng-if="botCtrl.bot != null">
-  <h1>{{ botCtrl.bot.username }}[bot]</h1>
+  <h1>{{ botCtrl.bot.username }}</h1>
   <span ng-if="botCtrl.bot.isMyBot">
     <form ng-submit="botCtrl.submitName()">
       <p>
@@ -28,6 +28,21 @@
       <button ng-click="botCtrl.cancelDescriptionEdit()">Cancel</button>
       <button ng-click="botCtrl.finishDescriptionEdit()">Submit</button>
     </p>
+  </span>
+  <span ng-if="botCtrl.gameKeys().length > 0">
+    <h2>Stats: (Win / Lose / Draw)</h2>
+    <span ng-repeat="game in botCtrl.gameKeys()">
+      <h3>{{ game }}: </h3>
+      <span ng-repeat="timeControls in botCtrl.timeControlsKeys(game)">
+      <h4>{{ timeControls }}: </h4>
+        <p ng-repeat="player in botCtrl.playerKeys(game, timeControls)">
+          {{ player }}:
+          {{ botCtrl.matches[game][timeControls][player].win }} /
+          {{ botCtrl.matches[game][timeControls][player].lose }} /
+          {{ botCtrl.matches[game][timeControls][player].draw }}
+        </p>
+      </span>
+    </span>
   </span>
 </span>
 <p class="error" ng-show="botCtrl.error != null">{{ botCtrl.error.message }}</p>

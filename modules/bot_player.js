@@ -2,7 +2,6 @@ var Player = require("./matches/player");
 
 function BotPlayer(socket) {
   Player.call(this, socket);
-  this.username += "[bot]";
   this.gameList = socket.session.gameList.slice();
 }
 

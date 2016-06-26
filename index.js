@@ -40,6 +40,10 @@ var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
       to: recipient,
       subject: "Login Link"
   };
+  //TODO(djmclaugh): This was added so that I can get the link when email delivery failed.
+  // This should be removed once I figure out a better email delivery system.
+  console.log("Trying to send the following email:");
+  console.log(email);
   emailServer.send(email, function(error, message) {
     if (error) {
       console.log("Error while sending email:");
