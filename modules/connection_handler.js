@@ -281,7 +281,7 @@ ConnectionHandler.prototype._addPlayer = function(player) {
 };
 
 ConnectionHandler.prototype._removePlayer = function(player) {
-  var list = getOrCreateList(this._players, player.identifer);
+  var list = getOrCreateList(this._players, player.identifier);
   removeItemFromList(player, list);
   // Remove the player from any subscription.
   for (var topic in this._subscribers) {
