@@ -35,9 +35,9 @@ function getValueForCurrentPosition() {
   }
   
   var gameStatus = g.getStatus();
-  if (gameStatus != g.STATUS_ENUM.UNDECIDED) {
+  if (g.isOver()) {
     var value = {};
-    if (gameStatus == g.STATUS_ENUM.DRAW) {
+    if (gameStatus == g.STATUS.DRAW) {
       value.best = 0;
       value.worst = 0;
     } else {

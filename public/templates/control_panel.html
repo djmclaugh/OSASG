@@ -1,8 +1,8 @@
 <h3>{{match.id}}</h3>
 <span ng-if="match.p1 != null">
   <p>P1: {{match.p1.username}}</p>
-  <p ng-show="match.game.whosTurnIsIt() == match.game.PLAYER_ENUM.P1"><strong><asg-timer time-source="p1TimeRemaining"></asg-timer></strong></p>
-  <p ng-hide="match.game.whosTurnIsIt() == match.game.PLAYER_ENUM.P1"><asg-timer time-source="p1TimeRemaining"></asg-timer></p>
+  <p ng-show="match.game.getStatus() == match.game.STATUS.P1_TO_PLAY"><strong><asg-timer time-source="p1TimeRemaining"></asg-timer></strong></p>
+  <p ng-hide="match.game.getStatus() == match.game.STATUS.P1_TO_PLAY"><asg-timer time-source="p1TimeRemaining"></asg-timer></p>
 </span>
 <span ng-if="match.p1 == null">
   <p>P1:
@@ -14,8 +14,8 @@
 </span>
 <span ng-if="match.p2 != null">
   <p>P2: {{match.p2.username}}</p>
-  <p ng-show="match.game.whosTurnIsIt() == match.game.PLAYER_ENUM.P2"><strong><asg-timer time-source="p2TimeRemaining"></asg-timer></strong></p>
-  <p ng-hide="match.game.whosTurnIsIt() == match.game.PLAYER_ENUM.P2"><asg-timer time-source="p2TimeRemaining"></asg-timer></p>
+  <p ng-show="match.game.getStatus() == match.game.STATUS.P2_TO_PLAY"><strong><asg-timer time-source="p2TimeRemaining"></asg-timer></strong></p>
+  <p ng-hide="match.game.getStatus() == match.game.STATUS.P2_TO_PLAY"><asg-timer time-source="p2TimeRemaining"></asg-timer></p>
 </span>
 <span ng-if="match.p2 == null">
   <p>P2:
@@ -26,16 +26,19 @@
   </p>
 </span>
 <p ng-if="match.p1 && match.p2" ng-switch="match.getStatus()">
-  <span ng-switch-when="GAME_STATUS_UNDECIDED">
-    {{match.game.whosTurnIsIt() == match.game.PLAYER_ENUM.P1 ? "P1" : "P2"}} to play
+  <span ng-switch-when="P1_TO_PLAY">
+    P1 to play
   </span>
-  <span ng-switch-when="GAME_STATUS_DRAW">
+  <span ng-switch-when="P2_TO_PLAY">
+    P2 to play
+  </span>
+  <span ng-switch-when="DRAW">
     Game Over! DRAW!
   </span>
-  <span ng-switch-when="GAME_STATUS_P1_WIN">
+  <span ng-switch-when="P1_WIN">
     Game Over! P1 wins!
   </span>
-  <span ng-switch-when="GAME_STATUS_P2_WIN">
+  <span ng-switch-when="P2_WIN">
     Game Over! P2 wins!
   </span>
 </p>

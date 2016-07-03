@@ -134,17 +134,28 @@ describe("Matchups", function() {
     var p2ReceivedMoves = 0;
     var spectatorReceivedMoves = 0;
 
+    var p1ReceivedMatchOverUpdate = false;
+    var p2ReceivedMatchOverUpdate = false;
+    var spectatorReceivedMatchOverUpdate = false;
+
     function isDone() {
       return p1ReceivedMoves == moves.length
           && p2ReceivedMoves == moves.length
-          && spectatorReceivedMoves == moves.length;
+          && spectatorReceivedMoves == moves.length
+          && p1ReceivedMatchOverUpdate
+          && p2ReceivedMatchOverUpdate
+          && spectatorReceivedMatchOverUpdate;
     }
 
     var p1Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE) {
-        if (payload.p2 != null) {
+        if (payload.status == match.STATUS.P1_TO_PLAY) {
           // If the match has started, play a move.
           player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: moves[0]});
+        }
+        if (p1ReceivedMoves == moves.length) {
+          assert.equal(payload.status, match.STATUS.DRAW);
+          p1ReceivedMatchOverUpdate = true;
         }
       } else if (topic == match.MESSAGES.PLAY) {
         assert.equal(payload.move, moves[p1ReceivedMoves]);
@@ -163,7 +174,10 @@ describe("Matchups", function() {
 
     var p2Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE) {
-        // Do nothing
+        if (p2ReceivedMoves == moves.length) {
+          assert.equal(payload.status, match.STATUS.DRAW);
+          p2ReceivedMatchOverUpdate = true;
+        }
       } else if (topic == match.MESSAGES.PLAY) {
         assert.equal(payload.move, moves[p2ReceivedMoves]);
         ++p2ReceivedMoves;
@@ -181,7 +195,10 @@ describe("Matchups", function() {
 
     var spectatorCallback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE) {
-        // Do nothing
+        if (spectatorReceivedMoves == moves.length) {
+          assert.equal(payload.status, match.STATUS.DRAW);
+          spectatorReceivedMatchOverUpdate = true;
+        }
       } else if (topic == match.MESSAGES.PLAY) {
         assert.equal(payload.move, moves[spectatorReceivedMoves]);
         ++spectatorReceivedMoves;

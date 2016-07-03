@@ -54,10 +54,6 @@ Connect6.prototype.getColourToPlay = function() {
   return this.moves.length % 2 == 0 ? BLACK : WHITE;
 };
 
-Connect6.prototype.whosTurnIsIt = function() {
-  return this.moves.length % 2 == 0 ? this.PLAYER_ENUM.P1 : this.PLAYER_ENUM.P2;
-};
-
 // Checks if the move is valid.
 // This is necessary since we do not know the origin of the move object.
 Connect6.prototype.validateMove = function(move) {
@@ -90,7 +86,7 @@ Connect6.prototype.validateFormatOfMove = function(move) {
 
 // We assume that the move object has the proper format.
 Connect6.prototype.validateLegalityOfMove = function(move) {
-  if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
+  if (this.isOver()) {
     throw new this.IllegalMoveError(move, "No moves are legal since the game is already over.");
   }
   if (this.moves.length == 0 && move.length != 1) {
@@ -111,7 +107,7 @@ Connect6.prototype.validateLegalityOfMove = function(move) {
 };
 
 Connect6.prototype.getLegalMoves = function() {
-  if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
+  if (this.isOver()) {
     return [];
   }
   var openSpots = this.board.getPositionsWithState(EMPTY);
@@ -151,12 +147,12 @@ Connect6.prototype.undoLastMove = function() {
 
 Connect6.prototype.getStatus = function() {
   if (this.didLastMoveWin()) {
-    return this.moves.length % 2 == 0 ? this.STATUS_ENUM.P2_WIN : this.STATUS_ENUM.P1_WIN;
+    return this.moves.length % 2 == 0 ? this.STATUS.P2_WIN : this.STATUS.P1_WIN;
   }
   if (2 * this.moves.length - 1 >= this.board.N) {
-    return this.STATUS_ENUM.DRAW;
+    return this.STATUS.DRAW;
   }
-  return this.STATUS_ENUM.UNDECIDED;
+  return this.moves.length % 2 == 0 ? this.STATUS.P1_TO_PLAY : this.STATUS.P2_TO_PLAY;
 };
 
 Connect6.prototype.willMoveWin = function(move, colour) {

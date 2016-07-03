@@ -74,9 +74,9 @@ Connect6GUI.prototype.draw = function() {
     this.drawPresetStones();
     this.drawMouse();
     var status = this.game.getStatus();
-    if (status == this.game.STATUS_ENUM.P1_WIN) {
+    if (status == this.game.STATUS.P1_WIN) {
       this.drawWin(this.game.getWinLine(), "white");
-    } else if (status == this.game.STATUS_ENUM.P2_WIN) {
+    } else if (status == this.game.STATUS.P2_WIN) {
       this.drawWin(this.game.getWinLine(), "black");
     }
   }
@@ -136,22 +136,6 @@ Connect6GUI.prototype.onMouseClick = function(e) {
 ////////////////////////////////////////
 // Draw helpers
 ////////////////////////////////////////
-
-Connect6GUI.prototype.draw = function() {
-  this.context.drawImage(Assets.GO_BOARD, 0, 0);
-  if (this.game !== null) {
-    this.drawPlacedStones();
-    this.drawMarkup();
-    this.drawPresetStones();
-    this.drawMouse();
-    var status = this.game.getStatus();
-    if (status == this.game.STATUS_ENUM.P1_WIN) {
-      this.drawWin(this.game.getWinLine(), "white");
-    } else if (status == this.game.STATUS_ENUM.P2_WIN) {
-      this.drawWin(this.game.getWinLine(), "black");
-    }
-  }
-};
 
 Connect6GUI.prototype.drawWin = function(win_line, colour) {
   this.context.save();

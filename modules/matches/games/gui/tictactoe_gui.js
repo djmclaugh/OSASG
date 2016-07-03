@@ -52,7 +52,7 @@ TictactoeGUI.prototype.draw = function() {
     this.drawPreset();
     this.drawMouse();
     var status = this.game.getStatus();
-    if (status == this.game.STATUS_ENUM.P1_WIN || status == this.game.STATUS_ENUM.P2_WIN) {
+    if (status == this.game.STATUS.P1_WIN || status == this.game.STATUS.P2_WIN) {
       this.drawWin(this.game.getWinLine());
     }
   }

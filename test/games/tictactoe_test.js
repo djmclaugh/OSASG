@@ -25,7 +25,7 @@ describe("Tictactoe", function() {
     game.makeMove(3);
     game.makeMove(4);
     game.makeMove(6);
-    assert.equal(game.getStatus(), game.STATUS_ENUM.P1_WIN);
+    assert.equal(game.getStatus(), game.STATUS.P1_WIN);
   });
 
   it("should be able to detect a draw", function() {
@@ -38,6 +38,6 @@ describe("Tictactoe", function() {
     game.makeMove(7);
     game.makeMove(8);
     game.makeMove(2);
-    assert.equal(game.getStatus(), game.STATUS_ENUM.DRAW);
+    assert.equal(game.getStatus(), game.STATUS.DRAW);
   });
 });

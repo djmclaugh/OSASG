@@ -119,7 +119,7 @@ Bot.prototype.takeAction = function(match) {
   if (!amP1 && !amP2) {
     // If I'm not even part of this match, just forget about it.
     delete this.matches[match.id];
-  } else if (match.game.getStatus() != match.game.STATUS_ENUM.UNDECIDED) {
+  } else if (match.game.isOver()) {
     // If the game is over, just forget about it.
     delete this.matches[match.id];
   } else if (match.p1 == null || match.p2 == null) {

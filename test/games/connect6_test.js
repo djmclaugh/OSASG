@@ -52,7 +52,7 @@ describe("Connect6", function() {
     game.makeMove([21, 22]);
     game.makeMove([3, 4]);
     game.makeMove([23, 24]);
-    assert.equal(game.getStatus(), game.STATUS_ENUM.P2_WIN);
+    assert.equal(game.getStatus(), game.STATUS.P2_WIN);
   });
 
   // game taken from http://java.csie.nctu.edu.tw/~icwu/connect6/connect6.html#Ref_record
@@ -76,7 +76,7 @@ describe("Connect6", function() {
     game.makeMove([123, 103]);
     game.makeMove([ 83,  84]);
     game.makeMove([203, 183]);
-    assert.equal(game.getStatus(), game.STATUS_ENUM.P1_WIN);
+    assert.equal(game.getStatus(), game.STATUS.P1_WIN);
   });
 });
 

@@ -20,7 +20,7 @@ module.exports = ClientMatch;
 
 ClientMatch.prototype.getStatus = function() {
   if (!this.p1Timer || !this.p2Timer) {
-    return this.game.STATUS_ENUM.UNDECIDED
+    return this.game.STATUS.P1_TO_PLAY
   }
   var now = Math.max(this.p1Timer.lastTimestamp, this.p2Timer.lastTimestamp);
   now = Math.max(Date.now() - this.matchService.clockOffset, now);
@@ -31,7 +31,7 @@ ClientMatch.prototype.getStatus = function() {
         this.onChangeCallbacks[i]();
       }
     }
-    return this.game.STATUS_ENUM.P2_WIN;
+    return this.game.STATUS.P2_WIN;
   } else if (this.p2Timer.timeLeft(now) < 0) {
     if (!this.hasNotifiedOfTimeout) {
       this.hasNotifiedOfTimeout = true;
@@ -39,7 +39,7 @@ ClientMatch.prototype.getStatus = function() {
         this.onChangeCallbacks[i]();
       }
     }
-    return this.game.STATUS_ENUM.P1_WIN;
+    return this.game.STATUS.P1_WIN;
   } else {
     return this.game.getStatus();
   }
@@ -50,10 +50,10 @@ ClientMatch.prototype.onChange = function(callback) {
 };
 
 ClientMatch.prototype.isMyTurn = function() {
-  if (!this.p1 || !this.p2 || this.getStatus() != this.game.STATUS_ENUM.UNDECIDED) {
+  if (!this.p1 || !this.p2 || this.game.isOver()) {
     return false;
   }
-  if (this.game.whosTurnIsIt() == this.game.PLAYER_ENUM.P1) {
+  if (this.game.getStatus() == this.game.STATUS.P1_TO_PLAY) {
     return this.socket.session.identifier == this.p1.identifier;
   } else {
     return this.socket.session.identifier == this.p2.identifier;
@@ -63,7 +63,7 @@ ClientMatch.prototype.isMyTurn = function() {
 ClientMatch.prototype.receiveMove = function(move, timestamp) {
   this.hasNotifiedOfTimeout = false;
   this.game.makeMove(move);
-  if (this.getStatus() == this.game.STATUS_ENUM.UNDECIDED) {
+  if (!this.game.isOver()) {
     if (this.p1Timer.isRunning) {
       this.p1Timer.stop(timestamp);
       this.p2Timer.start(timestamp);

@@ -1,15 +1,11 @@
 function Game() {}
 
-Game.prototype.PLAYER_ENUM = {
-  P1: "GAME_PLAYER_P1",
-  P2: "GAME_PLAYER_P2"
-};
-
-Game.prototype.STATUS_ENUM = {
-  UNDECIDED: "GAME_STATUS_UNDECIDED",
-  P1_WIN: "GAME_STATUS_P1_WIN",
-  P2_WIN: "GAME_STATUS_P2_WIN",
-  DRAW: "GAME_STATUS_DRAW"
+Game.prototype.STATUS = {
+  P1_TO_PLAY: "P1_TO_PLAY",
+  P2_TO_PLAY: "P2_TO_PLAY",
+  P1_WIN: "P1_WIN",
+  P2_WIN: "P2_WIN",
+  DRAW: "DRAW"
 };
 
 function InvalidMoveFormatError(move, expectedFormat, reason) {
@@ -46,10 +42,6 @@ Game.prototype.copy = function() {
   return copy;
 };
 
-Game.prototype.whosTurnIsIt = function() {
-  throw new Error("This method needs to be implemented by the subclass.");
-};
-
 Game.prototype.getLegalMoves = function() {
   throw new Error("This method needs to be implemented by the subclass.");
 };
@@ -64,6 +56,11 @@ Game.prototype.makeMove = function(move) {
 
 Game.prototype.getStatus = function() {
   throw new Error("This method needs to be implemented by the subclass.");
+};
+
+Game.prototype.isOver = function() {
+  status = this.getStatus();
+  return status == this.STATUS.P1_WIN || status == this.STATUS.P2_WIN || status == this.STATUS.DRAW
 };
 
 module.exports = Game;

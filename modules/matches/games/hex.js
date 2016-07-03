@@ -57,10 +57,6 @@ Hex.prototype.swappedPosition = function(p) {
   return this.board.swappedXYPosition(p);
 };
 
-Hex.prototype.whosTurnIsIt = function() {
-  return this.moves.length % 2 == 0 ? this.PLAYER_ENUM.P1 : this.PLAYER_ENUM.P2;
-};
-
 Hex.prototype.getColourAt = function(position) {
   return this.board.getStateAtPosition(position);
 };
@@ -95,7 +91,7 @@ Hex.prototype.validateFormatOfMove = function(move) {
 
 // We assume that the move object has the proper format.
 Hex.prototype.validateLegalityOfMove = function(move) {
-  if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
+  if (this.isOver()) {
     throw new this.IllegalMoveError(move, "No moves are legal since the game is already over.");
   }
   if (move == -1) {
@@ -111,7 +107,7 @@ Hex.prototype.validateLegalityOfMove = function(move) {
 };
 
 Hex.prototype.getLegalMoves = function() {
-  if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
+  if (this.isOver()) {
     return [];
   }
   var legalMoves = this.board.getPositionsWithState(EMPTY);
@@ -143,10 +139,10 @@ Hex.prototype.undoLastMove = function() {
 
 Hex.prototype.getStatus = function() {
   if (this.getWinPath()) {
-    return this.moves.length % 2 == 0 ? this.STATUS_ENUM.P2_WIN : this.STATUS_ENUM.P1_WIN;
+    return this.moves.length % 2 == 0 ? this.STATUS.P2_WIN : this.STATUS.P1_WIN;
   }
   // No draws are possible in Hex. So if now one won, it is still undecided.
-  return this.STATUS_ENUM.UNDECIDED;
+  return this.moves.length % 2 == 0 ? this.STATUS.P1_TO_PLAY : this.STATUS.P2_TO_PLAY;
 };
 
 Hex.prototype.getWinPath = function() {

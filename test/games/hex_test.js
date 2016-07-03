@@ -53,14 +53,14 @@ describe("Hex", function() {
     assert.equal(game.getColourAt(97), game.COLOUR_ENUM.BLUE);
   });
 
-  it("should be able to play a simple games", function() {
+  it("should be able to play simple games", function() {
     game.makeMove(0);
     game.makeMove(1);
     game.makeMove(3);
     game.makeMove(4);
     game.makeMove(6);
     game.makeMove(7);
-    assert.equal(game.getStatus(), game.STATUS_ENUM.P2_WIN);
+    assert.equal(game.getStatus(), game.STATUS.P2_WIN);
 
     game = new Hex({size:5});
     game.makeMove(3);
@@ -85,7 +85,7 @@ describe("Hex", function() {
     game.makeMove(1);
     game.makeMove(5);
     game.makeMove(6);
-    assert.equal(game.getStatus(), game.STATUS_ENUM.P2_WIN);
+    assert.equal(game.getStatus(), game.STATUS.P2_WIN);
   });
 });
 

@@ -40,10 +40,6 @@ Tictactoe.prototype.generateGameData = function() {
   return gameData;
 };
 
-Tictactoe.prototype.whosTurnIsIt = function() {
-  return this.moves.length % 2 == 0 ? this.PLAYER_ENUM.P1 : this.PLAYER_ENUM.P2;
-};
-
 Tictactoe.prototype.getColourAt = function(position) {
   return this.board.getStateAtPosition(position);
 };
@@ -74,7 +70,7 @@ Tictactoe.prototype.validateFormatOfMove = function(move) {
 
 // We assume that the move object has the proper format.
 Tictactoe.prototype.validateLegalityOfMove = function(move) {
-  if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
+  if (this.isOver()) {
     throw new this.IllegalMoveError(move, "No moves are legal since the game is already over");
   }
   if (this.getColourAt(move) != EMPTY) {
@@ -83,7 +79,7 @@ Tictactoe.prototype.validateLegalityOfMove = function(move) {
 };
 
 Tictactoe.prototype.getLegalMoves = function() {
-  if (this.getStatus() != this.STATUS_ENUM.UNDECIDED) {
+  if (this.isOver()) {
     return [];
   }
   return this.board.getPositionsWithState(EMPTY);
@@ -102,12 +98,12 @@ Tictactoe.prototype.undoLastMove = function() {
 
 Tictactoe.prototype.getStatus = function() {
   if (this.getWinLine()) {
-    return this.moves.length % 2 == 0 ? this.STATUS_ENUM.P2_WIN : this.STATUS_ENUM.P1_WIN;
+    return this.moves.length % 2 == 0 ? this.STATUS.P2_WIN : this.STATUS.P1_WIN;
   }
   if (this.moves.length == 9) {
-    return this.STATUS_ENUM.DRAW;
+    return this.STATUS.DRAW;
   }
-  return this.STATUS_ENUM.UNDECIDED;
+  return this.moves.length % 2 == 0 ? this.STATUS.P1_TO_PLAY : this.STATUS.P2_TO_PLAY;
 };
 
 const possibleWins = [
