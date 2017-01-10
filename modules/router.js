@@ -249,13 +249,13 @@ router.get("/api/creatematch/:gameTitle", function(req, res) {
     gameSettings: {},
     p1Timer: {
       type: "Bronstein",
-      initialTime: 10 * 1000,
-      bonusTime: 5 * 1000
+      initialTime: 99 * 60 * 60 * 1000,
+      bonusTime: 99 * 60 * 60 * 1000
     },
     p2Timer: {
       type: "Bronstein",
-      initialTime: 10 * 1000,
-      bonusTime: 5 * 1000
+      initialTime: 99 * 60 * 60 * 1000,
+      bonusTime: 99 * 60 * 60 * 1000
     },
     isRated: true
   });

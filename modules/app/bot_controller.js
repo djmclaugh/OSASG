@@ -31,25 +31,26 @@ module.exports = ["$http", "$sce", function($http, $sce) {
         self.matches[match.game] = {};
       }
       var gameSection = self.matches[match.game];
-      if (!(match.timeControls in gameSection)) {
-        gameSection[match.timeControls] = {};
-      }
-      var timeControlsSection = gameSection[match.timeControls];
-      var other = self.identifier == match.p1._id ? match.p2.username : match.p1.username;
-      if (!(other in timeControlsSection)) {
-        timeControlsSection[other] = {
+      var p1 = match.p1.user ? match.p1.user : match.p1.bot;
+      var p2 = match.p2.user ? match.p2.user : match.p2.bot;
+      var amP1 = self.identifier == p1._id;
+      var other = amP1 ? p2 : p1;
+      var key = other._id;
+      if (!(key in gameSection)) {
+        gameSection[key] = {
           win: 0,
           lose: 0,
-          draw: 0
+          draw: 0,
+          player: other
         };
       }
       if (match.result == "DRAW") {
-        timeControlsSection[other].draw += 1;
-      } else if ((match.result == "P1" && match.p1._id == self.identifier)
-          || (match.result == "P2" && match.p2._id == self.identifier)) {
-        timeControlsSection[other].win += 1;
+        gameSection[key].draw += 1;
+      } else if ((match.result == "P1" && match.p1.identifier == self.identifier)
+          || (match.result == "P2" && match.p2.identifier == self.identifier)) {
+        gameSection[key].win += 1;
       } else {
-        timeControlsSection[other].lose += 1;
+        gameSection[key].lose += 1;
       }
     }
     self.matchError = null;
@@ -59,12 +60,8 @@ module.exports = ["$http", "$sce", function($http, $sce) {
     return Object.keys(self.matches);
   };
 
-  self.timeControlsKeys = function(game) {
+  self.playerKeys = function(game) {
     return Object.keys(self.matches[game]);
-  };
-
-  self.playerKeys = function(game, timeControls) {
-    return Object.keys(self.matches[game][timeControls]);
   };
 
   function onMatchError(response) {

@@ -161,3 +161,23 @@ app.filter("isGuest", function() {
     return username.indexOf("[guest]") != -1;
   };
 });
+
+app.filter("isBot", function() {
+  return function(username) {
+    return username.indexOf("[bot]") != -1;
+  };
+});
+
+app.filter("userLink", function($sce, isBotFilter) {
+  return function(userObject, showInNewWindow) {
+    // For now, only link to the players details if they are a bot.
+    html = userObject.username;
+    if (isBotFilter(userObject.username)) {
+      var id = userObject.identifier ? userObject.identifier : userObject._id;
+      var target = showInNewWindow ? " target='_blank'" : "";
+      html = "<a href='/bot/" + id + "'" + target + ">" + userObject.username + "</a>";
+    }
+    return $sce.trustAsHtml(html);
+  };
+});
+

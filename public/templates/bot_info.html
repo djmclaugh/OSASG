@@ -10,11 +10,13 @@
   </span>
   <p>Owner: {{ botCtrl.bot.owner.username }}</p>
   <span ng-if="botCtrl.bot.isMyBot">
+    <br>
     <h2>Login Info: </h2>
     <p>Identifier: {{ botCtrl.bot.identifier }}</p>
     <p>Password: {{ botCtrl.bot.password }}</p>
     <p><button ng-click="botCtrl.changePassword()">Generate New Password</button></p>
   </span>
+  <br>
   <h2>Description: </h2>
   <span ng-hide="botCtrl.isEditingDescription">
     <div ng-bind-html="botCtrl.htmlFromMarkdown(botCtrl.bot.description)"></div>
@@ -30,18 +32,16 @@
     </p>
   </span>
   <span ng-if="botCtrl.gameKeys().length > 0">
+    <br>
     <h2>Stats: (Win / Lose / Draw)</h2>
     <span ng-repeat="game in botCtrl.gameKeys()">
       <h3>{{ game }}: </h3>
-      <span ng-repeat="timeControls in botCtrl.timeControlsKeys(game)">
-      <h4>{{ timeControls }}: </h4>
-        <p ng-repeat="player in botCtrl.playerKeys(game, timeControls)">
-          {{ player }}:
-          {{ botCtrl.matches[game][timeControls][player].win }} /
-          {{ botCtrl.matches[game][timeControls][player].lose }} /
-          {{ botCtrl.matches[game][timeControls][player].draw }}
-        </p>
-      </span>
+      <p ng-repeat="identifier in botCtrl.playerKeys(game)">
+        <span ng-bind-html="botCtrl.matches[game][identifier].player | userLink : false"></span>:
+        {{ botCtrl.matches[game][identifier].win }} /
+        {{ botCtrl.matches[game][identifier].lose }} /
+        {{ botCtrl.matches[game][identifier].draw }}
+      </p>
     </span>
   </span>
 </span>

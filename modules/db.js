@@ -195,10 +195,16 @@ exports.Bot = mongoose.model(botModelName, botSchema);
 
 // --- Matches ---
 var matchSchema = Schema({
-  p1: {type: Schema.Types.ObjectId, refPath: "p1Kind"},
-  p1Kind: {type: String, enum: [userModelName, botModelName]},
-  p2: {type: Schema.Types.ObjectId, refPath: "p2Kind"},
-  p2Kind: {type: String, enum: [userModelName, botModelName]},
+  p1: {
+    identifier: String,
+    bot: {type: Schema.Types.ObjectId, ref:botModelName},
+    user: {type: Schema.Types.ObjectId, ref:userModelName}
+  },
+  p2: {
+    identifier: String,
+    bot: {type: Schema.Types.ObjectId, ref:botModelName},
+    user: {type: Schema.Types.ObjectId, ref:userModelName}
+  },
   result: {type: String, enum: ["P1", "P2", "DRAW"]},
   game: String,
   timeControls: {type: String, enum: ["Bullet", "Rapid", "Long"]},
@@ -228,11 +234,17 @@ matchSchema.statics.addMatchToDatabase = function(match, result, callback) {
   if (timePerTurn <= 5 * 1000) {
     timeControls = "Bullet";
   }
+  var p1Object = match._p1.username.indexOf("[bot]") == -1 ?
+      {user: match._p1.identifier} :
+      {bot: match._p1.identifier};
+  p1Object.identifier = match._p1.identifier;
+  var p2Object = match._p2.username.indexOf("[bot]") == -1 ?
+      {user: match._p2.identifier} :
+      {bot: match._p2.identifier};
+  p2Object.identifier = match._p2.identifier;
   matchData = {
-    p1: match._p1.identifier,
-    p1Kind: match._p1.username.indexOf("[bot]") == -1 ? userModelName : botModelName,
-    p2: match._p2.identifier,
-    p2Kind: match._p2.username.indexOf("[bot]") == -1 ? userModelName : botModelName,
+    p1: p1Object,
+    p2: p2Object,
     result: result,
     game: match._gameTitle,
     timeControls: timeControls
@@ -243,9 +255,14 @@ matchSchema.statics.addMatchToDatabase = function(match, result, callback) {
 
 // callback - function(error, matches)
 matchSchema.statics.getMatchesForPlayer = function(identifier, callback) {
-  this.find({$or: [{"p1": identifier}, {"p2": identifier}]})
-      .populate("p1", "username")
-      .populate("p2", "username")
+  this.find({$or: [
+      {"p1.identifier": identifier},
+      {"p2.identifier": identifier},
+  ]})
+      .populate("p1.bot", "username")
+      .populate("p1.user", "username")
+      .populate("p2.bot", "username")
+      .populate("p2.user", "username")
       .exec(function(error, matches) {
         callback(error, matches);
       });
@@ -255,3 +272,4 @@ matchSchema.statics.getMatchesForPlayer = function(identifier, callback) {
 exports.Match = mongoose.model(matchModelName, matchSchema);
 
 mongoose.connect(config.databaseLocation);
+
