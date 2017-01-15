@@ -8,7 +8,6 @@ var https = require("https");
 var router = express.Router();
 
 function fetchUserInformation(req, res, next) {
-  var wasPreviouslyLoggedIn = !req.session.isGuest;
   if (req.user) {
     db.User.findById(req.user, function(error, user) {
       if (error) {
@@ -24,7 +23,7 @@ function fetchUserInformation(req, res, next) {
   } else {
     req.session.user = null;
     req.session.isGuest = true;
-    if (wasPreviouslyLoggedIn || !req.session.username) {
+    if (!req.session.username || !req.session.username.includes("[guest]")) {
       guest_names.getGuestName(function(username) {
         req.session.username = username;
 	if (req.session.username == null) {

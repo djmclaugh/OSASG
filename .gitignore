@@ -9,3 +9,6 @@ node_modules
 # Config files
 config.json
 ai/bot_config.json
+
+# Generated files
+public/javascript/osasg_client.js

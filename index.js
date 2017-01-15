@@ -65,7 +65,7 @@ io.use(function setSessionInfo(socket, next) {
       } else {
         socket.session = {};
         socket.session.username = session.username;
-        socket.session.identifier = session.isGuest ? session.username : session.passwordless;
+        socket.session.identifier = !session.user ? session.username : session.passwordless;
         socket.emit("session-info", socket.session);
       }
       next();

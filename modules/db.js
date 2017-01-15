@@ -150,7 +150,7 @@ botSchema.statics.createBotForUser = function (user, callback) {
       var error = new Error("Only 5 bots per user.");
       callback(error, null);
     } else {
-      self.findOne({username: baseUsername}, onSameNameLookup);
+      self.findOne({username: baseUsername + "[bot]"}, onSameNameLookup);
     }
   };
 
