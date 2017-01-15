@@ -14,8 +14,6 @@
 </span>
 <span ng-if="match.p2 != null">
   <p>P2: <span ng-bind-html='match.p2 | userLink:true'</span></p>
-  <p ng-if="match.p2.username.indexOf('[bot]') == -1">P2: {{match.p2.username}}</p>
-  <p ng-if="match.p2.username.indexOf('[bot]') != -1">P2: <a href="/bot/{{ match.p2.identifier }}" target="_blank">{{match.p2.username}}</a></p>
   <p ng-show="match.game.getStatus() == match.game.STATUS.P2_TO_PLAY"><strong><asg-timer time-source="p2TimeRemaining"></asg-timer></strong></p>
   <p ng-hide="match.game.getStatus() == match.game.STATUS.P2_TO_PLAY"><asg-timer time-source="p2TimeRemaining"></asg-timer></p>
 </span>

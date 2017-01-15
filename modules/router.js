@@ -8,46 +8,43 @@ var https = require("https");
 var router = express.Router();
 
 function fetchUserInformation(req, res, next) {
-  if (typeof(res.locals) == "undefined") {
-    res.locals = {};
-  }
+  var wasPreviouslyLoggedIn = !req.session.isGuest;
   if (req.user) {
     db.User.findById(req.user, function(error, user) {
-      res.locals.user = user;
-      next();
-    });
-  } else {
-    next();
-  }
-}
-
-function checkCredentials(req, res, next) {
-  if (res.locals.user) {
-    req.session.username = res.locals.user.username;
-    req.session.isGuest = false;
-    next();
-  } else if (!req.session.isGuest) {
-    guest_names.getGuestName(function(username) {
-      req.session.username = username;
-      if (req.session.username == null) {
-        req.session.username = req.session.id;
+      if (error) {
+        console.log(error);
+	req.session.user = null;
+	req.session.username = req.session.id;
+      } else {
+        req.session.user = user;
+	req.session.username = user.username;
       }
-      req.session.isGuest = true;
       next();
     });
   } else {
-    next();
+    req.session.user = null;
+    req.session.isGuest = true;
+    if (wasPreviouslyLoggedIn || !req.session.username) {
+      guest_names.getGuestName(function(username) {
+        req.session.username = username;
+	if (req.session.username == null) {
+	  req.session.username = req.session.id;
+	}
+	next();
+      });
+    } else {
+      next();
+    }
   }
 }
 
 router.use(fetchUserInformation);
-router.use(checkCredentials);
 
 router.get("/", function(req, res) {
   res.render("index", {
       title: "Open Source Abstract Strategy Games",
       username: req.session.username,
-      isGuest: req.session.isGuest
+      isGuest: !req.session.user
   });
 });
 
@@ -81,10 +78,10 @@ router.get("/match/:gameId", function(req, res) {
 router.post("/api/settings/change_username", function(req, res) {
   if (!req.body.desiredUsername) {
     res.status(400).send("Please enter your desired username.");
-  } else if (!res.locals.user) {
+  } else if (!req.session.user) {
     res.status(403).send("You must be logged in to change your username.");
   } else {
-    res.locals.user.changeUsername(req.body.desiredUsername, function(error, user) {
+    req.session.user.changeUsername(req.body.desiredUsername, function(error, user) {
       if (error) {
         res.status(500).send(error.message);
       } else {
@@ -98,10 +95,10 @@ router.post("/api/settings/change_username", function(req, res) {
 // Will send a 403 response if no user is logged in.
 // Will send a 500 response if this fails for any other reason.
 router.post("/api/bots/create_bot", function(req, res) {
-  if (!res.locals.user) {
+  if (!req.session.user) {
     res.status(403).send("you must be logged in to create a bot.");
   } else {
-    db.Bot.createBotForUser(res.locals.user, function(error, bot) {
+    db.Bot.createBotForUser(req.session.user, function(error, bot) {
       if (error) {
         res.status(500).send(error.message);
       } else {
@@ -115,10 +112,10 @@ router.post("/api/bots/create_bot", function(req, res) {
 // Will send a 403 response if no user is logged in.
 // Will send a 500 response if this fails for any other reason.
 router.get("/api/bots", function(req, res) {
-  if (!res.locals.user) {
+  if (!req.session.user) {
     res.status(403).send("you must be logged in to request your bots.");
   } else {
-    db.Bot.find({owner: res.locals.user}, function(error, bots) {
+    db.Bot.find({owner: req.session.user}, function(error, bots) {
       if (error) {
         res.status(500).send(error.message);
       } else {
@@ -162,7 +159,7 @@ router.get("/api/bots/:botId", function(req, res) {
         } else if(!bot) {
           res.status(404).send("Bot not found.");
         } else {
-          res.send(botData(bot, res.locals.user));
+          res.send(botData(bot, req.session.user));
         }
       });
 });
@@ -179,14 +176,14 @@ router.post("/api/bots/:botId/change_username", function(req, res) {
       .exec(function(error, bot) {
         if (error) {
           res.status(500).send(error.message);
-        } else if (!res.locals.user || res.locals.user.id != bot.owner.id) {
+        } else if (!req.session.user || req.session.user.id != bot.owner.id) {
           res.status(403).send("You cannot change the name of a bot you don't own.");
         } else {
           bot.changeUsername(req.body.desiredUsername, function(error) {
             if (error) {
               res.status(500).send(error.message);
             } else {
-              res.send(botData(bot, res.locals.user));
+              res.send(botData(bot, req.session.user));
             }
           });
         }
@@ -205,7 +202,7 @@ router.post("/api/bots/:botId/change_description", function(req, res) {
       .exec(function(error, bot) {
         if (error) {
           res.status(500).send(error.message);
-        } else if (!res.locals.user || res.locals.user.id != bot.owner.id) {
+        } else if (!req.session.user || req.session.user.id != bot.owner.id) {
           res.status(403).send("You cannot change the password of a bot you don't own.");
         } else {
           bot.description = req.body.desiredDescription;
@@ -213,7 +210,7 @@ router.post("/api/bots/:botId/change_description", function(req, res) {
             if (error) {
               res.status(500).send(error.message);
             } else {
-              res.send(botData(bot, res.locals.user));
+              res.send(botData(bot, req.session.user));
             }
           });
         }
@@ -230,14 +227,14 @@ router.post("/api/bots/:botId/change_password", function(req, res) {
       .exec(function(error, bot) {
         if (error) {
           res.status(500).send(error.message);
-        } else if (!res.locals.user || res.locals.user.id != bot.owner.id) {
+        } else if (!req.session.user || req.session.user.id != bot.owner.id) {
           res.status(403).send("You cannot change the password of a bot you don't own.");
         } else {
           bot.generateNewPassword(function(error) {
             if (error) {
               res.status(500).send(error.message);
             } else {
-              res.send(botData(bot, res.locals.user));
+              res.send(botData(bot, req.session.user));
             }
           });
         }
@@ -333,6 +330,7 @@ router.post("/sendToken", function(req, res) {
       } else if (!user) {
         callback(new Error("No user found"), null);
       } else {
+        console.log(user);
         callback(null, user._id);
       }
     });

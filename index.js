@@ -15,8 +15,9 @@ app.use(cookieParser(config.secret));
 
 // Setup session
 var session = require("express-session");
-var MongoStore = require("connect-mongo")(session);
-var memoryStore = new MongoStore({ url: config.databaseLocation });
+var memoryStore = new (require("express-sessions"))({
+  storage: "mongodb"
+});
 app.use(session({
   secret: config.secret,
   saveUninitialized: false,
@@ -26,33 +27,21 @@ app.use(session({
 }));
 
 // Setup passwordless
-var email = require("emailjs");
-var PasswordlessMongoStore = require("passwordless-mongostore");
+var PasswordlessMongoStore = require("passwordless-mongostore-bcrypt-node");
 var passwordless = require("passwordless");
 
-var emailServer = email.server.connect(config.emailServerOptions);
 var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
   var email = {
       text: "You can now access your account by following this link:\n" +
             config.appURL + ":" + config.port + "?token=" + tokenToSend + "&uid=" +
             encodeURIComponent(uidToSend),
-      from: config.emailAddress,
-      to: recipient,
-      subject: "Login Link"
   };
   //TODO(djmclaugh): This was added so that I can get the link when email delivery failed.
   // This should be removed once I figure out a better email delivery system.
   console.log("Trying to send the following email:");
   console.log(email);
-  emailServer.send(email, function(error, message) {
-    if (error) {
-      console.log("Error while sending email:");
-      console.log(error);
-    }
-    callback(error);
-  });
 };
-passwordless.init(new PasswordlessMongoStore(config.databaseLocation));
+passwordless.init(new PasswordlessMongoStore(config.passwordlessStoreLocation));
 passwordless.addDelivery(emailDelivery);
 
 app.use(passwordless.sessionSupport());

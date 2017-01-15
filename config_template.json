@@ -3,12 +3,7 @@
   "botPort": The port that the bots should connect to,
   "appURL": URL for the app,
   "databaseLocation": location of mongo database,
+  "passwordlessStoreLocation": location of the mongo database used to store passwordless information,
   "secret": secret string used to encode cookies,
-  "emailServerOptions": {
-    "user": username,
-    "password": password,
-    "host": host,
-    "ssl": is using ssl
-  },
-  "emailAddress": what the author of emails sent by this app should look like,
+  "recaptchaURL": recaptcha url
 }

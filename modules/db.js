@@ -1,8 +1,8 @@
 var config = require("../config.json");
-var mongoose = require('mongoose');
+var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
-var uuid = require('node-uuid');
+var uuid = require("uuid");
 
 const sessionModelName = "Session";
 const userModelName = "User";
@@ -11,7 +11,7 @@ const matchModelName = "Match";
 
 // --- Sessions ---
 var SessionSchema = new Schema({
-  session: Object
+  data: Object
 });
 
 exports.Session = mongoose.model(sessionModelName, SessionSchema);
@@ -271,5 +271,6 @@ matchSchema.statics.getMatchesForPlayer = function(identifier, callback) {
 
 exports.Match = mongoose.model(matchModelName, matchSchema);
 
-mongoose.connect(config.databaseLocation);
+mongoose.Promise = global.Promise;
+mongoose.createConnection(config.databaseLocation);
 

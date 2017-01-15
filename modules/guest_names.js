@@ -4,7 +4,10 @@ var fs = require('fs');
 var names_location = path.join(__dirname, '../public/other/guest_names.txt');
 
 function getAvailablesGuestNames(callback) {
-  var lines = fs.readFileSync(names_location).toString().split("\n");
+  var lines = fs.readFileSync(names_location).toString().split("\r\n");
+  if (lines.length == 1) {
+    lines = lines[0].split("\n");
+  }
   var names = [];
   for (var i = 0; i < lines.length; ++i) {
     names.push(lines[i] + "[guest]");
@@ -16,7 +19,7 @@ function getAvailablesGuestNames(callback) {
       return;
     }
     for (var i = 0; i < sessions.length; ++i) {
-      var index = names.indexOf(sessions[i].session.username);
+      var index = names.indexOf(sessions[i].data.username);
       if (index >= 0) {
         names.splice(index, 1);
       }
