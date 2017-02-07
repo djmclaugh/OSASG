@@ -27,6 +27,7 @@
     "express": "^4.9.5",
     "express-session": "^1.11.3",
     "express-sessions": "^1.0.6",
+    "express-ws": "^2.0.0",
     "markdown-it": "^6.0.5",
     "mocha": "^2.3.3",
     "mongoose": "^4.7.6",

@@ -13,3 +13,7 @@ p {
   padding-right: 10%;
   text-align: center;
 }
+
+.error {
+  color: red;
+}

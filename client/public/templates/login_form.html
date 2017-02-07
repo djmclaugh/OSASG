@@ -1,0 +1,12 @@
+<h3>Log In</h3>
+<p>To log in, simply enter your email address and you'll receive a link to your existing or newly created account.</p>
+<form (ngSubmit)="onSubmit()">
+  <p>
+    <label for="email-field">Email: </label>
+    <input id="email-field" type="email" name="email" [disabled]="submitting || successMessage" [(ngModel)]="email">
+  </p>
+  <p><button type="submit" [disabled]="submitting || email.length == 0 || successMessage">Log in</button></p>
+  <p [hidden]="!submitting"><strong>Sending email...</strong></p>
+  <p [hidden]="!successMessage"><strong>{{ successMessage }}</strong></p>
+  <p class="error" [hidden]="!errorMessage">{{ errorMessage }}</p>
+</form>

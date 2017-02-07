@@ -5,6 +5,8 @@ var bodyParser = require("body-parser");
 var express = require("express");
 var app = express();
 var http = require("http").Server(app);
+var expressWs = require("express-ws")(app, http);
+
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -36,20 +38,32 @@ var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
             config.appURL + ":" + config.port + "?token=" + tokenToSend + "&uid=" +
             encodeURIComponent(uidToSend),
   };
-  //TODO(djmclaugh): This was added so that I can get the link when email delivery failed.
+  // TODO(djmclaugh): This was added so that I can get the link when email delivery failed.
   // This should be removed once I figure out a better email delivery system.
   console.log("Trying to send the following email:");
   console.log(email);
+  callback();
 };
 passwordless.init(new PasswordlessMongoStore(config.passwordlessStoreLocation));
 passwordless.addDelivery(emailDelivery);
 
 app.use(passwordless.sessionSupport());
-app.use(passwordless.acceptToken({ successRedirect: "/"}));
+app.use(passwordless.acceptToken({ successRedirect: "http://localhost:8002/"}));
 
 // Setup router
 var router = require("./modules/router");
 app.use(router);
+
+app.ws("/", function(ws, req) {
+  var message = {};
+  message.type = "user-info";
+  message.username = req.session.username;
+  message.userId = req.session.user ? req.session.user.id : null;
+  ws.send(JSON.stringify(message));
+  ws.on("message", function(msg) {
+    console.log("received message: " + msg);
+  });
+});
 
 // Setup websockets
 var io = require("socket.io")(http);

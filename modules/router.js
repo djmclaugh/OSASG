@@ -7,6 +7,14 @@ var https = require("https");
 
 var router = express.Router();
 
+router.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "http://localhost:8002");
+  res.header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
 function fetchUserInformation(req, res, next) {
   if (req.user) {
     db.User.findById(req.user, function(error, user) {
@@ -26,10 +34,10 @@ function fetchUserInformation(req, res, next) {
     if (!req.session.username || !req.session.username.includes("[guest]")) {
       guest_names.getGuestName(function(username) {
         req.session.username = username;
-	if (req.session.username == null) {
-	  req.session.username = req.session.id;
-	}
-	next();
+	      if (req.session.username == null) {
+	        req.session.username = req.session.id;
+	      }
+	      next();
       });
     } else {
       next();
@@ -65,6 +73,66 @@ router.get("/match/:gameId", function(req, res) {
       username: req.session.username,
       id: req.params.gameId
   });
+});
+
+// Returns info about the currently logged in user.
+// No known reason for failures.
+// res - {
+//   username: The username of the currently logged in user.
+//   userId: The userId of the currently logged in user, null if the user is a guest.
+// }
+router.get("/user_info", function(req, res) {
+  res.send({
+    username: req.session.username,
+    userId: req.session.user ? req.session.user.id : null
+  });
+});
+
+// TODO(djmclaugh): This currently only outputs the email to the console. Need to hook up to
+// actual email service an protect this endpoint against bots (with a recaptcha or something).
+//
+// Sends a login email to the specified address and returns a message describing the action.
+// req - {
+//   user: The email address of the user that wants to login.
+// }
+// res - {
+//   message: message
+// }
+router.post("/send_login_email", function(req, res) {
+  var response = {};
+  if (typeof req.body.user != "string") {
+    response.message = "No valid email provided";
+    res.status(400).send(response);
+    return;
+  }
+
+  passwordless.requestToken(getUserId)(req, res, onEmailSent);
+
+  function getUserId(email, delivery, callback, req) {
+    db.User.getOrCreateWithEmail(email, function(error, user) {
+      if (error) {
+        callback(error, null);
+      } else if (!user) {
+        callback(new Error("No user found"), null);
+      } else {
+        callback(null, user._id);
+      }
+    });
+  }
+
+  function onEmailSent(error) {
+    if (error) {
+      response.message = error.message;
+      res.status(500).send(response);
+    } else {
+      response.message = "An email has been sent to " + req.body.user + ".\n";
+      res.send(response);
+    }
+  }
+});
+
+router.get("/logout", passwordless.logout(), function(req, res) {
+  res.redirect("/");
 });
 
 // Changes the username of the currently logged in user.
@@ -344,10 +412,6 @@ router.post("/sendToken", function(req, res) {
           + "Remember to check your spam folder." );
     }
   }
-});
-
-router.get("/logout", passwordless.logout(), function(req, res) {
-  res.redirect("/");
 });
 
 module.exports = router;

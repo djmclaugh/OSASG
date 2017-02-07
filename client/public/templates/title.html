@@ -1,0 +1,5 @@
+<h1>OSASG Angular 2 Client</h1>
+<p>Welcome {{ getUsername() }}!</p>
+<p><button [hidden]="isGuest()" (click)="logout()">Log out</button></p>
+<login-form [hidden]="!isGuest()"></login-form>
+<p class="error" *ngFor="let error of errors">{{ error }}</p>
