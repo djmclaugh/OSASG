@@ -2,7 +2,9 @@ import { Injectable } from "@angular/core";
 import { Http, Response, RequestOptionsArgs } from "@angular/http";
 import { Observable } from "rxjs/Rx";
 
-const osasgUrlBase: string = "localhost:8000/";
+const config = require("../../config.json");
+
+const osasgUrlBase: string = config.serverURL + ":" + config.port + "/";
 const httpOptions: RequestOptionsArgs = {withCredentials: true};
 const userInfoEndpoint: string = "user_info";
 const requestEmailEndpoint: string = "send_login_email";
@@ -40,7 +42,7 @@ export class OSASGService {
     }
   }
 
-  private handleMessage(type, data): void {
+  private handleMessage(type: string, data: any): void {
     console.log("Received: " + type);
     switch(type) {
       case "user-info":

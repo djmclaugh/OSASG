@@ -1,7 +1,8 @@
 {
   "port": The port that your app is listening to,
   "botPort": The port that the bots should connect to,
-  "appURL": URL for the app,
+  "serverURL": URL for the server,
+  "clientURL": URL that serves the client,
   "databaseLocation": location of mongo database,
   "passwordlessStoreLocation": location of the mongo database used to store passwordless information,
   "secret": secret string used to encode cookies,

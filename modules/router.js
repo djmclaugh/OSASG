@@ -1,3 +1,4 @@
+var config = require("../config.json");
 var express = require("express");
 var guest_names = require("./guest_names");
 var gameManager = require("./matches/game_manager").prototype.getInstance();
@@ -8,7 +9,7 @@ var https = require("https");
 var router = express.Router();
 
 router.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:8002");
+  res.header("Access-Control-Allow-Origin", "http://" + config.clientURL);
   res.header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.header("Access-Control-Allow-Credentials", "true");

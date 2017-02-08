@@ -35,7 +35,7 @@ var passwordless = require("passwordless");
 var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
   var email = {
       text: "You can now access your account by following this link:\n" +
-            config.appURL + ":" + config.port + "?token=" + tokenToSend + "&uid=" +
+            config.serverURL + ":" + config.port + "?token=" + tokenToSend + "&uid=" +
             encodeURIComponent(uidToSend),
   };
   // TODO(djmclaugh): This was added so that I can get the link when email delivery failed.
@@ -48,7 +48,7 @@ passwordless.init(new PasswordlessMongoStore(config.passwordlessStoreLocation));
 passwordless.addDelivery(emailDelivery);
 
 app.use(passwordless.sessionSupport());
-app.use(passwordless.acceptToken({ successRedirect: "http://localhost:8002/"}));
+app.use(passwordless.acceptToken({successRedirect: "http://" + config.clientURL}));
 
 // Setup router
 var router = require("./modules/router");
