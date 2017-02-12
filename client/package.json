@@ -5,7 +5,7 @@
   "scripts": {
     "clean": "rm -rf app_js",
     "build": "npm run clean && tsc && browserify app_js/main.js > public/javascript/generated/bundle.js && cp node_modules/zone.js/dist/zone.js public/javascript/generated/zone.js && cp node_modules/reflect-metadata/Reflect.js public/javascript/generated/Reflect.js  && cp node_modules/reflect-metadata/Reflect.js.map public/javascript/generated/Reflect.js.map",
-    "start": "npm run build && http-server ./public -p 8002",
+    "start": "npm run build && node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "djmclaugh",
@@ -21,7 +21,7 @@
     "@angular/router": "^3.4.3",
     "@types/node": "^7.0.4",
     "browserify": "^13.3.0",
-    "http-server": "^0.9.0",
+    "express": "^4.14.1",
     "reflect-metadata": "^0.1.9",
     "rxjs": "^5.0.3",
     "typescript": "^2.1.5",

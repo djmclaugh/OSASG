@@ -8,11 +8,28 @@ const osasgUrlBase: string = config.serverURL + ":" + config.port + "/";
 const httpOptions: RequestOptionsArgs = {withCredentials: true};
 const userInfoEndpoint: string = "user_info";
 const requestEmailEndpoint: string = "send_login_email";
+const fetchUsersEndpoint: string = "api/users";
+const fetchBotsEndpoint: string = "api/bots";
+const changeBotUsernameEndpoint: string = "api/bots/:botID/change_username";
+const changeUsernameEndpoint: string = "api/settings/change_username";
 const logoutEndpoint: string = "logout";
 
-interface UserInfo {
+export interface UserInfo {
   username: string,
-  userId: string
+  _id: string,
+  email: string
+}
+
+export interface BotInfo {
+  username: string,
+  _id: string,
+  description: string,
+  owner: string|UserInfo
+}
+
+export interface UserPageInfo {
+  user: UserInfo,
+  bots: Array<BotInfo>
 }
 
 @Injectable()
@@ -64,6 +81,23 @@ export class OSASGService {
     }
   }
 
+  getUserInfo(userID): Observable<UserPageInfo> {
+    return this.get(fetchUsersEndpoint + "/" + userID)
+        .map(response => response.json());
+  }
+
+  getBotInfo(botID): Observable<BotInfo> {
+    return this.get(fetchBotsEndpoint + "/" + botID)
+        .map(response => response.json());
+  }
+
+  getCurrentUserInfo(): UserInfo {
+    if (this.userInfo) {
+      return this.userInfo;
+    }
+    return null;
+  }
+
   getUsername(): string {
     if (this.userInfo) {
       return this.userInfo.username;
@@ -71,8 +105,22 @@ export class OSASGService {
     return null;
   }
 
+  // Emits the new username on success, throws an error otherwise.
+  updateUsername(newUsername: string): Observable<string> {
+    return this.post(changeUsernameEndpoint, {desiredUsername: newUsername})
+        .map((response: Response) => response.text())
+        .do((username: string) => this.userInfo.username = username);
+  }
+
+  // Emits the new username on success, throws an error otherwise.
+  updateBotUsername(botID: string, newUsername: string): Observable<string> {
+    let endpoint: string = changeBotUsernameEndpoint.replace(":botID", botID);
+    return this.post(endpoint, {desiredUsername: newUsername})
+        .map((response: Response) => response.text());
+  }
+
   isGuest(): boolean {
-    return !this.userInfo || !this.userInfo.userId;
+    return !this.userInfo || !this.userInfo._id;
   } 
 
   requestEmail(address: string): Promise<string> {

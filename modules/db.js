@@ -19,7 +19,7 @@ exports.Session = mongoose.model(sessionModelName, SessionSchema);
 // --- Users ---
 var userSchema = Schema({
   username: {type: String, unique: true},
-  email: {type: String, unique: true, lowercase: true}
+  email: {type: String, unique: true, lowercase: true, select: false}
 });
 
 
@@ -106,7 +106,7 @@ exports.User = mongoose.model(userModelName, userSchema);
 // --- Bots ---
 var botSchema = Schema({
   username: {type: String, unique: true},
-  password: String,
+  password: {type: String, select: false},
   description: {type: String, maxlength: 1000},
   owner: {type: Schema.Types.ObjectId, ref: userModelName}
 });

@@ -13,7 +13,12 @@ router.use(function(req, res, next) {
   res.header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.header("Access-Control-Allow-Credentials", "true");
-  next();
+  // intercept OPTIONS method
+  if ('OPTIONS' == req.method) {
+    res.send(200);
+  } else {
+    next();
+  }
 });
 
 function fetchUserInformation(req, res, next) {
@@ -21,11 +26,11 @@ function fetchUserInformation(req, res, next) {
     db.User.findById(req.user, function(error, user) {
       if (error) {
         console.log(error);
-	req.session.user = null;
-	req.session.username = req.session.id;
+        req.session.user = null;
+        req.session.username = req.session.id;
       } else {
         req.session.user = user;
-	req.session.username = user.username;
+        req.session.username = user.username;
       }
       next();
     });
@@ -153,7 +158,7 @@ router.post("/api/settings/change_username", function(req, res) {
       if (error) {
         res.status(500).send(error.message);
       } else {
-        res.send("Username successfully changed to " + user.username + ".");
+        res.send(user.username);
       }
     });
   }
@@ -193,45 +198,6 @@ router.get("/api/bots", function(req, res) {
   }
 });
 
-function botData(bot, user) {
-  if (!bot) {
-    return null;
-  }
-  var botData = {
-    identifier: bot.id,
-    owner: {
-      identifier: bot.owner.id,
-      username: bot.owner.username
-    },
-    username: bot.username,
-    description: bot.description,
-  };
-  if (user && user.id == bot.owner.id) {
-    botData.password = bot.password;
-    botData.isMyBot = true;
-  } else {
-    botData.isMyBot = false;
-  }
-  return botData;
-}
-
-// Get information about the bot with the specified id.
-// If the owner of the bot is the one making the request, the response will include the password.
-// Will send a 500 response if this fails for any reason.
-router.get("/api/bots/:botId", function(req, res) {
-  db.Bot.findById(req.params.botId)
-      .populate("owner")
-      .exec(function(error, bot) {
-        if (error) {
-          res.status(500).send(error.message);
-        } else if(!bot) {
-          res.status(404).send("Bot not found.");
-        } else {
-          res.send(botData(bot, req.session.user));
-        }
-      });
-});
-
 // Change the username of the bot.
 // Will send a 403 response if someone other than the owner is making the request.
 // Will send a 500 response if this fails for any other reason.
@@ -243,6 +209,7 @@ router.post("/api/bots/:botId/change_username", function(req, res) {
       .populate("owner")
       .exec(function(error, bot) {
         if (error) {
+          console.log(error);
           res.status(500).send(error.message);
         } else if (!req.session.user || req.session.user.id != bot.owner.id) {
           res.status(403).send("You cannot change the name of a bot you don't own.");
@@ -251,11 +218,71 @@ router.post("/api/bots/:botId/change_username", function(req, res) {
             if (error) {
               res.status(500).send(error.message);
             } else {
-              res.send(botData(bot, req.session.user));
+              res.send(bot.username);
             }
           });
         }
       });
+});
+
+// Get information about the bot with the specified id.
+// If the owner of the bot is the one making the request, the response will include the password.
+// Will send a 500 response if this fails for any reason.
+router.get("/api/bots/:botId", function(req, res) {
+  db.Bot.findById(req.params.botId)
+      // We select the password because there is no way of knowing before fetching the bot if it
+      // belongs to the user making the request. We need to delete this field if the bot doesn't
+      // belong to the currently logged in user.
+      .select("+password")
+      .populate("owner")
+      .exec(function(error, bot) {
+        if (error) {
+          console.log(error);
+          res.status(500).send(error.message);
+        } else if(!bot) {
+          res.status(404).send("Bot not found.");
+        } else {
+          if (!req.session.user || bot.owner.id != req.session.user.id) {
+            bot.password = "";
+          }
+          res.send(bot);
+        }
+      });
+});
+
+// Get information about the user with the specified id.
+// The response will contain more information if the user themself is making the request.
+// Will send a 500 response if this fails for any reason.
+router.get("/api/users/:userId", function(req, res) {
+  var response = {};
+  function onUserFind(error, user) {
+    if (error) {
+      console.log(error);
+      res.status(500).send(error.message);
+    } else if (!user) {
+      res.status(404).send("User not found.");
+    } else {
+      response.user = user;
+      db.Bot.find({owner: user})
+          .select("-description -owner")
+          .exec(onBotsFind);
+    }
+  }
+
+  function onBotsFind(error, bots) {
+    if (error) {
+      res.status(500).send(error.message);
+    } else {
+      response.bots = bots;
+      res.send(response);
+    }
+  }
+
+  if (req.session.user && req.params.userId == req.session.user.id) {
+    db.User.findById(req.params.userId).select("+email").exec(onUserFind);
+  } else {
+    db.User.findById(req.params.userId).exec(onUserFind);
+  }
 });
 
 // Change the description of the bot.

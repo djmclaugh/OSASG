@@ -1,6 +1,7 @@
 {
   "port": The port that your app is listening to,
   "botPort": The port that the bots should connect to,
+  "clientPort": The port on which the clent is served,
   "serverURL": URL for the server,
   "clientURL": URL that serves the client,
   "databaseLocation": location of mongo database,

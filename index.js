@@ -58,7 +58,7 @@ app.ws("/", function(ws, req) {
   var message = {};
   message.type = "user-info";
   message.username = req.session.username;
-  message.userId = req.session.user ? req.session.user.id : null;
+  message._id = req.session.user ? req.session.user.id : null;
   ws.send(JSON.stringify(message));
   ws.on("message", function(msg) {
     console.log("received message: " + msg);

@@ -1,4 +1,5 @@
 import { Component, OnInit } from "@angular/core";
+import { Router } from '@angular/router';
 
 import './rxjs-operators';
 
@@ -6,18 +7,28 @@ import { OSASGService } from "./osasg.service";
 
 @Component({
   selector: "osasg-client",
-  templateUrl: "/templates/title.html",
+  templateUrl: "/templates/app_root.html",
   providers: [OSASGService]
 })
 export class AppComponent implements OnInit {
   username: string = null;
   errors: Array<Error> = [];
 
-  constructor(private osasgService: OSASGService) { }
+  constructor(
+    private osasgService: OSASGService,
+    private router: Router
+  ) { }
 
   ngOnInit(): void {
     var self = this;
     this.username = this.osasgService.getUsername();
+  }
+
+  getIdentifier(): string {
+    if (this.osasgService.getCurrentUserInfo()) {
+      return this.osasgService.getCurrentUserInfo()._id;
+    }
+    return null;
   }
 
   getUsername(): string {

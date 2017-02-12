@@ -1,0 +1,19 @@
+<p [hidden]="botInfo || errorText">Loading...</p>
+<span *ngIf="botInfo">
+  <h2>{{ botInfo.username }}</h2>
+  <p><strong>ID</strong>: {{ botInfo._id }}</p>
+  <p><strong>Owner</strong>: <a [routerLink]="['/users', botInfo.owner._id]">{{ botInfo.owner.username }}</a></p>
+</span>
+<p *ngIf="errorText" class="error">{{ errorText }}</p>
+<span *ngIf="isOwner()">
+  <h2>Settings</h2>
+  <form (ngSubmit)="updateUsername()">
+    <p>
+      <label for="username-field">Change Username: </label>
+      <input id="username-field" type="text" name="username" [(ngModel)]="tempUsername">
+      <button type="submit" [disabled]="tempUsername.length == 0 || updatingUsername">Update</button>
+    </p>
+    <p class="error" [hidden]="!usernameChangeError">{{ usernameChangeError }}</p>
+  </form>
+  <p>Password: {{ botInfo.password }}</p>
+</span>

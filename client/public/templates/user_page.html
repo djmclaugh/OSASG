@@ -1,0 +1,34 @@
+<p [hidden]="userInfo || errorText">Loading...</p>
+<span *ngIf="userInfo">
+  <h2>{{ userInfo.username }}</h2>
+  <p><strong>ID</strong>: {{ userInfo._id }}</p>
+  <p [hidden]="!userInfo.email"><strong>Associated Email</strong>: {{ userInfo.email }}</p>
+</span>
+<p *ngIf="errorText" class="error">{{ errorText }}</p>
+<span *ngIf="isSelf()">
+  <h2>User Settings</h2>
+  <form (ngSubmit)="updateUsername()">
+    <p>
+      <label for="username-field">Change Username: </label>
+      <input id="username-field" type="text" name="username" [(ngModel)]="tempUsername">
+      <button type="submit" [disabled]="tempUsername.length == 0 || updatingUsername">Update</button>
+    </p>
+    <p class="error" [hidden]="!usernameChangeError">{{ usernameChangeError }}</p>
+  </form>
+  <form (ngSubmit)="updateEmail()">
+    <p>
+      <label for="email-field">Change Email: </label>
+      <input id="email-field" type="email" name="email" [(ngModel)]="tempEmail">
+      <button type="submit" [disabled]="tempEmail.length == 0 || updatingEmail">Update</button>
+    </p>
+    <p class="error" [hidden]="!emailChangeError">{{ emailChangeError }}</p>
+  </form>
+</span>
+<span *ngIf="bots.length > 0">
+  <h2>Bots</h2>
+  <p>
+    <span *ngFor="let bot of bots">
+      <a [routerLink]="['/bots', bot._id]">{{ bot.username }}</a>
+    </span>
+  </p>
+</span>

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Observable }     from 'rxjs/Observable';
+import { Observable } from 'rxjs/Observable';
 
 import { OSASGService } from "./osasg.service";
 
@@ -27,10 +27,6 @@ export class LoginFormComponent {
           this.submitting = false;
         })
         .catch(error => this.handleError(error));
-  }
-
-  currentUser(): string {
-    return this.osasgService.isGuest() ? null : this.osasgService.getUsername();
   }
 
   private handleError(error) {
