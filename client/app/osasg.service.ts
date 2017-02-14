@@ -11,6 +11,7 @@ const requestEmailEndpoint: string = "send_login_email";
 const fetchUsersEndpoint: string = "api/users";
 const fetchBotsEndpoint: string = "api/bots";
 const changeBotUsernameEndpoint: string = "api/bots/:botID/change_username";
+const changeBotPasswordEndpoint: string = "api/bots/:botID/change_password";
 const changeUsernameEndpoint: string = "api/settings/change_username";
 const logoutEndpoint: string = "logout";
 
@@ -24,6 +25,7 @@ export interface BotInfo {
   username: string,
   _id: string,
   description: string,
+  password: string,
   owner: string|UserInfo
 }
 
@@ -116,6 +118,13 @@ export class OSASGService {
   updateBotUsername(botID: string, newUsername: string): Observable<string> {
     let endpoint: string = changeBotUsernameEndpoint.replace(":botID", botID);
     return this.post(endpoint, {desiredUsername: newUsername})
+        .map((response: Response) => response.text());
+  }
+
+  // Emits the new password on success, throws an error otherwise.
+  changeBotPassword(botID: string): Observable<string> {
+    let endpoint: string = changeBotPasswordEndpoint.replace(":botID", botID);
+    return this.post(endpoint, {})
         .map((response: Response) => response.text());
   }
 

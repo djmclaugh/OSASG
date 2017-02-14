@@ -17,6 +17,9 @@ export class BotPageComponent {
   usernameChangeError: string = null;
   updatingUsername: boolean = false;
 
+  passwordChangeError: string = null;
+  updatingPassword: boolean = false;
+
   tempDescription: string = "";
   descriptionChangeError: string = null;
   updatingDescription: boolean = false;
@@ -61,6 +64,22 @@ export class BotPageComponent {
             (errorResponse: Response) => {
               this.usernameChangeError = errorResponse.text();
               this.updatingUsername = false;
+            });
+  }
+
+  updatePassword(): void {
+    console.log("wut");
+    this.updatingPassword = true;
+    this.osasgService.changeBotPassword(this.botInfo._id)
+        .subscribe(
+            (newPassword: string) => {
+              this.botInfo.password = newPassword;
+              this.passwordChangeError = null;
+              this.updatingPassword = false;
+            },
+            (errorResponse: Response) => {
+              this.passwordChangeError = errorResponse.text();
+              this.updatingPassword = false;
             });
   }
 

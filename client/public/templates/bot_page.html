@@ -15,5 +15,9 @@
     </p>
     <p class="error" [hidden]="!usernameChangeError">{{ usernameChangeError }}</p>
   </form>
-  <p>Password: {{ botInfo.password }}</p>
+  <p>
+    Password: {{ botInfo.password }}
+    <button [disabled]="updatingPassword" (click)="updatePassword()">Generate new password</button>
+  </p>
+  <p class="error" [hidden]="!passwordChangeError">{{ passwordChangeError }}</p>
 </span>

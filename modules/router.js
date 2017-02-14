@@ -15,7 +15,7 @@ router.use(function(req, res, next) {
   res.header("Access-Control-Allow-Credentials", "true");
   // intercept OPTIONS method
   if ('OPTIONS' == req.method) {
-    res.send(200);
+    res.sendStatus(200);
   } else {
     next();
   }
@@ -318,6 +318,7 @@ router.post("/api/bots/:botId/change_description", function(req, res) {
 // body - {}
 router.post("/api/bots/:botId/change_password", function(req, res) {
   db.Bot.findById(req.params.botId)
+      .select("+password")
       .populate("owner")
       .exec(function(error, bot) {
         if (error) {
@@ -329,7 +330,7 @@ router.post("/api/bots/:botId/change_password", function(req, res) {
             if (error) {
               res.status(500).send(error.message);
             } else {
-              res.send(botData(bot, req.session.user));
+              res.send(bot.password);
             }
           });
         }
