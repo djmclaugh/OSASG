@@ -1,0 +1,41 @@
+<h3>{{ title() }}</h3>
+<span *ngIf="matchData">
+<p>P1: 
+  <span *ngIf="matchData && matchData.p1">{{ matchData.p1.username }}</span>
+  <span *ngIf="!matchData || !matchData.p1">
+    <button (click)="selectSeat(1)">Play as P1</button>
+    <button *ngFor="let bot of availableBots()" (click)="selectBot(bot.identifier, 1)">{{ bot.username }}</button>
+  </span>
+</p>
+<p>P2: 
+  <span *ngIf="matchData && matchData.p2">{{ matchData.p2.username }}</span>
+  <span *ngIf="!matchData || !matchData.p2">
+    <button (click)="selectSeat(2)">Play as P2</button>
+    <button *ngFor="let bot of availableBots()" (click)="selectBot(bot.identifier, 2)">{{ bot.username }}</button>
+  </span>
+</p>
+<span *ngIf="matchData && matchData.p1 && matchData.p2" [ngSwitch]="matchData.status">
+  <p *ngSwitchCase="'P1_TO_PLAY'">
+    P1 to play
+  </p>
+  <p *ngSwitchCase="'P2_TO_PLAY'">
+    P2 to play
+  </p>
+  <p *ngSwitchCase="'DRAW'">
+    Game Over! DRAW!
+  </p>
+  <p *ngSwitchCase="'P1_WIN'">
+    Game Over! P1 wins!
+  </p>
+  <p *ngSwitchCase="'P2_WIN'">
+    Game Over! P2 wins!
+  </p>
+  <p *ngSwitchDefault>
+    I don't know what is happening.
+  </p>
+</span>
+<p *ngIf="!matchData || !matchData.p1 || !matchData.p2">
+  Waiting for more players to join
+</p>
+<p><button [disabled]="!hasMoveToSubmit" (click)="submitMove()">Submit Move</button></p>
+</span>

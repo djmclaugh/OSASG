@@ -69,11 +69,10 @@ const gameManager = require("./matches/game_manager").prototype.getInstance();
 var Player = require("./matches/player");
 var BotPlayer = require("./bot_player");
 
-function ConnectionHandler(clientServer, botServer) {
+function ConnectionHandler(botServer) {
   var self = this;
 
   self.hasStarted = false;
-  self.clientServer = clientServer;
   self.botServer = botServer;
 
   // Map of ALL clients (including bots and guests) that are currently online.
@@ -110,11 +109,6 @@ ConnectionHandler.prototype.start = function() {
   self.onMatchUpdatedCallbackId = gameManager.onMatchUpdated(function(match) {
     self._sendMatchInfo(ACTIVE_MATCHES_UPDATE, match);
   });
-
-  self.onClientConnectCallback = function(socket) {
-    self.onClientConnect(socket);
-  };
-  self.clientServer.on("connection", self.onClientConnectCallback);
     
   self.onBotConnectCallbackId = self.botServer.onConnection(function(socket) {
     self.onBotConnect(socket);
@@ -125,8 +119,6 @@ ConnectionHandler.prototype.stop = function() {
   gameManager.removeListener(this.onMatchAddedCallbackId);
   gameManager.removeListener(this.onMatchRemovedCallbackId);
   gameManager.removeListener(this.onMatchUpdatedCallbackId);
-  // TODO(djmclaugh): figure a way to remove the listeners from the socket.io Server object.
-  //this.clientServer.removeAllListeners();
   this.botServer.removeListener(this.onBotConnectCallbackId);
 };
 
@@ -196,7 +188,7 @@ ConnectionHandler.prototype._listenForEventsOnPlayer = function(player) {
 
   // Let the player suscribe to updates about active bots.
   player.on(ACTIVE_BOTS, function() {
-    self._subscribePlayerToActiveBots(player); 
+    self._subscribePlayerToActiveBots(player);
   });
 
   // Let the player join matches.
@@ -204,7 +196,12 @@ ConnectionHandler.prototype._listenForEventsOnPlayer = function(player) {
     var match = gameManager.getMatchupById(data.matchId);
     if (match) {
       if (data.seat) {
-        match.addPlayer(player, data.seat);
+        try {
+          match.addPlayer(player, data.seat);
+        } catch (e) {
+          var errorMessage = "Error while joining match: " + e.message;
+          player.emit(ERROR_MESSAGE, {error: errorMessage});
+        }
       } else {
         // If no seat is specified, the player is responding to an invite.
         var now = Date.now();
@@ -252,10 +249,6 @@ ConnectionHandler.prototype._listenForEventsOnPlayer = function(player) {
     self._removePlayer(player);
   });
 }
-
-ConnectionHandler.prototype.onClientConnect = function(socket) {
-  this._addPlayer(new Player(socket));
-};
 
 ConnectionHandler.prototype.onBotConnect = function(socket) {
   this._addPlayer(new BotPlayer(socket));

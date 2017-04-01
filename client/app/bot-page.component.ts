@@ -123,5 +123,4 @@ export class BotPageComponent {
     this.botInfo = bot;
     this.errorText = null;
   }
-
 }

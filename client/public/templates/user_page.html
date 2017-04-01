@@ -24,11 +24,11 @@
     <p class="error" [hidden]="!emailChangeError">{{ emailChangeError }}</p>
   </form>
 </span>
-<span *ngIf="bots.length > 0">
-  <h2>Bots</h2>
-  <p>
-    <span *ngFor="let bot of bots">
-      <a [routerLink]="['/bots', bot._id]">{{ bot.username }}</a>
-    </span>
-  </p>
-</span>
+<h2>Bots</h2>
+<p>
+  <span *ngFor="let bot of bots">
+    <a [routerLink]="['/bots', bot._id]">{{ bot.username }}</a>
+  </span>
+</p>
+<p><button [disabled]="creatingBot" (click)="createNewBot()">Add New Bot</button></p>
+<p class="error" [hidden]="!botCreateError">{{ botCreateError }}</p>

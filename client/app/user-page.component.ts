@@ -22,6 +22,9 @@ export class UserPageComponent {
   emailChangeError: string = null;
   updatingEmail: boolean = false;
 
+  botCreateError: string = null;
+  creatingBot: boolean = false;
+
   constructor (
     private route: ActivatedRoute,
     private osasgService: OSASGService) {}
@@ -65,6 +68,34 @@ export class UserPageComponent {
     this.emailChangeError = "Changing associated email has not been implemented yet.";
   }
 
+  createNewBot(): void {
+    this.creatingBot = true;
+    this.osasgService.createBot()
+        .subscribe(
+            (newBotID: string) => {
+              this.refresh(() => {
+                this.creatingBot = false;
+                this.botCreateError = null;
+              });
+            },
+            (errorResponse: Response) => {
+              this.botCreateError = errorResponse.text();
+              this.creatingBot = false;
+            });;
+  }
+
+  private refresh(callback: () => void) {
+    if (this.userInfo._id) {
+      this.userObservableFromID(this.userInfo._id)
+          .subscribe((user: UserPageInfo) => {
+            this.handleFetchedUser(user);
+            callback();
+          });
+    } else {
+      callback();
+    }
+  }
+
   private clearFetchedInfo(): void {
     this.userInfo = null;
     this.errorText = null;
@@ -79,13 +110,17 @@ export class UserPageComponent {
   }
 
   private userObservableFromParams(params: Params): Observable<UserPageInfo> {
-    return this.osasgService.getUserInfo(params["userID"])
-        .catch((err:any, caught: Observable<UserPageInfo>) => this.handleBadUserFetch(err, caught));
+    return this.userObservableFromID(params["userID"]);
+  }
+
+  private userObservableFromID(id: string): Observable<UserPageInfo> {
+    return this.osasgService.getUserInfo(id)
+        .catch((err:any, caught: Observable<UserPageInfo>) => this.handleBadUserFetch(err));
   }
 
   // If fetching a user fails (which can happen if the user enters a bad URL), note the error and
   // replace the failing Observable with and empty Observable.
-  private handleBadUserFetch(error: any, caught: Observable<UserPageInfo>): Observable<UserPageInfo> {
+  private handleBadUserFetch(error: any): Observable<UserPageInfo> {
     this.userInfo = null;
     if (error instanceof Response) {
       this.errorText = error.text();

@@ -12,14 +12,13 @@ function getAvailablesGuestNames(callback) {
   for (var i = 0; i < lines.length; ++i) {
     names.push(lines[i] + "[guest]");
   }
-
   Sessions.find({}, function(error, sessions) {
     if (error) {
       callback(error, null);
       return;
     }
     for (var i = 0; i < sessions.length; ++i) {
-      var index = names.indexOf(sessions[i].data.username);
+      var index = names.indexOf(sessions[i].username);
       if (index >= 0) {
         names.splice(index, 1);
       }
@@ -34,10 +33,11 @@ exports.getGuestName = function(callback) {
       throw error;
     }
     if (names.length == 0) {
-      return null;
+      callback(null);
+    } else {
+      var randIndex = Math.floor(Math.random() * names.length);
+      var username = names[randIndex];
+      callback(username);
     }
-    var randIndex = Math.floor(Math.random() * names.length);
-    var username = names[randIndex];
-    callback(username);
   });
 };

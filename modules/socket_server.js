@@ -13,22 +13,24 @@ function SocketServer(port) {
     var adapter = new SocketAdapter(socket);
     self.sockets.push(adapter);
     adapter.on("authorization", function(data) {
-      db.Bot.findById(data.identifier, function(error, bot) {
-        if (error) {
-          adapter.emit("error-message", {error: error.message});
-          adapter.close();
-        } else if (!bot) {
-          adapter.emit("error-message", {error: "Identifier not recognized."});
-          adapter.close();
-        } else if (!data.password || bot.password != data.password) {
-          adapter.emit("error-message", {error: "Wrong password."});
-          adapter.close();
-        } else {
-          adapter.session.username = bot.username;
-          adapter.session.identifier = bot.id;
-          adapter.session.gameList = data.gameList;
-          self.dispatcher.dispatchEvent("connection", adapter);
-        }
+      db.Bot.findById(data.identifier)
+          .select("+password")
+          .exec(function(error, bot) {
+            if (error) {
+              adapter.emit("error-message", {error: error.message});
+              adapter.close();
+            } else if (!bot) {
+              adapter.emit("error-message", {error: "Identifier not recognized."});
+              adapter.close();
+            } else if (!data.password || bot.password != data.password) {
+              adapter.emit("error-message", {error: "Wrong password."});
+              adapter.close();
+            } else {
+              adapter.session.username = bot.username;
+              adapter.session.identifier = bot.id;
+              adapter.session.gameList = data.gameList;
+              self.dispatcher.dispatchEvent("connection", adapter);
+            }
       });
     });
     adapter.on("disconnect", function() {

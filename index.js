@@ -6,10 +6,8 @@ var express = require("express");
 var app = express();
 var http = require("http").Server(app);
 var expressWs = require("express-ws")(app, http);
+var Player = require("./modules/matches/player");
 
-
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -17,15 +15,16 @@ app.use(cookieParser(config.secret));
 
 // Setup session
 var session = require("express-session");
-var memoryStore = new (require("express-sessions"))({
-  storage: "mongodb"
-});
+
+const MongoStore = require('connect-mongo')(session);
+var sessionStore = new MongoStore({ url: 'mongodb://localhost/test' });
 app.use(session({
   secret: config.secret,
-  saveUninitialized: false,
+  saveUninitialized: true,
   resave: false,
-  store: memoryStore,
-  rolling: true
+  store: sessionStore,
+  rolling: true,
+  cookie: {maxAge: 24 * 60 * 60 * 1000}
 }));
 
 // Setup passwordless
@@ -54,46 +53,29 @@ app.use(passwordless.acceptToken({successRedirect: "http://" + config.clientURL}
 var router = require("./modules/router");
 app.use(router);
 
-app.ws("/", function(ws, req) {
-  var message = {};
-  message.type = "user-info";
-  message.username = req.session.username;
-  message._id = req.session.user ? req.session.user.id : null;
-  ws.send(JSON.stringify(message));
-  ws.on("message", function(msg) {
-    console.log("received message: " + msg);
-  });
-});
-
-// Setup websockets
-var io = require("socket.io")(http);
-// Set session information to any socket that tries to connect.
-io.use(function setSessionInfo(socket, next) {
-  var req = socket.request;
-  cookieParser(config.secret)(req, null, function (err) {
-    memoryStore.get(req.signedCookies["connect.sid"], function (err, session) {
-      if (!session) {
-        console.log("Error - no session found");
-        next(new Error("Authentication error"));
-        return;
-      } else {
-        socket.session = {};
-        socket.session.username = session.username;
-        socket.session.identifier = !session.user ? session.username : session.passwordless;
-        socket.emit("session-info", socket.session);
-      }
-      next();
-    });
-  });
-});
-
 // Setup TCP socket server for bots
 var SocketServer = require("./modules/socket_server");
 var socketServer = new SocketServer(config.botPort);
 
 var ConnectionHandler = require("./modules/connection_handler");
-var connectionHandler = new ConnectionHandler(io, socketServer);
+var connectionHandler = new ConnectionHandler(socketServer);
 connectionHandler.start();
+
+app.ws("/", function(ws, req, next, other) {
+  // Wrap in a try/catch because otherwise errors get dropped for some reason.
+  // TODO(djmclaugh): find root cause and actualy fix.
+  try {
+    var message = {};
+    message.type = "user-info";
+    message.username = req.session.username;
+    message._id = req.session.user ? req.session.user.id : null;
+    connectionHandler._addPlayer(new Player(ws, message.username, message._id));
+    ws.send(JSON.stringify(message));
+  } catch (e) {
+    console.log("ERROR IN index.js' 'app.ws(\"/\"...'.");
+    console.log(e);
+  }
+});
 
 http.listen(config.port, function(){
   console.log("OSASG started on port " + config.port);

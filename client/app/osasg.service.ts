@@ -1,24 +1,30 @@
 import { Injectable } from "@angular/core";
 import { Http, Response, RequestOptionsArgs } from "@angular/http";
-import { Observable } from "rxjs/Rx";
+import { Observable, Observer, Subject } from "rxjs/Rx";
 
 const config = require("../../config.json");
 
 const osasgUrlBase: string = config.serverURL + ":" + config.port + "/";
 const httpOptions: RequestOptionsArgs = {withCredentials: true};
-const userInfoEndpoint: string = "user_info";
 const requestEmailEndpoint: string = "send_login_email";
 const fetchUsersEndpoint: string = "api/users";
 const fetchBotsEndpoint: string = "api/bots";
+const createBotEndpoint: string = "api/bots/create_bot";
 const changeBotUsernameEndpoint: string = "api/bots/:botID/change_username";
 const changeBotPasswordEndpoint: string = "api/bots/:botID/change_password";
 const changeUsernameEndpoint: string = "api/settings/change_username";
+const createMatchEndpoint: string = "api/create_match";
 const logoutEndpoint: string = "logout";
 
 export interface UserInfo {
   username: string,
   _id: string,
   email: string
+}
+
+export interface PlayerInfo {
+  username: string,
+  identifier: string
 }
 
 export interface BotInfo {
@@ -29,10 +35,68 @@ export interface BotInfo {
   owner: string|UserInfo
 }
 
+export interface ActiveBotInfo {
+  gameList: Array<string>,
+  username: string,
+  identifier: string
+}
+
 export interface UserPageInfo {
   user: UserInfo,
   bots: Array<BotInfo>
 }
+
+export type ListUpdatAction = "set"|"add"|"remove"|"update";
+
+export interface MatchInfo {
+  matchId: string,
+  p1: PlayerInfo,
+  p2: PlayerInfo,
+  status: string
+}
+
+export interface MatchUpdate {
+  action: ListUpdatAction,
+  matches: Array<MatchInfo>
+}
+
+export interface BotUpdate {
+  action: ListUpdatAction,
+  bots: Array<ActiveBotInfo>
+}
+
+export type MatchStatus =
+    "NOT_STARTED"
+    |"P1_TO_PLAY"
+    |"P2_TO_PLAY"
+    |"P1_WIN"
+    |"P2_WIN"
+    |"P1_OUT_OF_TIME"
+    |"P2_OUT_OF_TIME"
+    |"DRAW";
+
+export interface PlayMessage {
+  matchId: string,
+  move: any,
+  timestamp: number,
+  status: MatchStatus
+}
+
+export interface UpdateMessage {
+  matchId: string,
+  p1: PlayerInfo,
+  p2: PlayerInfo,
+  gameData: any,
+  settings: any,
+  timers: any,
+  status: MatchStatus
+}
+
+export interface ErrorMessage {
+  error: string;
+}
+
+export type MatchMessage = PlayMessage|UpdateMessage;
 
 @Injectable()
 export class OSASGService {
@@ -41,31 +105,94 @@ export class OSASGService {
   private userInfo: UserInfo = null;
   private errors: Array<Error> = [];
 
+  private matchUpdateObservable: Observable<MatchUpdate>;
+  private matchUpdateSubject: Subject<MatchUpdate>;
+  private botUpdateObservable: Observable<BotUpdate>;
+  private botUpdateSubject: Subject<BotUpdate>;
+  private matchSubjects: Map<String, Subject<MatchMessage>>;
+  private isSubscribedToMatches: boolean = false;
+  private isSubscribedToBots: boolean = false;
+
   constructor (private http: Http) {
-    this.createNewSocket();
+    this.createNewSocket(); 
+    this.matchUpdateSubject = new Subject<MatchUpdate>();
+    this.matchUpdateObservable = Observable.create((observer: Observer<MatchUpdate>) => {
+      if (this.userInfo) {
+        this.sendMessage("api-active-matches", {});
+      }
+      this.isSubscribedToMatches = true;
+      this.matchUpdateSubject.subscribe(observer);
+    });
+    this.botUpdateSubject = new Subject<BotUpdate>();
+    this.botUpdateObservable = Observable.create((observer: Observer<BotUpdate>) => {
+      if (this.userInfo) {
+        this.sendMessage("api-active-bots", {});
+      }
+      this.isSubscribedToBots = true;
+      this.botUpdateSubject.subscribe(observer);
+    });
+    this.matchSubjects = new Map<String, Subject<MatchMessage>>();
   }
 
   private createNewSocket(): void {
     var self: OSASGService = this;
-    self.socket = new WebSocket("ws://" + osasgUrlBase);
-    self.socket.onopen = function(event) {
-      console.log("Socket connection succesfully established.");
-    }
-    self.socket.onmessage = function(event) {
-      var json = JSON.parse(event.data);
-      self.handleMessage(json.type, json);
-    }
-    self.socket.onclose = function(event) {
-      console.log("Socket closed. Creating new socket.");
-      self.createNewSocket();
-    }
+    self.get("ping").subscribe(
+      response => {
+        self.socket = new WebSocket("ws://" + osasgUrlBase);
+        self.socket.onopen = function(event) {
+          console.log("Socket connection succesfully established.");
+        }
+        self.socket.onmessage = function(event) {
+          var json = JSON.parse(event.data);
+          self.handleMessage(json.type, json);
+        }
+        self.socket.onclose = function(event) {
+          console.log("Socket closed. Creating new socket.");
+          self.createNewSocket();
+        }
+      },
+      error => {
+        setTimeout(() => this.createNewSocket(), 5000);
+      }
+    );
   }
 
   private handleMessage(type: string, data: any): void {
     console.log("Received: " + type);
+    // console.log(data);
     switch(type) {
       case "user-info":
         this.userInfo = data;
+        // It's possible we tried subscribing to active matches before the server fully processed
+        // the socket connection. Try again when the server sends the user info.
+        if (this.isSubscribedToMatches) {
+          this.sendMessage("api-active-matches", {});
+        }
+        if (this.isSubscribedToBots) {
+          this.sendMessage("api-active-bots", {});
+        }
+        this.matchSubjects.forEach((value:any, key:String) => {
+          this.sendMessage("api-join-match", {
+              matchId: key,
+              seat: 3
+          });
+        });
+        break;
+      case "api-active-matches":
+        this.matchUpdateSubject.next(data);
+        break;
+      case "api-active-bots":
+        this.botUpdateSubject.next(data);
+        break;
+      case "play":
+      case "update":
+        let subject: Subject<MatchMessage> = this.matchSubjects.get(data.matchId);
+        if (subject) {
+          subject.next(data);
+        }
+        break;
+      case "error-message":
+        console.log(data.error);
         break;
       default:
         console.log("Unknown type");
@@ -73,14 +200,51 @@ export class OSASGService {
     }
   }
 
-  private sendMessage(type, data): void {
+  sendMessage(type, data): void {
     if (this.socket.readyState == this.socket.OPEN) {
       data.type = type;
       this.socket.send(JSON.stringify(data));
+      console.log("Sent: " + type);
     } else {
       console.log("Could not send '" + type + "'message because the socket is not open.");
       console.log("Current socket status: " + this.socket.readyState);
     }
+  }
+
+  getMatchUpdates(): Observable<MatchUpdate> {
+    return this.matchUpdateObservable;
+  }
+
+  getBotUpdates(): Observable<BotUpdate> {
+    return this.botUpdateObservable;
+  }
+
+  getUpdatesForMatch(matchID: string): Observable<MatchMessage> {
+    return Observable.create((observer: Observer<MatchMessage>) => {
+      if (this.userInfo) {
+        this.sit(matchID, 3);
+      }
+      let subject: Subject<MatchMessage> = this.matchSubjects.get(matchID);
+      if (!subject) {
+        subject = new Subject<MatchMessage>();
+        this.matchSubjects.set(matchID, subject);
+      }
+      subject.subscribe(observer);
+    });
+  }
+
+  sit(matchID: string, seat: number): void {
+    this.sendMessage("api-join-match", {
+      matchId: matchID,
+      seat: seat
+    });
+  }
+
+  play(matchID: string, move: any) :void {
+    this.sendMessage("play", {
+      matchId: matchID,
+      move: move
+    });
   }
 
   getUserInfo(userID): Observable<UserPageInfo> {
@@ -146,6 +310,18 @@ export class OSASGService {
     });
   }
 
+  // Emits the match id if the match has succesfully been created.
+  createMatch(options: any): Observable<string> {
+    return this.post(createMatchEndpoint, options)
+        .map((response: Response) => response.text());
+  }
+
+  // Emits the new bot's id if the bot has succesfully been created.
+  createBot(): Observable<string> {
+    return this.post(createBotEndpoint, {})
+        .map((response: Response) => response.text());
+  }
+
   logout(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       this.get(logoutEndpoint)
@@ -160,11 +336,11 @@ export class OSASGService {
     });
   }
 
-  private get(endpoint): Observable<Response> {
+  private get(endpoint: string): Observable<Response> {
     return this.http.get("http://" + osasgUrlBase + endpoint, httpOptions);
   }
 
-  private post(endpoint, body): Observable<Response> {
+  private post(endpoint: string, body: any): Observable<Response> {
     return this.http.post("http://" + osasgUrlBase + endpoint, body, httpOptions);
   }
 

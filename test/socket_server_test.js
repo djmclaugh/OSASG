@@ -12,14 +12,21 @@ var registeredBots = {
     password: "password_123"
   }
 };
-dbStub.Bot.findById = function(id, callback) {
-  process.nextTick(function() {
-    if (id in registeredBots) {
-      callback(null, registeredBots[id]);
-    } else {
-      callback(new Error("Bot not found"), null);
-    }
-  });
+dbStub.Bot.findById = function(id) {
+  var query = {};
+  query.select = function(field) {
+    return query;
+  };
+  query.exec = function(callback) {
+    process.nextTick(function() {
+      if (id in registeredBots) {
+        callback(null, registeredBots[id]);
+      } else {
+        callback(new Error("Bot not found"), null);
+      }
+    });
+  };
+  return query;
 };
 
 const PORT = 12345;

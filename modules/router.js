@@ -43,7 +43,7 @@ function fetchUserInformation(req, res, next) {
 	      if (req.session.username == null) {
 	        req.session.username = req.session.id;
 	      }
-	      next();
+        next();
       });
     } else {
       next();
@@ -53,45 +53,13 @@ function fetchUserInformation(req, res, next) {
 
 router.use(fetchUserInformation);
 
-router.get("/", function(req, res) {
-  res.render("index", {
-      title: "Open Source Abstract Strategy Games",
-      username: req.session.username,
-      isGuest: !req.session.user
-  });
-});
-
-router.get("/settings", function(req, res) {
-  res.render("settings", {
-      username: req.session.username
-  });
-});
-
-router.get("/bot/:botId", function(req, res) {
-  res.render("bot", {
-      botId: req.params.botId
-  });
-});
-
-router.get("/match/:gameId", function(req, res) {
-  res.render("match", {
-      title: req.params.gameId,
-      username: req.session.username,
-      id: req.params.gameId
-  });
-});
-
-// Returns info about the currently logged in user.
-// No known reason for failures.
-// res - {
-//   username: The username of the currently logged in user.
-//   userId: The userId of the currently logged in user, null if the user is a guest.
-// }
-router.get("/user_info", function(req, res) {
-  res.send({
-    username: req.session.username,
-    userId: req.session.user ? req.session.user.id : null
-  });
+// Simple response to set cookies.
+// When the browser establishes the websocket connection, the browser might not have cookies yet.
+// The clien should call this endpoint so that browser cookies are set.
+// This is a temporary solution until I figure out a better way or rethink authentication.
+// TODO(djmclaugh): figure this out.
+router.get("/ping", function(req, res) {
+  res.send("pong");
 });
 
 // TODO(djmclaugh): This currently only outputs the email to the console. Need to hook up to
@@ -138,7 +106,7 @@ router.post("/send_login_email", function(req, res) {
 });
 
 router.get("/logout", passwordless.logout(), function(req, res) {
-  res.redirect("/");
+  res.sendStatus(200);
 });
 
 // Changes the username of the currently logged in user.
@@ -175,7 +143,7 @@ router.post("/api/bots/create_bot", function(req, res) {
       if (error) {
         res.status(500).send(error.message);
       } else {
-        res.send(bot);
+        res.send(bot._id);
       }
     });
   }
@@ -337,22 +305,27 @@ router.post("/api/bots/:botId/change_password", function(req, res) {
       });
 });
 
-router.get("/api/creatematch/:gameTitle", function(req, res) {
-  gameManager.createNewMatchup(req.params.gameTitle, {
-    gameSettings: {},
-    p1Timer: {
-      type: "Bronstein",
-      initialTime: 99 * 60 * 60 * 1000,
-      bonusTime: 99 * 60 * 60 * 1000
-    },
-    p2Timer: {
-      type: "Bronstein",
-      initialTime: 99 * 60 * 60 * 1000,
-      bonusTime: 99 * 60 * 60 * 1000
-    },
-    isRated: true
-  });
-  res.redirect("/");
+router.post("/api/create_match", function(req, res) {
+  try {
+    var match = gameManager.createNewMatchup("Tictactoe", {
+      gameSettings: {},
+      p1Timer: {
+        type: "Bronstein",
+        initialTime: 99 * 60 * 60 * 1000,
+        bonusTime: 99 * 60 * 60 * 1000
+      },
+      p2Timer: {
+        type: "Bronstein",
+        initialTime: 99 * 60 * 60 * 1000,
+        bonusTime: 99 * 60 * 60 * 1000
+      },
+      isRated: true
+    });
+    res.send(match.id);
+  } catch (e) {
+    console.log(e);
+    res.status(500).send(error.message);
+  }
 });
 
 router.get("/api/matches/player/:playerId", function(req, res) {

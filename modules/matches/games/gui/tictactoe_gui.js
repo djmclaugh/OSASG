@@ -65,6 +65,7 @@ TictactoeGUI.prototype.draw = function() {
 TictactoeGUI.prototype.onMouseMove = function(e) {
   if (this.isMouseDisabled) {
     this.mouseTarget = {type: "NULL"};
+    this.changeHappened();
     return;
   }
   var coordinates = this.getMouseCoordinates(e);
@@ -72,15 +73,18 @@ TictactoeGUI.prototype.onMouseMove = function(e) {
   var y = coordinates.y;
   this.mouseTarget = {type: "NULL"};
   if (x < 25 || y < 25 || x > 475 || y > 475) {
+    this.changeHappened();
     return;
   }
   if ((x - 30) % 150 > 140 || (y - 30) % 150 > 140) {
+    this.changeHappened();
     return;
   }
   var coordX = Math.round((x - 100) / 150);
   var coordY = Math.round((y - 100) / 150);
   var p = coordX + (3 * coordY);
   if (this.game.getColourAt(p) != this.game.COLOUR_ENUM.EMPTY) {
+    this.changeHappened();
     return;
   }
   if (this.preset === p) {
@@ -88,10 +92,12 @@ TictactoeGUI.prototype.onMouseMove = function(e) {
   } else if (!this.preset) {
     this.mouseTarget = {type: "BOARD", position: p};
   }
+  this.changeHappened();
 };
 
 TictactoeGUI.prototype.onMouseOut = function(e) {
   this.mouseTarget = {type:"NULL"};
+  this.changeHappened();
 };
 
 TictactoeGUI.prototype.onMouseClick = function(e) {

@@ -1,0 +1,5 @@
+<span [hidden]="!matchData">
+  <canvas #match_canvas width=500 height=500></canvas>
+</span>
+<br>
+<match-control-panel [matchData]="matchData" [hasMoveToSubmit]="null !== moveToSubmit" (onSeatSelect)="onSeatSelect($event)" (onMoveSubmit)="onMoveSubmit($event)"></match-control-panel>

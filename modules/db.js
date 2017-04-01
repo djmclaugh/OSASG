@@ -272,5 +272,10 @@ matchSchema.statics.getMatchesForPlayer = function(identifier, callback) {
 exports.Match = mongoose.model(matchModelName, matchSchema);
 
 mongoose.Promise = global.Promise;
-mongoose.createConnection(config.databaseLocation);
-
+mongoose.connect('mongodb://localhost/test', function(err) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Connection to mongo DB successful");
+    }
+});

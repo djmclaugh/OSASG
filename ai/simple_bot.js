@@ -46,9 +46,8 @@ SimpleBot.prototype.getTictactoeMove = function(game) {
     return null;
   }
 
-  var myColour = game.moves.length % 2 ? game.COLOUR_ENUM.X : game.COLOUR_ENUM.O;
-  var otherColour = game.moves.length % 2 ? game.COLOUR_ENUM.O : game.COLOUR_ENUM.X;
-
+  var myColour = game.moves.length % 2 == 0? game.COLOUR_ENUM.X : game.COLOUR_ENUM.O;
+  var otherColour = game.moves.length % 2 == 0 ? game.COLOUR_ENUM.O : game.COLOUR_ENUM.X;
   var winningMoves = []; 
   for (var i = 0; i < possibleMoves.length; ++i) {
     var move = possibleMoves[i];

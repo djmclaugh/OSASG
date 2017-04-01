@@ -196,6 +196,7 @@ Matchup.prototype._dataForUpdate = function() {
 };
 
 Matchup.prototype._addPlayerToSpectators = function(player, shouldSendUpdtate) {
+  var self = this;
   if (this._spectators.indexOf(player) == -1) {
     this._spectators.push(player);
   }
@@ -205,6 +206,9 @@ Matchup.prototype._addPlayerToSpectators = function(player, shouldSendUpdtate) {
       this._players.push(player);
     }
   }
+  player.on("disconnect", function() {
+    self._spectators.splice(self._spectators.indexOf(player), 1);
+  });
   if (shouldSendUpdtate) {
     player.emit(UPDATE, this._dataForUpdate());
   }
