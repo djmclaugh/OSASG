@@ -15,20 +15,11 @@
   </span>
 </p>
 <span *ngIf="matchData && matchData.p1 && matchData.p2" [ngSwitch]="matchData.status">
-  <p *ngSwitchCase="'P1_TO_PLAY'">
-    P1 to play
+  <p *ngSwitchCase="'ONGOING'">
+    Ongoing Game
   </p>
-  <p *ngSwitchCase="'P2_TO_PLAY'">
-    P2 to play
-  </p>
-  <p *ngSwitchCase="'DRAW'">
-    Game Over! DRAW!
-  </p>
-  <p *ngSwitchCase="'P1_WIN'">
-    Game Over! P1 wins!
-  </p>
-  <p *ngSwitchCase="'P2_WIN'">
-    Game Over! P2 wins!
+  <p *ngSwitchCase="'COMPLETED'">
+    Game Over!
   </p>
   <p *ngSwitchDefault>
     I don't know what is happening.

@@ -6,8 +6,6 @@ import { Observable } from "rxjs/Rx";
 import { OSASGService, UpdateMessage, ActiveBotInfo } from "./osasg.service";
 import { AvailableBotsService } from "./available-bots.service";
 
-const TicTacToe = require("../../modules/matches/games/gui/tictactoe_gui");
-
 @Component({
   selector: "match-control-panel",
   templateUrl: "/templates/match_control_panel.html",
@@ -30,7 +28,7 @@ export class MatchControlPanelComponent {
   constructor (private availableBotsService: AvailableBotsService) {}
 
   title(): string {
-    return this.matchData ? this.matchData.matchId : "Match not found";
+    return this.matchData ? this.matchData.matchID : "Match not found";
   }
 
   selectSeat(seat: number): void {
@@ -38,7 +36,7 @@ export class MatchControlPanelComponent {
   }
 
   selectBot(botID: string, seat: number): void {
-    this.availableBotsService.inviteBotToMatch(this.matchData.matchId, botID, seat);
+    this.availableBotsService.inviteBotToMatch(this.matchData.matchID, botID, seat);
   }
 
   submitMove(): void {

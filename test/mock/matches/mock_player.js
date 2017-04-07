@@ -19,6 +19,7 @@ module.exports = MockPlayer;
 // Overide methods involving sockets.
 MockPlayer.prototype.disconnect = function() {
   this.emit("error-message", {error: "Server manually closing connection."});
+  this.emit("disconnect", {});
   this.hasDisconnected = true;
 };
 

@@ -62,10 +62,10 @@ GameManager.prototype.getMatchesPlayerIsIn = function(player) {
   });
 };
 
-GameManager.prototype.getMatchupById = function(matchId) {
+GameManager.prototype.getMatchupById = function(matchID) {
   for (var i = 0; i < this.matchups.length; ++i) {
     var matchup = this.matchups[i];
-    if (matchup.id == matchId) {
+    if (matchup.id == matchID) {
       return matchup;
     }
   }

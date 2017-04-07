@@ -22,7 +22,7 @@ export class LobbyService {
         case "remove":
           this.activeMatches = this.activeMatches.filter(matchInfo => {
             for (let toRemove of matchUpdate.matches) {
-              if (toRemove.matchId == matchInfo.matchId) {
+              if (toRemove.matchID == matchInfo.matchID) {
                 return false;
               }
             }
@@ -32,7 +32,7 @@ export class LobbyService {
         case "update":
           for (let i:number = 0; i < this.activeMatches.length; ++i) {
             for (let toUpdate of matchUpdate.matches) {
-              if (toUpdate.matchId == this.activeMatches[i].matchId) {
+              if (toUpdate.matchID == this.activeMatches[i].matchID) {
                 this.activeMatches[i] = toUpdate;
                 break;
               }

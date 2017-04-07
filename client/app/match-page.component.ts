@@ -1,38 +1,53 @@
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, NgZone } from '@angular/core';
 import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Response } from "@angular/http";
-import { Observable } from "rxjs/Rx";
+import { Observable, Subscription } from "rxjs/Rx";
 
 import { OSASGService, MatchMessage, PlayMessage, UpdateMessage, UserInfo } from "./osasg.service";
-
-const TicTacToe = require("../../modules/matches/games/tictactoe");
-const TicTacToeGUI = require("../../modules/matches/games/gui/tictactoe_gui");
+import { GUI } from "./guis/GUI";
+import { ConnectGUI } from "./guis/connectGUI";
 
 @Component({
   selector: "match-page",
   templateUrl: "/templates/match_page.html",
 })
+
 export class MatchPageComponent {
   matchData: UpdateMessage;
-  moveToSubmit: any;
   game: any;
-  gameGUI: any;
+  gameGUI: GUI;
+  subscription: Subscription;
+  requestAnimationFrameHandle: number;
   @ViewChild("match_canvas") canvas: ElementRef;
 
   constructor (
-    private route: ActivatedRoute,
-    private osasgService: OSASGService) {}
+      private route: ActivatedRoute,
+      private osasgService: OSASGService,
+      private _ngZone: NgZone) {
+  }
 
   ngOnInit() {
     // do: Clear previous user info when new route parameters are emited.
     // switchMap: Transform the parameters into an Observable<UserInfo> that will either emit
     //     a UserInfo or handle whatever error might occure.
     // subscribe: Handled fetched user information.
-    this.route.params
+    this.subscription = this.route.params
         .do(() => this.clearFetchedInfo())
         .switchMap((params: Params) => this.matchObservableFromParams(params))
         .subscribe((message: MatchMessage) => this.handleMessage(message));
+    this._ngZone.runOutsideAngular(() => {
+      let self: MatchPageComponent = this;
+      function step() {
+        self.onFrame();
+        self.requestAnimationFrameHandle = window.requestAnimationFrame(step);
+      }
+      self.requestAnimationFrameHandle = window.requestAnimationFrame(step);
+    });
+  }
 
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+    window.cancelAnimationFrame(this.requestAnimationFrameHandle);
   }
 
   private matchObservableFromParams(params: Params): Observable<MatchMessage> {
@@ -40,16 +55,17 @@ export class MatchPageComponent {
   }
 
   private handleMessage(message: MatchMessage) {
-    if ("move" in message) {
+    if (!("settings" in message)) {
       let playMessage: PlayMessage = <PlayMessage> message;
-      this.game.makeMove(playMessage.move);
-      this.gameGUI.clean();
+      this.gameGUI.addEvent(playMessage.events);
       this.gameGUI.draw();
-      this.matchData.status = message.status;
     } else {
       this.matchData = <UpdateMessage> message;
-      this.game.initFromGameData(this.matchData.gameData);
-      this.gameGUI.clean();
+      this.gameGUI = new ConnectGUI(
+          message.matchID.split("_")[0],
+          this.matchData.settings.gameSettings,
+          this.canvas.nativeElement);
+      this.gameGUI.setEvents(this.matchData.events);
       this.gameGUI.draw();
     }
     let currentUser: UserInfo = this.osasgService.getCurrentUserInfo();
@@ -61,32 +77,44 @@ export class MatchPageComponent {
         myID = currentUser.username;
       }
     }
-    if ((this.matchData.status == "P1_TO_PLAY" && this.matchData.p1.identifier == myID)
-        || (this.matchData.status == "P2_TO_PLAY" && this.matchData.p2.identifier == myID)) {
-      this.gameGUI.setMouseDisabled(false);
-    } else {
-      this.gameGUI.setMouseDisabled(true);
+    this.gameGUI.isMyTurn = false;
+    if (this.matchData.status == "ONGOING") {
+      if ((this.matchData.toPlay.indexOf(0) != -1 && this.matchData.p1.identifier == myID)
+          || (this.matchData.toPlay.indexOf(1) != -1 && this.matchData.p2.identifier == myID)) {
+        this.gameGUI.isMyTurn = true;
+      }
     }
   }
 
   clearFetchedInfo() {
     this.matchData = null;
-    this.game = new TicTacToe();
-    this.gameGUI = new TicTacToeGUI(this.game, this.canvas.nativeElement);
-    this.gameGUI.draw();
-    this.gameGUI.onChange(() => {
-      this.gameGUI.draw();
-      this.moveToSubmit = this.gameGUI.getMove();
-    });
-    this.gameGUI.setMouseDisabled(true);
-    this.moveToSubmit = this.gameGUI.getMove();
+    //this.gameGUI.draw();
+    //this.gameGUI.onChange(() => {
+    //  this.gameGUI.draw();
+    //  this.moveToSubmit = this.gameGUI.getMove();
+    //});
+    //this.gameGUI.setMouseDisabled(true);
+    //this.moveToSubmit = this.gameGUI.getMove();
   }
 
   onSeatSelect(seat: number): void {
-    this.osasgService.sit(this.matchData.matchId, seat);
+    this.osasgService.sit(this.matchData.matchID, seat);
+  }
+
+  moveToSubmit(): any {
+    if (this.gameGUI) {
+      return this.gameGUI.getMove();
+    }
+    return null;
   }
 
   onMoveSubmit(): void {
-    this.osasgService.play(this.matchData.matchId, this.moveToSubmit);
+    this.osasgService.play(this.matchData.matchID, this.moveToSubmit());
+  }
+
+  onFrame(): void {
+    if (this.gameGUI && this.gameGUI.needsRedraw) {
+      this.gameGUI.draw();
+    }
   }
 }

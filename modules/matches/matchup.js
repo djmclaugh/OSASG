@@ -1,4 +1,3 @@
-var Game = require("./games/game");
 var Games = require("./games");
 var MatchClock = require("../utilities/timer/match_clock");
 var Timers = require("../utilities/timer/timers");
@@ -28,37 +27,30 @@ const EVENT_END = "match_event_end"
 
 function onPlay(match, player) {
   return function(data) {
-    var timestamp = Date.now();
-    if (data.matchId != match.id) {
+    if (data.matchID != match.id) {
       return;
     }
-    status = match._getStatus(timestamp);
+    var timestamp = Date.now();
+    status = match._getStatus();
     var game = match._game;
+    var amP1 = player.isSameUser(match._p1);
+    var amP2 = player.isSameUser(match._p2);
     if (status == match.STATUS.NOT_STARTED) {
       player.emit(ERROR, {error: "The game hasn't started yet."});
       return;
-    } else if (status == match.STATUS.P1_WIN
-          || status == match.STATUS.P2_WIN
-          || status == match.STATUS.DRAW) {
+    } else if (status == match.STATUS.COMPLETED) {
       player.emit(ERROR, {error: "The game is already over."});
       return;
-    } else if ((status == match.STATUS.P1_TO_PLAY && player.isSameUser(match._p1))
-        || (status == match.STATUS.P2_TO_PLAY && player.isSameUser(match._p2))) {
-      var error = match._makeMove(data.move, timestamp);
+    } else if (amP1 || amP2) {
+      var playerNumber;
+      if (amP1 && amP2) {
+        playerNumber = match._game.getPlayersToPlay().has(0) ? 0 : 1;
+      } else {
+        playerNumber = player.isSameUser(match._p1) ? 0 : 1;
+      }
+      var error = match._makeMove(data.move, playerNumber, timestamp);
       if (error) {
         player.emit(ERROR, {error: error});
-      }
-    } else if (player.isSameUser(match._p1)) {
-      if (status == match.STATUS.P1_OUT_OF_TIME) {
-        player.emit(ERROR, {error: "Move received after time ran out."});
-      } else {
-        player.emit(ERROR, {error: "It isn't your turn to play."});
-      }
-    } else if (player.isSameUser(match._p2)) {
-      if (status == match.STATUS.P2_OUT_OF_TIME) {
-        player.emit(ERROR, {error: "Move received after time ran out."});
-      } else {
-        player.emit(ERROR, {error: "It isn't your turn to play."});
       }
     } else {
       player.emit(ERROR, {error: "You are not playing in this game."});
@@ -94,13 +86,8 @@ Matchup.prototype.MESSAGES = {
 
 Matchup.prototype.STATUS = {
   NOT_STARTED: "NOT_STARTED",
-  P1_TO_PLAY: Game.prototype.STATUS.P1_TO_PLAY,
-  P2_TO_PLAY: Game.prototype.STATUS.P2_TO_PLAY,
-  P1_WIN: Game.prototype.STATUS.P1_WIN,
-  P2_WIN: Game.prototype.STATUS.P2_WIN,
-  P1_OUT_OF_TIME: "P1_OUT_OF_TIME",
-  P2_OUT_OF_TIME: "P2_OUT_OF_TIME",
-  DRAW: Game.prototype.STATUS.DRAW
+  ONGOING: "ONGOING",
+  COMPLETED: "COMPLETED"
 };
 
 Matchup.prototype.ERRORS = {
@@ -146,35 +133,39 @@ Matchup.prototype.addPlayer = function(player, seat) {
 };
 
 Matchup.prototype.matchInfo = function() {
-  return this._dataForUpdate();
-}
+  var info = {};
+  info.matchID = this.id;
+  info.p1 = this._p1 ? {identifier: this._p1.identifier, username: this._p1.username} : null;
+  info.p2 = this._p2 ? {identifier: this._p2.identifier, username: this._p2.username} : null;
+  return info;
+};
 
 ////////// Private
 
-Matchup.prototype._makeMove = function(move, timestamp) {
+Matchup.prototype._makeMove = function(move, playerNumber, timestamp) {
+  var didTurnAdvance = false;
   try {
-    this._game.makeMove(move);
+    didTurnAdvance = this._game.playMove(move, playerNumber);
   } catch (error) {
     return "Error while trying to make a move: " + error.message;
   }
-  this._clock.toggle(timestamp);
-  this._broadcast(PLAY, {
-        matchId: this.id,
-        move: move,
-        timestamp: timestamp,
-        status: this._getStatus(timestamp)});
-  this._checkIfOver();
+  // Ignore timers for now
+  // this._clock.toggle(timestamp);
+  if (didTurnAdvance) {
+    this._broadcastLatestEvents(timestamp);
+    this._checkIfOver();
+  }
 };
 
 Matchup.prototype._dataForUpdate = function() {
   var data = {};
   data.status = this._getStatus();
-  data.gameData = this._game.generateGameData();
   data.settings = this._settings;
-  data.timers = {
-    p1: this._p1Timer.exportState(),
-    p2: this._p2Timer.exportState(),
-  }
+  // Ignor timers for now
+  // data.timers = {
+  //   p1: this._p1Timer.exportState(),
+  //   p2: this._p2Timer.exportState(),
+  // }
   if (this._p1) {
     data.p1 = {
       username: this._p1.username,
@@ -191,7 +182,8 @@ Matchup.prototype._dataForUpdate = function() {
   } else {
     data.p2 = null;
   } 
-  data.matchId = this.id;
+  data.matchID = this.id;
+  data.toPlay = Array.from(this._game.getPlayersToPlay());
   return data;
 };
 
@@ -210,7 +202,20 @@ Matchup.prototype._addPlayerToSpectators = function(player, shouldSendUpdtate) {
     self._spectators.splice(self._spectators.indexOf(player), 1);
   });
   if (shouldSendUpdtate) {
-    player.emit(UPDATE, this._dataForUpdate());
+    var data = this._dataForUpdate();
+    var amP1 = player.isSameUser(this._p1)
+    var amP2 = player.isSameUser(this._p2)
+    // Right now only support 2 player games are supported.
+    if (amP1 && amP2) {
+      data.events = this._game.getTurnEvents();
+    } else if (amP1) {
+      data.events = this._game.getTurnEventsAsSeenBy(0);
+    } else if (amP2) {
+      data.events = this._game.getTurnEventsAsSeenBy(1);
+    } else {
+      data.events = this._game.getTurnEventsAsSeenBy(-1);
+    }
+    player.emit(UPDATE, data);
   }
 };
 
@@ -223,65 +228,90 @@ Matchup.prototype._setPlayer = function(player, seat) {
   } else if (seat == 2) {
     this._p2 = player;
   }
-  if (this.hasStarted() && !this._clock.hasStarted()) {
-    this._clock.start(Date.now());
-    this._startCheckingTime();
-  }
+  //if (this.hasStarted() && !this._clock.hasStarted()) {
+  //  this._clock.start(Date.now());
+  //  this._startCheckingTime();
+  //}
   this._addPlayerToSpectators(player, false);
   this._triggerUpdate();
 };
 
 // Notify everyone that the status of this match has changed
 Matchup.prototype._triggerUpdate = function() {
-  var updateObject = this._dataForUpdate();
-  this._broadcast(UPDATE, updateObject);
-  this._dispatcher.dispatchEvent(EVENT_UPDATE, updateObject);
+  this._broadcastCurrentState();
+  this._dispatcher.dispatchEvent(EVENT_UPDATE, this._dataForUpdate());
 };
 
-Matchup.prototype._broadcast = function(message, data) {
-  for (var i = 0; i < this._spectators.length; ++i) {
-    this._spectators[i].emit(message, data);
+Matchup.prototype._broadcastLatestEvents = function(timestamp) {
+  var publicEvents = this._game.getLatestTurnEventsAsSeenBy(-1);
+  var data = {
+    matchID: this.id,
+    status: this._getStatus(timestamp),
+    toPlay: Array.from(this._game.getPlayersToPlay()),
+    timestamp: timestamp
   }
-};
+  for (var i = 0; i < this._spectators.length; ++i) {
+    var spectator = this._spectators[i];
+    var amP1 = spectator.isSameUser(this._p1)
+    var amP2 = spectator.isSameUser(this._p2)
+    // Right now only support 2 player games are supported.
+    if (amP1 && amP2) {
+      data.events = this._game.getLatestTurnEvents();
+    } else if (amP1) {
+      data.events = this._game.getLatestTurnEventsAsSeenBy(0);
+    } else if (amP2) {
+      data.events = this._game.getLatestTurnEventsAsSeenBy(1);
+    } else {
+      data.events = publicEvents;
+    }
+    spectator.emit(PLAY, data);
+  }
+}
+
+Matchup.prototype._broadcastCurrentState = function() {
+  var publicEvents = this._game.getTurnEventsAsSeenBy(-1);
+  var data = this._dataForUpdate();
+  for (var i = 0; i < this._spectators.length; ++i) {
+    var spectator = this._spectators[i];
+    var amP1 = spectator.isSameUser(this._p1)
+    var amP2 = spectator.isSameUser(this._p2)
+    // Right now only support 2 player games are supported.
+    if (amP1 && amP2) {
+      data.events = this._game.getTurnEvents();
+    } else if (amP1) {
+      data.events = this._game.getTurnEventsAsSeenBy(0);
+    } else if (amP2) {
+      data.events = this._game.getTurnEventsAsSeenBy(1);
+    } else {
+      data.events = publicEvents;
+    }
+    spectator.emit(UPDATE, data);
+  }
+}
 
 Matchup.prototype._checkIfOver = function() {
   var timestamp = Date.now();
   var status = this._getStatus(timestamp);
   var result = null;
-  if (status == this.STATUS.P1_WIN || status == this.STATUS.P2_OUT_OF_TIME) {
-    result = "P1";
-  } else if (status == this.STATUS.P2_WIN || status == this.STATUS.P1_OUT_OF_TIME) {
-    result = "P2";
-  } else if (status == this.STATUS.DRAW) {
-    result = "DRAW";
+  if (status == this.STATUS.COMPLETED) {
+    var winners = this._game.getWinners();
+    if (winners.has(0)) {
+      result = "P1";
+    } else if (winners.has(1)) {
+      result = "P2";
+    } else {
+      result = "DRAW";
+    }
   }
   if (result) {
-    this._clock.stop(timestamp)
-    clearInterval(this._checkTimeIntervalId);
     this._triggerUpdate();
     this._dispatcher.dispatchEvent(EVENT_END, {result: result});
   }
 };
 
-Matchup.prototype._startCheckingTime = function() {
-  this._checkTimeIntervalId = setInterval(checkTime.bind(this), 1000);
-};
-
-function checkTime() {
-  this._checkIfOver();
-}
-
-Matchup.prototype._getStatus = function(timestamp) {
+Matchup.prototype._getStatus = function() {
   if (!this.hasStarted()) {
     return this.STATUS.NOT_STARTED;
   }
-  var status = this._game.getStatus();
-  if (this._clock.currentPlayerIsOutOfTime(timestamp)) {
-    if (status == this.STATUS.P1_TO_PLAY) {
-      return this.STATUS.P1_OUT_OF_TIME; 
-    } else if (status == this.STATUS.P2_TO_PLAY) {
-      return this.STATUS.P2_OUT_OF_TIME
-    }
-  }
-  return status;
+  return this._game.getPlayersToPlay().size ? this.STATUS.ONGOING :this.STATUS.COMPLETED;
 };

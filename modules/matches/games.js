@@ -1,17 +1,17 @@
-exports.Connect6 = require("./games/connect6");
-exports.Tictactoe = require("./games/tictactoe");
-exports.Hex = require("./games/hex");
+var ConnectModule = require("ts-turnbased-connect");
 
-exports.newGame = function(gameTitle, settings) {
-  return new exports[gameTitle](settings);
+exports.newGame = function(gameTitle, gameSettings) {
+  if (gameTitle == "Tictactoe") {
+    return new ConnectModule.Connect(ConnectModule.tictactoeOptions());
+  } else if (gameTitle == "Connect6") {
+    return new ConnectModule.Connect(ConnectModule.connect6Options());
+  } else if (gameTitle == "Connect") {
+    return new ConnectModule.Connect(gameSettings);
+  }
+  throw new Error("Unkown game type: " + gameTitle);
 }
 
-exports.newGameFromId = function(gameId, settings) {
+exports.newGameFromID = function(gameId, gameSettings) {
   var name = gameId.split("_")[0];
-  return exports.newGame(name.charAt(0).toUpperCase() + name.slice(1), settings);
-}
-
-exports.gameClassFromId = function(gameId) {
-  var name = gameId.split("_")[0];
-  return exports[name.charAt(0).toUpperCase() + name.slice(1)];
+  return exports.newGame(name.charAt(0).toUpperCase() + name.slice(1), gameSettings);
 }

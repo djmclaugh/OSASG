@@ -49,7 +49,7 @@ export interface UserPageInfo {
 export type ListUpdatAction = "set"|"add"|"remove"|"update";
 
 export interface MatchInfo {
-  matchId: string,
+  matchID: string,
   p1: PlayerInfo,
   p2: PlayerInfo,
   status: string
@@ -67,29 +67,26 @@ export interface BotUpdate {
 
 export type MatchStatus =
     "NOT_STARTED"
-    |"P1_TO_PLAY"
-    |"P2_TO_PLAY"
-    |"P1_WIN"
-    |"P2_WIN"
-    |"P1_OUT_OF_TIME"
-    |"P2_OUT_OF_TIME"
-    |"DRAW";
+    |"ONGOING"
+    |"COMPLETED";
 
 export interface PlayMessage {
-  matchId: string,
-  move: any,
+  matchID: string,
+  events: any,
   timestamp: number,
-  status: MatchStatus
+  status: MatchStatus,
+  toPlay: Array<number>
 }
 
 export interface UpdateMessage {
-  matchId: string,
+  matchID: string,
   p1: PlayerInfo,
   p2: PlayerInfo,
-  gameData: any,
+  events: Array<any>,
   settings: any,
   timers: any,
-  status: MatchStatus
+  status: MatchStatus,
+  toPlay: Array<number>
 }
 
 export interface ErrorMessage {
@@ -173,7 +170,7 @@ export class OSASGService {
         }
         this.matchSubjects.forEach((value:any, key:String) => {
           this.sendMessage("api-join-match", {
-              matchId: key,
+              matchID: key,
               seat: 3
           });
         });
@@ -186,7 +183,7 @@ export class OSASGService {
         break;
       case "play":
       case "update":
-        let subject: Subject<MatchMessage> = this.matchSubjects.get(data.matchId);
+        let subject: Subject<MatchMessage> = this.matchSubjects.get(data.matchID);
         if (subject) {
           subject.next(data);
         }
@@ -235,14 +232,14 @@ export class OSASGService {
 
   sit(matchID: string, seat: number): void {
     this.sendMessage("api-join-match", {
-      matchId: matchID,
+      matchID: matchID,
       seat: seat
     });
   }
 
   play(matchID: string, move: any) :void {
     this.sendMessage("play", {
-      matchId: matchID,
+      matchID: matchID,
       move: move
     });
   }

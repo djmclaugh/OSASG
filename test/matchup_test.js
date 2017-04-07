@@ -24,16 +24,17 @@ describe("Matchups", function() {
     var p1Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
         // If the match has started, play a move.
-        player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 0});
+        player1.mockSocketSent(match.MESSAGES.PLAY, {matchID: "Tictactoe_0", move: {x: 0, y: 0}});
       } else if (topic == match.MESSAGES.PLAY) {
         p1SentAValidMove = true;
         // When I receive my move, try to play again.
-        player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 1});
+        player1.mockSocketSent(match.MESSAGES.PLAY, {matchID: "Tictactoe_0", move: {x: 1, y: 0}});
       } else if (topic == match.MESSAGES.ERROR) {
         // Make sure that the first move went through successfully.
         assert.equal(p1SentAValidMove, true);
         // Make sure that the error message is appropriate.
-        assert.equal(payload.error, "It isn't your turn to play.");
+        var message = "Error while trying to make a move: Out of turn play by player 0: No legal moves this turn for this player";
+        assert.equal(payload.error, message);
         done();
       }
     };
@@ -51,7 +52,7 @@ describe("Matchups", function() {
     var p1Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
         // If the match has started, play a move.
-        player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 10});
+        player1.mockSocketSent(match.MESSAGES.PLAY, {matchID: "Tictactoe_0", move: {x: 10, y: 10}});
       } else if (topic == match.MESSAGES.ERROR) {
         assert.equal(payload.error.indexOf("Error while trying to make a move: "), 0);
         done();
@@ -82,11 +83,11 @@ describe("Matchups", function() {
     var p1Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
         // If the match has started, play a move.
-        player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 0});
+        player1.mockSocketSent(match.MESSAGES.PLAY, {matchID: "Tictactoe_0", move: {x: 0, y: 0}});
       } else if (topic == match.MESSAGES.PLAY) {
-        if (payload.move == 1) {
-          player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 2});
-        } else if (payload.move == 3) {
+        if (payload.events.x == 0 && payload.events.y == 1) {
+          player1.mockSocketSent(match.MESSAGES.PLAY, {matchID: "Tictactoe_0", move: {x: 0, y: 2}});
+        } else if (payload.events.x == 1 && payload.events.y == 0) {
           done();
         }
       }
@@ -94,8 +95,9 @@ describe("Matchups", function() {
 
     var p2Callback1 = function(topic, payload) {
       if (topic == match.MESSAGES.PLAY) {
-        if (payload.move == 0) {
-          player2_1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 1});
+        if (payload.events.x == 0 && payload.events.y == 0) {
+          player2_1.mockSocketSent(match.MESSAGES.PLAY,
+              {matchID: "Tictactoe_0",  move: {x: 0, y: 1}});
           player2_1.disconnect();
           match.addPlayer(player2_2, 2);
         }
@@ -106,12 +108,12 @@ describe("Matchups", function() {
       // Play the 4th move if you receive the 3rd move or if the 3rd move was already played when
       // you joined.
       if (topic == match.MESSAGES.PLAY) {
-        if (payload.move == 2) {
-          player2_2.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 3});
+        if (payload.events.x == 0 && payload.events.y == 2) {
+          player2_2.mockSocketSent(match.MESSAGES.PLAY, {matchID: "Tictactoe_0",  move: {x: 1, y: 0}});
         }
       } else if (topic == match.MESSAGES.UPDATE) {
-        if (payload.gameData.moves.length == 3) {
-          player2_2.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: 3});
+        if (payload.events.length == 4) {
+          player2_2.mockSocketSent(match.MESSAGES.PLAY, {matchID: "Tictactoe_0",  move: {x: 1, y: 0}});
         }
       }
     };
@@ -128,7 +130,17 @@ describe("Matchups", function() {
     var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
 
     // The sequence of moves the player should play.
-    var moves = [4, 0, 2, 6, 3, 5, 7, 1, 8];
+    var moves = [
+        {x: 1, y: 1},
+        {x: 0, y: 0},
+        {x: 2, y: 0},
+        {x: 0, y: 2},
+        {x: 0, y: 1},
+        {x: 2, y: 1},
+        {x: 1, y: 2},
+        {x: 1, y: 0},
+        {x: 2, y: 2}
+    ];
 
     var p1ReceivedMoves = 0;
     var p2ReceivedMoves = 0;
@@ -149,20 +161,21 @@ describe("Matchups", function() {
 
     var p1Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE) {
-        if (payload.status == match.STATUS.P1_TO_PLAY) {
+        if (payload.status == "ONGOING" && payload.toPlay.indexOf(0) != -1) {
           // If the match has started, play a move.
-          player1.mockSocketSent(match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: moves[0]});
+          player1.mockSocketSent(match.MESSAGES.PLAY, {matchID: "Tictactoe_0", move: moves[0]});
         }
         if (p1ReceivedMoves == moves.length) {
-          assert.equal(payload.status, match.STATUS.DRAW);
+          assert.equal(payload.status, match.STATUS.COMPLETED);
           p1ReceivedMatchOverUpdate = true;
         }
       } else if (topic == match.MESSAGES.PLAY) {
-        assert.equal(payload.move, moves[p1ReceivedMoves]);
+        assert.equal(payload.events.x, moves[p1ReceivedMoves].x);
+        assert.equal(payload.events.y, moves[p1ReceivedMoves].y);
         ++p1ReceivedMoves;
         if (p1ReceivedMoves % 2 == 0) {
           player1.mockSocketSent(
-            match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: moves[p1ReceivedMoves]});
+            match.MESSAGES.PLAY, {matchID: "Tictactoe_0", move: moves[p1ReceivedMoves]});
         }
       } else {
         assert(false, "Unexpected message on topic '" + topic + "'.");
@@ -175,15 +188,16 @@ describe("Matchups", function() {
     var p2Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE) {
         if (p2ReceivedMoves == moves.length) {
-          assert.equal(payload.status, match.STATUS.DRAW);
+          assert.equal(payload.status, match.STATUS.COMPLETED);
           p2ReceivedMatchOverUpdate = true;
         }
       } else if (topic == match.MESSAGES.PLAY) {
-        assert.equal(payload.move, moves[p2ReceivedMoves]);
+        assert.equal(payload.events.x, moves[p2ReceivedMoves].x);
+        assert.equal(payload.events.y, moves[p2ReceivedMoves].y);
         ++p2ReceivedMoves;
         if (p2ReceivedMoves % 2 == 1) {
           player2.mockSocketSent(
-            match.MESSAGES.PLAY, {matchId: "Tictactoe_0", move: moves[p2ReceivedMoves]});
+            match.MESSAGES.PLAY, {matchID: "Tictactoe_0", move: moves[p2ReceivedMoves]});
         }
       } else {
         assert(false, "Unexpected message on topic '" + topic + "'.");
@@ -196,11 +210,12 @@ describe("Matchups", function() {
     var spectatorCallback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE) {
         if (spectatorReceivedMoves == moves.length) {
-          assert.equal(payload.status, match.STATUS.DRAW);
+          assert.equal(payload.status, match.STATUS.COMPLETED);
           spectatorReceivedMatchOverUpdate = true;
         }
       } else if (topic == match.MESSAGES.PLAY) {
-        assert.equal(payload.move, moves[spectatorReceivedMoves]);
+        assert.equal(payload.events.x, moves[spectatorReceivedMoves].x);
+        assert.equal(payload.events.y, moves[spectatorReceivedMoves].y);
         ++spectatorReceivedMoves;
       } else {
         assert(false, "Unexpected message on topic '" + topic + "'.");

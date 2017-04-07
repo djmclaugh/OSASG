@@ -193,7 +193,7 @@ ConnectionHandler.prototype._listenForEventsOnPlayer = function(player) {
 
   // Let the player join matches.
   player.on(JOIN_MATCH, function(data) {
-    var match = gameManager.getMatchupById(data.matchId);
+    var match = gameManager.getMatchupById(data.matchID);
     if (match) {
       if (data.seat) {
         try {
@@ -225,7 +225,7 @@ ConnectionHandler.prototype._listenForEventsOnPlayer = function(player) {
         player.emit(ERROR_MESSAGE, {error: errorMessage});  
       }
     } else {
-      player.emit(ERROR_MESSAGE, {error: "Unable to find match '" + data.matchId + "'."});
+      player.emit(ERROR_MESSAGE, {error: "Unable to find match '" + data.matchID + "'."});
     }
   });
 
