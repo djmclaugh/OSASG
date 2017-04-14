@@ -58,16 +58,15 @@ function onPlay(match, player) {
   };
 }
 
-function Matchup(id, gameTitle, settings) {
+function Matchup(id, matchSettings) {
   var self = this;
   this.id = id;
 
-  this._settings = settings;
-  this._p1Timer = Timers.newTimer(settings.p1Timer);
-  this._p2Timer = Timers.newTimer(settings.p2Timer);
+  this._settings = matchSettings;
+  this._p1Timer = Timers.newTimer(matchSettings.p1Timer);
+  this._p2Timer = Timers.newTimer(matchSettings.p2Timer);
   this._clock = new MatchClock(this._p1Timer, this._p2Timer);
-  this._game = Games.newGame(gameTitle, settings.gameSettings);
-  this._gameTitle = gameTitle;
+  this._game = Games.newGame(matchSettings.gameName, matchSettings.gameSettings);
   this._p1 = null;
   this._p2 = null;
   this._spectators = [];
@@ -135,6 +134,8 @@ Matchup.prototype.addPlayer = function(player, seat) {
 Matchup.prototype.matchInfo = function() {
   var info = {};
   info.matchID = this.id;
+  info.gameName = this._settings.gameName;
+  info.settings = this._settings;
   info.p1 = this._p1 ? {identifier: this._p1.identifier, username: this._p1.username} : null;
   info.p2 = this._p2 ? {identifier: this._p2.identifier, username: this._p2.username} : null;
   return info;
@@ -159,6 +160,7 @@ Matchup.prototype._makeMove = function(move, playerNumber, timestamp) {
 
 Matchup.prototype._dataForUpdate = function() {
   var data = {};
+  data.gameName = this._settings.gameName;
   data.status = this._getStatus();
   data.settings = this._settings;
   // Ignor timers for now
@@ -166,21 +168,22 @@ Matchup.prototype._dataForUpdate = function() {
   //   p1: this._p1Timer.exportState(),
   //   p2: this._p2Timer.exportState(),
   // }
+  data.players = [];
   if (this._p1) {
-    data.p1 = {
+    data.players.push({
       username: this._p1.username,
       identifier: this._p1.identifier
-    };
+    });
   } else {
-    data.p1 = null;
+    data.players.push(null);
   }
   if (this._p2) {
-    data.p2 = {
+    data.players.push({
       username: this._p2.username,
       identifier: this._p2.identifier
-    };
+    });
   } else {
-    data.p2 = null;
+    data.players.push(null);
   } 
   data.matchID = this.id;
   data.toPlay = Array.from(this._game.getPlayersToPlay());
@@ -199,7 +202,10 @@ Matchup.prototype._addPlayerToSpectators = function(player, shouldSendUpdtate) {
     }
   }
   player.on("disconnect", function() {
-    self._spectators.splice(self._spectators.indexOf(player), 1);
+    var index = self._spectators.indexOf(player);
+    if (index > -1) {
+      self._spectators.splice(self._spectators.indexOf(player), 1);
+    }
   });
   if (shouldSendUpdtate) {
     var data = this._dataForUpdate();

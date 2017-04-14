@@ -80,8 +80,7 @@ export interface PlayMessage {
 
 export interface UpdateMessage {
   matchID: string,
-  p1: PlayerInfo,
-  p2: PlayerInfo,
+  players: Array<PlayerInfo>,
   events: Array<any>,
   settings: any,
   timers: any,

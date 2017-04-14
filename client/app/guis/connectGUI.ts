@@ -85,7 +85,10 @@ export class ConnectGUI extends GUI {
     if (this.playedMoves.length == 0) {
       return this.presets.length == this.options.q;
     }
-    return this.presets.length == this.options.p;
+    let spacesLeft: number = this.options.boardWidth * this.options.boardHeight;
+    spacesLeft -= (this.playedMoves.length - 1) * this.options.p;
+    spacesLeft -= this.options.q;
+    return this.presets.length == Math.min(this.options.p, spacesLeft);
   }
 
   draw(): void {

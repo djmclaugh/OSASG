@@ -214,14 +214,14 @@ ConnectionHandler.prototype._listenForEventsOnPlayer = function(player) {
             continue;
           }
           // If the invite is found, add the player to the appropriate game.
-          if (invite.matchId == match.id && invite.playerId == player.identifier) {
+          if (invite.matchID == match.id && invite.playerID == player.identifier) {
             match.addPlayer(player, invite.seat);
             self._sentInvites.splice(i, 1);
             return;
           }
         }
         var errorMessage = "No seat specified and no invites found while tryin to join match '"
-            + data.matchId + "'.";
+            + data.matchID + "'.";
         player.emit(ERROR_MESSAGE, {error: errorMessage});  
       }
     } else {
@@ -231,16 +231,21 @@ ConnectionHandler.prototype._listenForEventsOnPlayer = function(player) {
 
   // Let the player invite other players.
   player.on(INVITE_PLAYER, function(data) {
-    if (data.playerId in self._players && self._players[data.playerId].length > 0) {
-      data.timestamp = Date.now();
-      self._sentInvites.push(data);
-      var players = self._players[data.playerId];
-      for (var i = 0; i < players.length; ++i) {
-        var invitee = players[i];
-        invitee.emit(INVITE_PLAYER, {matchId: data.matchId});
+    var match = gameManager.getMatchupById(data.matchID);
+    if (match) {
+      if (data.playerID in self._players && self._players[data.playerID].length > 0) {
+        data.timestamp = Date.now();
+        self._sentInvites.push(data);
+        var players = self._players[data.playerID];
+        for (var i = 0; i < players.length; ++i) {
+          var invitee = players[i];
+          invitee.emit(INVITE_PLAYER, match.matchInfo());
+        }
+      } else {
+        player.emit(ERROR_MESSAGE, {error: "User '" + data.playerID + "' is currently not online."});
       }
     } else {
-      player.emit(ERROR_MESSAGE, {error: "User '" + data.playerId + "' is currently not online."});
+      player.emit(ERROR_MESSAGE, {error: "Unable to find match '" + data.matchID + "'."});
     }
   });
 

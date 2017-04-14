@@ -5,6 +5,7 @@ npm-debug.log*
 
 # Depedndencies
 node_modules
+ai/node_modules
 client/node_modules
 
 # Config files
@@ -12,6 +13,7 @@ config.json
 ai/bot_config.json
 
 # Generated files
+ai/js
 public/javascript/osasg_client.js
 client/app_js
 client/public/javascript/generated/*.js

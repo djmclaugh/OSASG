@@ -11,7 +11,6 @@ export class AvailableBotsService {
     this.activeBots = [];
     // TODO(djmclaugh): optimize
     osasgService.getBotUpdates().subscribe(botUpdate => {
-      console.log(JSON.stringify(botUpdate));
       switch(botUpdate.action) {
         case "set":
           this.activeBots = botUpdate.bots;
@@ -47,8 +46,8 @@ export class AvailableBotsService {
 
   inviteBotToMatch(matchID: string, botID: string, seat: number) {
     this.osasgService.sendMessage("api-invite-player", {
-      matchId: matchID,
-      playerId: botID,
+      matchID: matchID,
+      playerID: botID,
       seat: seat
     });
   }

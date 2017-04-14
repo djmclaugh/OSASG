@@ -57,6 +57,8 @@ export class MatchPageComponent {
   private handleMessage(message: MatchMessage) {
     if (!("settings" in message)) {
       let playMessage: PlayMessage = <PlayMessage> message;
+      this.matchData.events.push(playMessage.events);
+      this.matchData.toPlay = playMessage.toPlay;
       this.gameGUI.addEvent(playMessage.events);
       this.gameGUI.draw();
     } else {
@@ -79,8 +81,8 @@ export class MatchPageComponent {
     }
     this.gameGUI.isMyTurn = false;
     if (this.matchData.status == "ONGOING") {
-      if ((this.matchData.toPlay.indexOf(0) != -1 && this.matchData.p1.identifier == myID)
-          || (this.matchData.toPlay.indexOf(1) != -1 && this.matchData.p2.identifier == myID)) {
+      if ((this.matchData.toPlay.indexOf(0) != -1 && this.matchData.players[0].identifier == myID)
+          || (this.matchData.toPlay.indexOf(1) != -1 && this.matchData.players[1].identifier == myID)) {
         this.gameGUI.isMyTurn = true;
       }
     }

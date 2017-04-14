@@ -72,16 +72,16 @@ GameManager.prototype.getMatchupById = function(matchID) {
   return null;
 };
 
-GameManager.prototype.createNewMatchup = function(gameTitle, settings) {
+GameManager.prototype.createNewMatchup = function(matchSettings) {
   var self = this;
-  var matchupId = gameTitle.toLowerCase() + "_" + this.counter;
-  var matchup = new Matchup(matchupId, gameTitle, settings);
+  var matchupId = matchSettings.gameName.toLowerCase() + "_" + this.counter;
+  var matchup = new Matchup(matchupId, matchSettings);
   this.counter += 1;
   matchup.onMatchUpdate(function() {
     self.dispatcher.dispatchEvent(MATCH_UPDATED, matchup);
   });
   matchup.onMatchEnd(function(data) {
-    if (settings.isRated) {
+    if (matchSettings.isRated) {
       db.Match.addMatchToDatabase(matchup, data.result, function(error, addedMatch) {
         if (error) {
           console.log("Error while trying to add match to database:");
