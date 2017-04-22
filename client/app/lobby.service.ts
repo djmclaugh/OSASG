@@ -44,8 +44,4 @@ export class LobbyService {
       }
     });
   }
-
-  createMatch(): Observable<string> {
-    return this.osasgService.createMatch({});
-  }
 }

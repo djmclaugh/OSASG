@@ -307,8 +307,12 @@ export class OSASGService {
   }
 
   // Emits the match id if the match has succesfully been created.
-  createMatch(options: any): Observable<string> {
-    return this.post(createMatchEndpoint, options)
+  createMatch(gameName: string, options: any): Observable<string> {
+    let body: any = {
+      gameName: gameName,
+      gameSettings: options
+    }
+    return this.post(createMatchEndpoint, body)
         .map((response: Response) => response.text());
   }
 

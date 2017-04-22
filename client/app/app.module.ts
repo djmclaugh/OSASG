@@ -6,6 +6,7 @@ import { RouterModule, Routes } from '@angular/router';
 
 import { AppComponent } from "./app.component";
 import { BotPageComponent } from "./bot-page.component";
+import { CreateMatchFormComponent } from "./create-match-form.component";
 import { HomeComponent } from "./home.component";
 import { LobbyComponent } from "./lobby.component";
 import { LoginFormComponent } from "./login-form.component";
@@ -34,6 +35,7 @@ const appRoutes: Routes = [
   declarations: [
     AppComponent,
     BotPageComponent,
+    CreateMatchFormComponent,
     HomeComponent,
     LobbyComponent,
     LoginFormComponent,

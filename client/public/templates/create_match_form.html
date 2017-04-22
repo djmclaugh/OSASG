@@ -1,0 +1,27 @@
+<div class="container">
+  <h3>Create new match</h3>
+  <p>Game Type: 
+    <select [(ngModel)]="selectedGame" name="gameTitle">
+      <option [ngValue]="i" *ngFor="let i of possibleGames">{{ i }}</option>
+    </select>
+  </p>
+  <p *ngIf="selectedGame == 'Connect'">
+    <label for="width">Width:</label>
+    <input type="number" [(ngModel)]="connectWidth" id="width" min="1" max="19">
+    <label for="heigth">Height:</label>
+    <input type="number" [(ngModel)]="connectHeight" id="height" min="1" max="19">
+    <label for="k">k:</label>
+    <input type="number" [(ngModel)]="connectK" id="k" min="1" max="9">
+    <label for="p">p:</label>
+    <input type="number" [(ngModel)]="connectP" id="p" min="1" max="9">
+    <label for="q">q:</label>
+    <input type="number" [(ngModel)]="connectQ" id="q" min="1" max="9">
+  </p>
+  <p *ngIf="selectedGame == 'Connect6'">
+    <label for="width">Width:</label>
+    <input type="number" [(ngModel)]="connect6Width" id="width" min="1" max="19">
+    <label for="heigth">Height:</label>
+    <input type="number" [(ngModel)]="connect6Height" id="width" min="1" max="19">
+  </p>
+  <p><button (click)="onSubmit()">Create New Match</button></p>
+</div>

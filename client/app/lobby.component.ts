@@ -17,10 +17,6 @@ export class LobbyComponent {
     return this.lobbyService.activeMatches;
   }
 
-  createMatch(): void {
-    this.lobbyService.createMatch().subscribe();
-  }
-
   joinMatch(matchID: string): void {
     window.open("/match/" + matchID);
   }

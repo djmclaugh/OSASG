@@ -35,6 +35,14 @@ export class MatchPageComponent {
         .do(() => this.clearFetchedInfo())
         .switchMap((params: Params) => this.matchObservableFromParams(params))
         .subscribe((message: MatchMessage) => this.handleMessage(message));
+  }
+
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+    window.cancelAnimationFrame(this.requestAnimationFrameHandle);
+  }
+
+  ngAfterViewInit() {
     this._ngZone.runOutsideAngular(() => {
       let self: MatchPageComponent = this;
       function step() {
@@ -43,11 +51,6 @@ export class MatchPageComponent {
       }
       self.requestAnimationFrameHandle = window.requestAnimationFrame(step);
     });
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
-    window.cancelAnimationFrame(this.requestAnimationFrameHandle);
   }
 
   private matchObservableFromParams(params: Params): Observable<MatchMessage> {
@@ -60,7 +63,6 @@ export class MatchPageComponent {
       this.matchData.events.push(playMessage.events);
       this.matchData.toPlay = playMessage.toPlay;
       this.gameGUI.addEvent(playMessage.events);
-      this.gameGUI.draw();
     } else {
       this.matchData = <UpdateMessage> message;
       this.gameGUI = new ConnectGUI(
@@ -68,7 +70,6 @@ export class MatchPageComponent {
           this.matchData.settings.gameSettings,
           this.canvas.nativeElement);
       this.gameGUI.setEvents(this.matchData.events);
-      this.gameGUI.draw();
     }
     let currentUser: UserInfo = this.osasgService.getCurrentUserInfo();
     let myID: string = null;
@@ -90,13 +91,6 @@ export class MatchPageComponent {
 
   clearFetchedInfo() {
     this.matchData = null;
-    //this.gameGUI.draw();
-    //this.gameGUI.onChange(() => {
-    //  this.gameGUI.draw();
-    //  this.moveToSubmit = this.gameGUI.getMove();
-    //});
-    //this.gameGUI.setMouseDisabled(true);
-    //this.moveToSubmit = this.gameGUI.getMove();
   }
 
   onSeatSelect(seat: number): void {

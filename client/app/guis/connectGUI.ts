@@ -16,7 +16,7 @@ export class ConnectGUI extends GUI {
     if (gameName == "tictactoe") {
       this.options = sanitizeOptions(tictactoeOptions());
     } else if (gameName == "connect6") {
-      this.options = sanitizeOptions(connect6Options());
+      this.options = sanitizeOptions(connect6Options(options.boardWidth, options.boardHeight));
     } else {
       this.options = sanitizeOptions(options);
     }
@@ -35,6 +35,7 @@ export class ConnectGUI extends GUI {
     }
     this.presets = new Array<Coordinate>();
     this.mouseTarget = null;
+    this.needsRedraw = true;
   }
 
   addEvent(event: ConnectMove) {
@@ -42,6 +43,7 @@ export class ConnectGUI extends GUI {
     this.playedMoves.push(event);
     this.presets = new Array<Coordinate>();
     this.mouseTarget = null;
+    this.needsRedraw = true;
   };
 
   onMouseMove(p: MousePosition): void {

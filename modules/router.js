@@ -307,25 +307,15 @@ router.post("/api/bots/:botId/change_password", function(req, res) {
 
 router.post("/api/create_match", function(req, res) {
   try {
-    // TODO(djmclaugh): have the client provide this data instead of hard coding it.
-    var match = gameManager.createNewMatchup({
-      gameName: "Tictactoe",
-      gameSettings: {},
-      p1Timer: {
-        type: "Bronstein",
-        initialTime: 99 * 60 * 60 * 1000,
-        bonusTime: 99 * 60 * 60 * 1000
-      },
-      p2Timer: {
-        type: "Bronstein",
-        initialTime: 99 * 60 * 60 * 1000,
-        bonusTime: 99 * 60 * 60 * 1000
-      },
+    var options = {
+      gameName: req.body.gameName,
+      gameSettings: req.body.gameSettings,
       isRated: false
-    });
+    }
+    var match = gameManager.createNewMatchup(options);
     res.send(match.id);
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.log(error);
     res.status(500).send(error.message);
   }
 });

@@ -63,9 +63,9 @@ function Matchup(id, matchSettings) {
   this.id = id;
 
   this._settings = matchSettings;
-  this._p1Timer = Timers.newTimer(matchSettings.p1Timer);
-  this._p2Timer = Timers.newTimer(matchSettings.p2Timer);
-  this._clock = new MatchClock(this._p1Timer, this._p2Timer);
+  //this._p1Timer = Timers.newTimer(matchSettings.p1Timer);
+  //this._p2Timer = Timers.newTimer(matchSettings.p2Timer);
+  //this._clock = new MatchClock(this._p1Timer, this._p2Timer);
   this._game = Games.newGame(matchSettings.gameName, matchSettings.gameSettings);
   this._p1 = null;
   this._p2 = null;
