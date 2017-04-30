@@ -1,4 +1,5 @@
 import { Bot, MatchInfo } from "./bot";
+import { Update } from "ts-turnbased";
 import { Coordinate, ConnectMove, ConnectOptions, connect6Options, tictactoeOptions, sanitizeOptions } from "ts-turnbased-connect";
 
 export class RandomBot extends Bot {
@@ -15,17 +16,20 @@ export class RandomBot extends Bot {
 
   protected getMove(match: MatchInfo): any {
     if (match.gameName == "Tictactoe") {
-      return this.getConnectMove(match.events, sanitizeOptions(tictactoeOptions()));
+      return this.getConnectMove(match.updates, sanitizeOptions(tictactoeOptions()));
     } else if (match.gameName == "Connect6") {
-      return this.getConnectMove(match.events, sanitizeOptions(connect6Options()));
+      return this.getConnectMove(match.updates, sanitizeOptions(connect6Options()));
     } else if (match.gameName == "Connect") {
-      return this.getConnectMove(match.events, sanitizeOptions(match.settings.gameSettings));
+      return this.getConnectMove(match.updates, sanitizeOptions(match.settings.gameSettings));
     }
     throw Error("Don't know how to play: " + match.gameName);
   }
 
   // --- Connect helper methods ---
-  private getConnectMove(movesSoFar: Array<ConnectMove>, options: ConnectOptions): ConnectMove {
+  private getConnectMove(updatesSoFar: Array<Update>, options: ConnectOptions): ConnectMove {
+    let movesSoFar: Array<ConnectMove> = updatesSoFar.slice(1).map(update => {
+      return update.publicInfo;
+    });
     let board: Array<Array<boolean>> = [];
     for (let i: number = 0; i < options.boardWidth; ++i) {
       board[i] = [];
@@ -33,7 +37,7 @@ export class RandomBot extends Bot {
         board[i].push(true);
       }
     }
-    for (let move of movesSoFar.slice(1)) {
+    for (let move of movesSoFar) {
       let coordinates: Array<Coordinate> = Array.isArray(move) ? move : [move];
       for (let c of coordinates) {
         board[c.x][c.y] = false;
@@ -47,7 +51,7 @@ export class RandomBot extends Bot {
         }
       }
     }
-    let toPlace: number = movesSoFar.length == 1 ? options.q : options.p;
+    let toPlace: number = movesSoFar.length == 0 ? options.q : options.p;
     let move: Array<Coordinate> = [];
     while (move.length < toPlace && availableCoordinates.length > 0) {
       let index: number = Math.floor(Math.random() * availableCoordinates.length);

@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { Http, Response, RequestOptionsArgs } from "@angular/http";
 import { Observable, Observer, Subject } from "rxjs/Rx";
+import { Update } from "ts-turnbased";
 
 const config = require("../../config.json");
 
@@ -72,7 +73,7 @@ export type MatchStatus =
 
 export interface PlayMessage {
   matchID: string,
-  events: any,
+  update: Update,
   timestamp: number,
   status: MatchStatus,
   toPlay: Array<number>
@@ -81,7 +82,7 @@ export interface PlayMessage {
 export interface UpdateMessage {
   matchID: string,
   players: Array<PlayerInfo>,
-  events: Array<any>,
+  updates: Array<Update>,
   settings: any,
   timers: any,
   status: MatchStatus,

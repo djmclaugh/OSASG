@@ -60,16 +60,16 @@ export class MatchPageComponent {
   private handleMessage(message: MatchMessage) {
     if (!("settings" in message)) {
       let playMessage: PlayMessage = <PlayMessage> message;
-      this.matchData.events.push(playMessage.events);
+      this.matchData.updates.push(playMessage.update);
       this.matchData.toPlay = playMessage.toPlay;
-      this.gameGUI.addEvent(playMessage.events);
+      this.gameGUI.addUpdate(playMessage.update);
     } else {
       this.matchData = <UpdateMessage> message;
       this.gameGUI = new ConnectGUI(
           message.matchID.split("_")[0],
           this.matchData.settings.gameSettings,
           this.canvas.nativeElement);
-      this.gameGUI.setEvents(this.matchData.events);
+      this.gameGUI.setUpdates(this.matchData.updates);
     }
     let currentUser: UserInfo = this.osasgService.getCurrentUserInfo();
     let myID: string = null;

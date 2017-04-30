@@ -24,7 +24,7 @@ export interface MatchInfo {
   matchID: string,
   gameName: string,
   settings: MatchSettings,
-  events: Array<any>,
+  updates: Array<any>,
   status: "NOT_STARTED"|"ONGOING"|"COMPLETED",
   players: Array<PlayerInfo>,
   toPlay: Array<number>,
@@ -105,7 +105,7 @@ export abstract class Bot {
 
   private onPlay(message: any) {
     let match: MatchInfo = this.matches[message.matchID];
-    match.events.push(message.events);
+    match.updates.push(message.update);
     match.toPlay = message.toPlay;
     match.winners = message.winners;
     this.processMatch(match);

@@ -1,4 +1,5 @@
 import { Bot, MatchInfo } from "./bot";
+import { Update } from "ts-turnbased";
 import { Coordinate, ConnectMove, ConnectOptions, connect6Options, tictactoeOptions, sanitizeOptions } from "ts-turnbased-connect";
 
 export class SimpleBot extends Bot {
@@ -13,17 +14,19 @@ export class SimpleBot extends Bot {
 
   protected getMove(match: MatchInfo): any {
     if (match.gameName == "Tictactoe") {
-      return this.getConnectMove(match.events, sanitizeOptions(tictactoeOptions()));
+      return this.getConnectMove(match.updates, sanitizeOptions(tictactoeOptions()));
     } else if (match.gameName == "Connect6") {
-      return this.getConnectMove(match.events, sanitizeOptions(connect6Options()));
+      return this.getConnectMove(match.updates, sanitizeOptions(connect6Options()));
     } else if (match.gameName == "Connect") {
-      return this.getConnectMove(match.events, sanitizeOptions(match.settings.gameSettings));
+      return this.getConnectMove(match.updates, sanitizeOptions(match.settings.gameSettings));
     }
     throw Error("Don't know how to play: " + match.gameName);
   }
 
-  private getConnectMove(events: Array<ConnectMove>, options: ConnectOptions): ConnectMove {
-    let playedMoves: Array<ConnectMove> = events.slice(1);
+  private getConnectMove(updatesSoFar: Array<Update>, options: ConnectOptions): ConnectMove {
+    let playedMoves: Array<ConnectMove> = updatesSoFar.slice(1).map(update => {
+      return update.publicInfo;
+    });
     let board: Array<Array<number>> = [];
     for (let i: number = 0; i < options.boardWidth; ++i) {
       board[i] = [];

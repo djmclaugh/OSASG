@@ -1,3 +1,5 @@
+import { Update } from "ts-turnbased";
+
 export interface MousePosition {
   x: number;
   y: number;
@@ -43,8 +45,8 @@ export abstract class GUI {
     return {x: actualX * ratio, y: actualY * ratio};
   };
 
-  abstract setEvents(events: Array<any>): void;
-  abstract addEvent(event: any): void;
+  abstract setUpdates(events: Array<Update>): void;
+  abstract addUpdate(event: Update): void;
 
   abstract onMouseMove(p: MousePosition): void;
   abstract onMouseClick(p: MousePosition): void;

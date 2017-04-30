@@ -13,8 +13,8 @@
   "license": "Unlicense",
   "dependencies": {
     "carrier": "^0.3.0",
-    "ts-turnbased": "0.0.2",
-    "ts-turnbased-connect": "0.0.5",
+    "ts-turnbased": "0.0.3",
+    "ts-turnbased-connect": "0.0.7",
     "typescript": "^2.2.2"
   },
   "devDependencies": {

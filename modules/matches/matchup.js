@@ -211,16 +211,9 @@ Matchup.prototype._addPlayerToSpectators = function(player, shouldSendUpdtate) {
     var data = this._dataForUpdate();
     var amP1 = player.isSameUser(this._p1)
     var amP2 = player.isSameUser(this._p2)
-    // Right now only support 2 player games are supported.
-    if (amP1 && amP2) {
-      data.events = this._game.getTurnEvents();
-    } else if (amP1) {
-      data.events = this._game.getTurnEventsAsSeenBy(0);
-    } else if (amP2) {
-      data.events = this._game.getTurnEventsAsSeenBy(1);
-    } else {
-      data.events = this._game.getTurnEventsAsSeenBy(-1);
-    }
+    data.updates = this._game.getAllUpdates().map((update) => {
+      return this.updateAsSeenBy(update, amP1, amP2);
+    });
     player.emit(UPDATE, data);
   }
 };
@@ -229,15 +222,17 @@ Matchup.prototype._setPlayer = function(player, seat) {
   if (seat != 1 && seat != 2) {
     throw new Error("'seat' should be 1 or 2.");
   }
+  var wasPreviouslyStarted = this.hasStarted();
   if (seat == 1) {
     this._p1 = player;
   } else if (seat == 2) {
     this._p2 = player;
   }
-  //if (this.hasStarted() && !this._clock.hasStarted()) {
-  //  this._clock.start(Date.now());
-  //  this._startCheckingTime();
-  //}
+  if (this.hasStarted() && !wasPreviouslyStarted) {
+    this._game.start();
+    //this._clock.start(Date.now());
+    //this._startCheckingTime();
+  }
   this._addPlayerToSpectators(player, false);
   this._triggerUpdate();
 };
@@ -249,7 +244,7 @@ Matchup.prototype._triggerUpdate = function() {
 };
 
 Matchup.prototype._broadcastLatestEvents = function(timestamp) {
-  var publicEvents = this._game.getLatestTurnEventsAsSeenBy(-1);
+  var latestUpdate = this._game.getLatestUpdate();
   var data = {
     matchID: this.id,
     status: this._getStatus(timestamp),
@@ -261,36 +256,21 @@ Matchup.prototype._broadcastLatestEvents = function(timestamp) {
     var amP1 = spectator.isSameUser(this._p1)
     var amP2 = spectator.isSameUser(this._p2)
     // Right now only support 2 player games are supported.
-    if (amP1 && amP2) {
-      data.events = this._game.getLatestTurnEvents();
-    } else if (amP1) {
-      data.events = this._game.getLatestTurnEventsAsSeenBy(0);
-    } else if (amP2) {
-      data.events = this._game.getLatestTurnEventsAsSeenBy(1);
-    } else {
-      data.events = publicEvents;
-    }
+    data.update = updateAsSeenBy(latestUpdate, amP1, amP2);
     spectator.emit(PLAY, data);
   }
 }
 
 Matchup.prototype._broadcastCurrentState = function() {
-  var publicEvents = this._game.getTurnEventsAsSeenBy(-1);
+  var events = this._game.getAllUpdates();
   var data = this._dataForUpdate();
   for (var i = 0; i < this._spectators.length; ++i) {
     var spectator = this._spectators[i];
     var amP1 = spectator.isSameUser(this._p1)
     var amP2 = spectator.isSameUser(this._p2)
-    // Right now only support 2 player games are supported.
-    if (amP1 && amP2) {
-      data.events = this._game.getTurnEvents();
-    } else if (amP1) {
-      data.events = this._game.getTurnEventsAsSeenBy(0);
-    } else if (amP2) {
-      data.events = this._game.getTurnEventsAsSeenBy(1);
-    } else {
-      data.events = publicEvents;
-    }
+    data.updates = events.map((currentValue) => {
+      return updateAsSeenBy(currentValue, amP1, amP2);
+    });
     spectator.emit(UPDATE, data);
   }
 }
@@ -321,3 +301,21 @@ Matchup.prototype._getStatus = function() {
   }
   return this._game.getPlayersToPlay().size ? this.STATUS.ONGOING :this.STATUS.COMPLETED;
 };
+
+function updateAsSeenBy(update, amP1, amP2) {
+  if (!update) {
+    return null;
+  }
+  var newUpdate = {
+    publicInfo: update.publicInfo
+  }
+  if (update.privateInfo && (amP1 || amP2)) {
+    newUpdate.privateInfo = update.privateInfo.map((currentValue, index) => {
+      if (index == 0 && amP1 || index == 1 && amP2) {
+        currentValue
+      }
+      return null;
+    });
+  }
+  return newUpdate;
+}
