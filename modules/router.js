@@ -408,4 +408,7 @@ router.post("/sendToken", function(req, res) {
   }
 });
 
-module.exports = router;
+module.exports.getRouter = function(sessionStore) {
+  guest_names.setStore(sessionStore);
+  return router;
+};

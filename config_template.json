@@ -4,8 +4,8 @@
   "clientPort": The port on which the clent is served,
   "serverURL": URL for the server,
   "clientURL": URL that serves the client,
-  "databaseLocation": location of mongo database,
-  "passwordlessStoreLocation": location of the mongo database used to store passwordless information,
+  "databaseLocation": location of mongo database - will use a memory store if set to the empty string,
+  "passwordlessStoreLocation": location of the mongo database used to store passwordless information - will use a memory store if set to the empty string,
   "secret": secret string used to encode cookies,
   "recaptchaURL": recaptcha url
 }

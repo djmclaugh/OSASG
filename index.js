@@ -14,18 +14,27 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser(config.secret));
 
 // Setup session
-var session = require("express-session");
-
-const MongoStore = require('connect-mongo')(session);
-var sessionStore = new MongoStore({ url: 'mongodb://localhost/test' });
-app.use(session({
+var Session = require("express-session");
+var sessionStore;
+var options = {
   secret: config.secret,
   saveUninitialized: true,
   resave: false,
-  store: sessionStore,
   rolling: true,
   cookie: {maxAge: 24 * 60 * 60 * 1000}
-}));
+}
+var router;
+if (config.databaseLocation.length > 0) {
+  const MongoStore = require('connect-mongo')(session);
+  options.store = new MongoStore({ url: "mongodb://" + config.databaseLocation + "/test" });
+  router = require("./modules/router").getRouter(null);
+} else {
+  console.log("Starting OSASG with memory store for sessions. (Should not be used in prod)");
+  options.store = new Session.MemoryStore();
+  router = require("./modules/router").getRouter(options.store);
+}
+var session = Session(options);
+app.use(session);
 
 // Setup passwordless
 var PasswordlessMongoStore = require("passwordless-mongostore-bcrypt-node");
@@ -43,14 +52,19 @@ var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
   console.log(email);
   callback();
 };
-passwordless.init(new PasswordlessMongoStore(config.passwordlessStoreLocation));
+if (config.passwordlessStoreLocation.length > 0) {
+  passwordless.init(new PasswordlessMongoStore(config.passwordlessStoreLocation));
+} else {
+  console.log("Starting OSASG with memory store for passwordless. (Should not be used in prod)");
+  var MemoryStore = require("passwordless-memorystore");
+  passwordless.init(new MemoryStore());
+}
 passwordless.addDelivery(emailDelivery);
 
 app.use(passwordless.sessionSupport());
 app.use(passwordless.acceptToken({successRedirect: "http://" + config.clientURL}));
 
 // Setup router
-var router = require("./modules/router");
 app.use(router);
 
 // Setup TCP socket server for bots

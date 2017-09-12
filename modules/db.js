@@ -30,7 +30,7 @@ userSchema.statics.getOrCreateWithEmail = function (email, callback) {
   email = email.toLowerCase();
 
   var baseUsername = "";
-  
+
   // Pass the user to the callback if it exists.
   // If the user doesn't exist, create a new one and pass it to the callback
   var onLookup = function(error, user) {
@@ -95,7 +95,7 @@ userSchema.methods.changeUsername = function(newUsername, callback) {
       } else {
         self.username = newUsername;
         self.save(callback);
-      } 
+      }
     };
     self.model(userModelName).findOne({username:  new RegExp(newUsername, "i")}, onLookup);
   }
@@ -214,7 +214,7 @@ var matchSchema = Schema({
 // Statics
 // callback - function(error, match)
 matchSchema.statics.addMatchToDatabase = function(match, result, callback) {
-  // Time controls in a ranked match are the same for both players so we only have to check the 
+  // Time controls in a ranked match are the same for both players so we only have to check the
   // p1 time controls. We also assume a Bronstein timer.
   if (match._settings.p1Timer.type != "Bronstein") {
     callback(new Error("Invalid timer type for ranked match."), null);
@@ -268,14 +268,17 @@ matchSchema.statics.getMatchesForPlayer = function(identifier, callback) {
       });
 };
 
-
 exports.Match = mongoose.model(matchModelName, matchSchema);
 
 mongoose.Promise = global.Promise;
-mongoose.connect('mongodb://localhost/test', function(err) {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("Connection to mongo DB successful");
-    }
-});
+if (config.databaseLocation.length > 0) {
+  mongoose.connect('mongodb://localhost/test', function(err) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("Connection to mongo DB successful");
+      }
+  });
+} else {
+  console.log("No database location provided. (Should not be used in prod)");
+}

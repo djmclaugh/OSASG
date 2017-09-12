@@ -2,6 +2,7 @@ var path = require("path");
 var Sessions = require("./db").Session;
 var fs = require('fs');
 var names_location = path.join(__dirname, '../public/other/guest_names.txt');
+var sessionStore = null;
 
 function getAvailablesGuestNames(callback) {
   var lines = fs.readFileSync(names_location).toString().split("\r\n");
@@ -12,7 +13,8 @@ function getAvailablesGuestNames(callback) {
   for (var i = 0; i < lines.length; ++i) {
     names.push(lines[i] + "[guest]");
   }
-  Sessions.find({}, function(error, sessions) {
+
+  onFetchAll = function(error, sessions) {
     if (error) {
       callback(error, null);
       return;
@@ -24,7 +26,13 @@ function getAvailablesGuestNames(callback) {
       }
     }
     callback(null, names);
-  });
+  };
+
+  if (!sessionStore) {
+    Sessions.find({}, onFetchAll);
+  } else {
+    sessionStore.all(onFetchAll);
+  }
 }
 
 exports.getGuestName = function(callback) {
@@ -41,3 +49,7 @@ exports.getGuestName = function(callback) {
     }
   });
 };
+
+exports.setStore = function(store) {
+  sessionStore = store;
+}

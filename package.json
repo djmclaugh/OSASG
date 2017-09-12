@@ -27,6 +27,7 @@
     "mocha": "^2.3.3",
     "mongoose": "^4.7.6",
     "passwordless": "^1.1.2",
+    "passwordless-memorystore": "0.0.1",
     "passwordless-mongostore-bcrypt-node": "^0.1.1",
     "proxyquire": "^1.7.9",
     "ts-turnbased": "0.0.3",

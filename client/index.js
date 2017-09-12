@@ -9,6 +9,6 @@ app.get("**", function(req, res) {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-http.listen(8002, function(){
+http.listen(config.clientPort, function(){
   console.log("OSASG client started at " + config.clientURL);
 });
