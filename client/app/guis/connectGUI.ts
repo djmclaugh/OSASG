@@ -11,9 +11,9 @@ export class ConnectGUI extends GUI {
   mouseTarget: Coordinate;
   presets: Array<Coordinate>;
   game: Connect;
-  
-  constructor(gameName: string, options: any, canvas: HTMLCanvasElement) {
-    super(canvas);
+
+  constructor(gameName: string, options: any, canvas: HTMLCanvasElement, asPlayers: Set<number>) {
+    super(canvas, asPlayers);
     if (gameName == "tictactoe") {
       this.options = sanitizeOptions(tictactoeOptions());
     } else if (gameName == "connect6") {
@@ -56,7 +56,7 @@ export class ConnectGUI extends GUI {
     }
     this.mouseTarget = c;
   }
-  
+
   onMouseClick(p: MousePosition): void {
     this.onMouseMove(p);
     if (!this.mouseTarget) {
@@ -71,7 +71,7 @@ export class ConnectGUI extends GUI {
     this.mouseTarget = null;
     this.needsRedraw = true;
   }
-  
+
   onMouseOut(): void {
     if (this.mouseTarget != null) {
       this.needsRedraw = true;

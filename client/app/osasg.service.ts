@@ -97,7 +97,7 @@ export type MatchMessage = PlayMessage|UpdateMessage;
 
 @Injectable()
 export class OSASGService {
-  
+
   private socket:WebSocket = null;
   private userInfo: UserInfo = null;
   private errors: Array<Error> = [];
@@ -111,7 +111,7 @@ export class OSASGService {
   private isSubscribedToBots: boolean = false;
 
   constructor (private http: Http) {
-    this.createNewSocket(); 
+    this.createNewSocket();
     this.matchUpdateSubject = new Subject<MatchUpdate>();
     this.matchUpdateObservable = Observable.create((observer: Observer<MatchUpdate>) => {
       if (this.userInfo) {
@@ -237,9 +237,10 @@ export class OSASGService {
     });
   }
 
-  play(matchID: string, move: any) :void {
+  play(matchID: string, player: number, move: any) :void {
     this.sendMessage("play", {
       matchID: matchID,
+      player: player,
       move: move
     });
   }
@@ -291,7 +292,7 @@ export class OSASGService {
 
   isGuest(): boolean {
     return !this.userInfo || !this.userInfo._id;
-  } 
+  }
 
   requestEmail(address: string): Promise<string> {
     return new Promise((resolve, reject) => {

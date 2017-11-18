@@ -13,7 +13,8 @@ export class CreateMatchFormComponent {
   possibleGames: Array<string> = [
     "Connect",
     "Connect6",
-    "Tictactoe"
+    "Tictactoe",
+    "Roshambo"
   ];
   submitted = false;
 
@@ -28,9 +29,12 @@ export class CreateMatchFormComponent {
   connectP: number = 2;
   connectQ: number = 1;
 
+  // Roshambo options
+  roshamboNumberOfRounds: number = 10;
+
   constructor (private osasgService: OSASGService) {}
 
-  onSubmit() { 
+  onSubmit() {
     console.log(this.selectedGame);
     this.osasgService
         .createMatch(this.selectedGame, this.getOptions())
@@ -51,6 +55,8 @@ export class CreateMatchFormComponent {
         return this.getConnect6Options();
       case "Connect":
         return this.getConnectOptions();
+      case "Roshambo":
+        return this.getRoshamboOptions();
     }
     throw new Error("Unknown game type: " + this.selectedGame);
   }
@@ -69,6 +75,12 @@ export class CreateMatchFormComponent {
       k: this.connectK,
       p: this.connectP,
       q: this.connectQ
+    }
+  }
+
+  getRoshamboOptions(): any {
+    return {
+      numRounds: this.roshamboNumberOfRounds
     }
   }
 }

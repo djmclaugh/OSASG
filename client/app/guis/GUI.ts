@@ -7,30 +7,38 @@ export interface MousePosition {
 
 export abstract class GUI {
   needsRedraw: boolean;
-  canvas: HTMLCanvasElement;
-  isMyTurn: boolean;
+  playersToPlay: Array<number>;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(public canvas: HTMLCanvasElement, public playingAs: Set<number>) {
     this.canvas = canvas;
     this.canvas.addEventListener("mousemove", e => this.onMouseMoveEvent(e));
     this.canvas.addEventListener("mouseout", e => this.onMouseOutEvent(e));
     this.canvas.addEventListener("click", e => this.onMouseClickEvent(e));
   }
 
+  private isMyTurn() {
+    for (let playerToPlay of this.playersToPlay) {
+      if (this.playingAs.has(playerToPlay)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private onMouseMoveEvent(e: MouseEvent) {
-    if (this.isMyTurn) {
+    if (this.isMyTurn()) {
       this.onMouseMove(this.getMousePosition(e));
     }
   }
 
   private onMouseClickEvent(e: MouseEvent) {
-    if (this.isMyTurn) {
+    if (this.isMyTurn()) {
       this.onMouseClick(this.getMousePosition(e));
     }
   }
 
   private onMouseOutEvent(e: MouseEvent) {
-    if (this.isMyTurn) {
+    if (this.isMyTurn()) {
       this.onMouseOut();
     }
   }
@@ -44,6 +52,9 @@ export abstract class GUI {
     let ratio: number = 500 / (rect.right - rect.left);
     return {x: actualX * ratio, y: actualY * ratio};
   };
+
+  // Does nothing by defualt, but can be overrriden to do some clean up
+  public onMoveSubmitted(): void {}
 
   abstract setUpdates(events: Array<Update>): void;
   abstract addUpdate(event: Update): void;

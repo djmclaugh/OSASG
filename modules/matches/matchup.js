@@ -42,13 +42,15 @@ function onPlay(match, player) {
       player.emit(ERROR, {error: "The game is already over."});
       return;
     } else if (amP1 || amP2) {
-      var playerNumber;
-      if (amP1 && amP2) {
-        playerNumber = match._game.getPlayersToPlay().has(0) ? 0 : 1;
-      } else {
-        playerNumber = player.isSameUser(match._p1) ? 0 : 1;
+      if (data.player == 0 && !amP1) {
+        player.emit(ERROR, {error: "You cannot play as P1."});
+        return;
       }
-      var error = match._makeMove(data.move, playerNumber, timestamp);
+      if (data.player == 1 && !amP2) {
+        player.emit(ERROR, {error: "You cannot play as P2."});
+        return;
+      }
+      var error = match._makeMove(data.move, data.player, timestamp);
       if (error) {
         player.emit(ERROR, {error: error});
       }
@@ -94,11 +96,11 @@ Matchup.prototype.ERRORS = {
 };
 
 Matchup.prototype.onMatchUpdate = function(callback) {
-  return this._dispatcher.on(EVENT_UPDATE, callback);  
+  return this._dispatcher.on(EVENT_UPDATE, callback);
 };
 
 Matchup.prototype.onMatchEnd = function(callback) {
-  return this._dispatcher.on(EVENT_END, callback);  
+  return this._dispatcher.on(EVENT_END, callback);
 };
 
 Matchup.prototype.isCurrentlyPlaying = function(player) {
@@ -127,7 +129,7 @@ Matchup.prototype.addPlayer = function(player, seat) {
     } else {
       // The seat is already taken.
       throw new FailedToJoinMatchError(player, this, "seat " + seat + " is already occupied.");
-    }  
+    }
   }
 };
 
@@ -184,7 +186,7 @@ Matchup.prototype._dataForUpdate = function() {
     });
   } else {
     data.players.push(null);
-  } 
+  }
   data.matchID = this.id;
   data.toPlay = Array.from(this._game.getPlayersToPlay());
   return data;
@@ -212,7 +214,7 @@ Matchup.prototype._addPlayerToSpectators = function(player, shouldSendUpdtate) {
     var amP1 = player.isSameUser(this._p1)
     var amP2 = player.isSameUser(this._p2)
     data.updates = this._game.getAllUpdates().map((update) => {
-      return this.updateAsSeenBy(update, amP1, amP2);
+      return updateAsSeenBy(update, amP1, amP2);
     });
     player.emit(UPDATE, data);
   }

@@ -1,6 +1,6 @@
 <div class="container">
   <h3>Create new match</h3>
-  <p>Game Type: 
+  <p>Game Type:
     <select [(ngModel)]="selectedGame" name="gameTitle">
       <option [ngValue]="i" *ngFor="let i of possibleGames">{{ i }}</option>
     </select>
@@ -22,6 +22,10 @@
     <input type="number" [(ngModel)]="connect6Width" id="width" min="1" max="19">
     <label for="heigth">Height:</label>
     <input type="number" [(ngModel)]="connect6Height" id="width" min="1" max="19">
+  </p>
+  <p *ngIf="selectedGame == 'Roshambo'">
+    <label for="numRounds">Number of rounds:</label>
+    <input type="number" [(ngModel)]="roshamboNumberOfRounds" id="numRounds" min="1" max="99">
   </p>
   <p><button (click)="onSubmit()">Create New Match</button></p>
 </div>

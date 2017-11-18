@@ -6,6 +6,7 @@ import { Observable, Subscription } from "rxjs/Rx";
 import { OSASGService, MatchMessage, PlayMessage, UpdateMessage, UserInfo } from "./osasg.service";
 import { GUI } from "./guis/GUI";
 import { ConnectGUI } from "./guis/connectGUI";
+import { RoshamboGUI } from "./guis/roshamboGUI";
 
 @Component({
   selector: "match-page",
@@ -65,28 +66,39 @@ export class MatchPageComponent {
       this.gameGUI.addUpdate(playMessage.update);
     } else {
       this.matchData = <UpdateMessage> message;
-      this.gameGUI = new ConnectGUI(
-          message.matchID.split("_")[0],
+
+      let playingAs: Set<number> = new Set();
+      let currentUser: UserInfo = this.osasgService.getCurrentUserInfo();
+      let myID: string = null;
+      if (currentUser) {
+        if (currentUser._id) {
+          myID = currentUser._id;
+        } else {
+          myID = currentUser.username;
+        }
+      }
+      for (let i = 0; i < this.matchData.players.length; ++i) {
+        if (this.matchData.players[i] && this.matchData.players[i].identifier == myID) {
+          playingAs.add(i);
+        }
+      }
+
+      let gameName: string = message.matchID.split("_")[0];
+      if (gameName == "roshambo") {
+        this.gameGUI = new RoshamboGUI(
           this.matchData.settings.gameSettings,
-          this.canvas.nativeElement);
+          this.canvas.nativeElement,
+          playingAs);
+      } else {
+        this.gameGUI = new ConnectGUI(
+          gameName,
+          this.matchData.settings.gameSettings,
+          this.canvas.nativeElement,
+          playingAs);
+      }
       this.gameGUI.setUpdates(this.matchData.updates);
     }
-    let currentUser: UserInfo = this.osasgService.getCurrentUserInfo();
-    let myID: string = null;
-    if (currentUser) {
-      if (currentUser._id) {
-        myID = currentUser._id;
-      } else {
-        myID = currentUser.username;
-      }
-    }
-    this.gameGUI.isMyTurn = false;
-    if (this.matchData.status == "ONGOING") {
-      if ((this.matchData.toPlay.indexOf(0) != -1 && this.matchData.players[0].identifier == myID)
-          || (this.matchData.toPlay.indexOf(1) != -1 && this.matchData.players[1].identifier == myID)) {
-        this.gameGUI.isMyTurn = true;
-      }
-    }
+    this.gameGUI.playersToPlay = this.matchData.toPlay;
   }
 
   clearFetchedInfo() {
@@ -105,7 +117,16 @@ export class MatchPageComponent {
   }
 
   onMoveSubmit(): void {
-    this.osasgService.play(this.matchData.matchID, this.moveToSubmit());
+    let playerToPlay: number;
+    for (let player of this.gameGUI.playersToPlay) {
+      if (this.gameGUI.playingAs.has(player)) {
+        playerToPlay = player;
+        break;
+      }
+    }
+    this.osasgService.play(this.matchData.matchID, playerToPlay, this.moveToSubmit());
+    this.gameGUI.playersToPlay.splice(this.gameGUI.playersToPlay.indexOf(playerToPlay), 1);
+    this.gameGUI.onMoveSubmitted();
   }
 
   onFrame(): void {
