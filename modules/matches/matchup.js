@@ -50,6 +50,13 @@ function onPlay(match, player) {
         player.emit(ERROR, {error: "You cannot play as P2."});
         return;
       }
+      if (typeof data.player == "undefined") {
+        if (amP1) {
+          data.player = 0;
+        } else if (amP2) {
+          data.player = 1;
+        }
+      }
       var error = match._makeMove(data.move, data.player, timestamp);
       if (error) {
         player.emit(ERROR, {error: error});
