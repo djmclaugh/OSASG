@@ -1,7 +1,7 @@
 var path = require("path");
 var Sessions = require("./db").Session;
 var fs = require('fs');
-var names_location = path.join(__dirname, '../public/other/guest_names.txt');
+var names_location = path.join(__dirname, '../guest_names.txt');
 var sessionStore = null;
 
 function getAvailablesGuestNames(callback) {
