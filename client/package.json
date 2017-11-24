@@ -4,7 +4,7 @@
   "description": "Client that interacts with the OSASG server.",
   "scripts": {
     "clean": "rm -rf app_js",
-    "build": "npm run clean && tsc && browserify app_js/main.js > public/javascript/generated/bundle.js && cp node_modules/zone.js/dist/zone.js public/javascript/generated/zone.js && cp node_modules/reflect-metadata/Reflect.js public/javascript/generated/Reflect.js  && cp node_modules/reflect-metadata/Reflect.js.map public/javascript/generated/Reflect.js.map",
+    "build": "npm run clean && tsc && browserify app/main.js > public/javascript/generated/bundle.js && cp node_modules/zone.js/dist/zone.js public/javascript/generated/zone.js && cp node_modules/reflect-metadata/Reflect.js public/javascript/generated/Reflect.js  && cp node_modules/reflect-metadata/Reflect.js.map public/javascript/generated/Reflect.js.map",
     "start": "npm run build && node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

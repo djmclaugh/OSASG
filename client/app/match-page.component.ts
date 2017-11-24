@@ -8,6 +8,8 @@ import { GUI } from "./guis/GUI";
 import { ConnectGUI } from "./guis/connectGUI";
 import { RoshamboGUI } from "./guis/roshamboGUI";
 
+import { PlayerInfo } from "../../shared/player_info";
+
 @Component({
   selector: "match-page",
   templateUrl: "/templates/match_page.html",
@@ -68,11 +70,11 @@ export class MatchPageComponent {
       this.matchData = <UpdateMessage> message;
 
       let playingAs: Set<number> = new Set();
-      let currentUser: UserInfo = this.osasgService.getCurrentUserInfo();
+      let currentUser: PlayerInfo = this.osasgService.getCurrentUserInfo();
       let myID: string = null;
       if (currentUser) {
-        if (currentUser._id) {
-          myID = currentUser._id;
+        if (currentUser.identifier) {
+          myID = currentUser.identifier;
         } else {
           myID = currentUser.username;
         }

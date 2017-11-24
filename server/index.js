@@ -1,17 +1,15 @@
 var config = require("./config.json");
 var path = require("path");
-var cookieParser = require("cookie-parser");
 var bodyParser = require("body-parser");
 var express = require("express");
 var app = express();
 var http = require("http").Server(app);
-var expressWs = require("express-ws")(app, http);
 var Player = require("./modules/matches/player");
+var signature = require("cookie-signature");
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser(config.secret));
 
 // Setup session
 var Session = require("express-session");
@@ -75,6 +73,25 @@ var ConnectionHandler = require("./modules/connection_handler");
 var connectionHandler = new ConnectionHandler(socketServer);
 connectionHandler.start();
 
+var SocketAuthenticator = require("./modules/sockets/socket_authenticator").SocketAuthenticator;
+let authenticateRequest = function(request, callback) {
+  session(request, {}, () => {
+    if (request.session) {
+      callback(null, {
+        identifier: request.session.identifier,
+        username: request.session.username
+      });
+    } else {
+      callback(null, null);
+    }
+  });
+};
+let authenticateInfo = function(info, callback) {
+  callback(null, null);
+};
+let handler = new SocketAuthenticator(http, authenticateRequest, authenticateInfo);
+
+/*
 app.ws("/", function(ws, req, next, other) {
   // Wrap in a try/catch because otherwise errors get dropped for some reason.
   // TODO(djmclaugh): find root cause and actualy fix.
@@ -90,6 +107,7 @@ app.ws("/", function(ws, req, next, other) {
     console.log(e);
   }
 });
+*/
 
 http.listen(config.port, function(){
   console.log("OSASG started on port " + config.port);

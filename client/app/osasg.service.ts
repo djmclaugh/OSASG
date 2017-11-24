@@ -3,6 +3,9 @@ import { Http, Response, RequestOptionsArgs } from "@angular/http";
 import { Observable, Observer, Subject } from "rxjs/Rx";
 import { Update } from "ts-turnbased";
 
+import { PlayerInfo } from "../../shared/player_info";
+import { PlayerInfoSocketMessage, isPlayerInfoMessage, SocketMessage } from "../../shared/socket_protocol";
+
 const config = require("../../config.json");
 
 const osasgUrlBase: string = config.serverURL + ":" + config.port + "/";
@@ -99,7 +102,7 @@ export type MatchMessage = PlayMessage|UpdateMessage;
 export class OSASGService {
 
   private socket:WebSocket = null;
-  private userInfo: UserInfo = null;
+  private userInfo: PlayerInfo = null;
   private errors: Array<Error> = [];
 
   private matchUpdateObservable: Observable<MatchUpdate>;
@@ -138,14 +141,33 @@ export class OSASGService {
         self.socket = new WebSocket("ws://" + osasgUrlBase);
         self.socket.onopen = function(event) {
           console.log("Socket connection succesfully established.");
+          self.sendMessage("AUTHENTICATION", {data: "wow"});
         }
-        self.socket.onmessage = function(event) {
-          var json = JSON.parse(event.data);
-          self.handleMessage(json.type, json);
+        self.socket.onmessage = (event) => {
+          let message: SocketMessage = JSON.parse(event.data);
+          if (isPlayerInfoMessage(message)) {
+            this.userInfo = message.playerInfo;
+            // It's possible we tried subscribing to active matches before the server fully processed
+            // the socket connection. Try again when the server sends the user info.
+            if (this.isSubscribedToMatches) {
+              this.sendMessage("api-active-matches", {});
+            }
+            if (this.isSubscribedToBots) {
+              this.sendMessage("api-active-bots", {});
+            }
+            this.matchSubjects.forEach((value:any, key:String) => {
+              this.sendMessage("api-join-match", {
+                  matchID: key,
+                  seat: 3
+              });
+            });
+          } else {
+            self.handleMessage(message.type, message);
+          }
         }
         self.socket.onclose = function(event) {
           console.log("Socket closed. Creating new socket.");
-          self.createNewSocket();
+          //self.createNewSocket();
         }
       },
       error => {
@@ -158,23 +180,6 @@ export class OSASGService {
     console.log("Received: " + type);
     // console.log(data);
     switch(type) {
-      case "user-info":
-        this.userInfo = data;
-        // It's possible we tried subscribing to active matches before the server fully processed
-        // the socket connection. Try again when the server sends the user info.
-        if (this.isSubscribedToMatches) {
-          this.sendMessage("api-active-matches", {});
-        }
-        if (this.isSubscribedToBots) {
-          this.sendMessage("api-active-bots", {});
-        }
-        this.matchSubjects.forEach((value:any, key:String) => {
-          this.sendMessage("api-join-match", {
-              matchID: key,
-              seat: 3
-          });
-        });
-        break;
       case "api-active-matches":
         this.matchUpdateSubject.next(data);
         break;
@@ -193,6 +198,7 @@ export class OSASGService {
         break;
       default:
         console.log("Unknown type");
+        console.log(data);
         break;
     }
   }
@@ -255,7 +261,7 @@ export class OSASGService {
         .map(response => response.json());
   }
 
-  getCurrentUserInfo(): UserInfo {
+  getCurrentUserInfo(): PlayerInfo {
     if (this.userInfo) {
       return this.userInfo;
     }
@@ -291,7 +297,7 @@ export class OSASGService {
   }
 
   isGuest(): boolean {
-    return !this.userInfo || !this.userInfo._id;
+    return !this.userInfo || this.userInfo.identifier.indexOf("guest-") == 0;
   }
 
   requestEmail(address: string): Promise<string> {

@@ -10,7 +10,7 @@ var router = express.Router();
 
 router.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://" + config.clientURL);
-  res.header('Access-Control-Allow-Methods: GET, PUT, POST, DELETE, OPTIONS');
+  res.header("Access-Control-Allow-Methods: GET, POST");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.header("Access-Control-Allow-Credentials", "true");
   // intercept OPTIONS method
@@ -27,9 +27,10 @@ function fetchUserInformation(req, res, next) {
       if (error) {
         console.log(error);
         req.session.user = null;
-        req.session.username = req.session.id;
+        req.session.username = null;
       } else {
         req.session.user = user;
+        req.session.identifier = user.id;
         req.session.username = user.username;
       }
       next();
@@ -40,8 +41,10 @@ function fetchUserInformation(req, res, next) {
     if (!req.session.username || !req.session.username.includes("[guest]")) {
       guest_names.getGuestName(function(username) {
         req.session.username = username;
+        var date = new Date();
+        req.session.identifier = "guest-" + Math.floor(Math.random() * 1000) + "-" + date.getTime();
 	      if (req.session.username == null) {
-	        req.session.username = req.session.id;
+	        req.session.username = req.session.identifier;
 	      }
         next();
       });

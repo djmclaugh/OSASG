@@ -28,7 +28,7 @@ export class AppComponent implements OnInit {
 
   getIdentifier(): string {
     if (this.osasgService.getCurrentUserInfo()) {
-      return this.osasgService.getCurrentUserInfo()._id;
+      return this.osasgService.getCurrentUserInfo().identifier;
     }
     return null;
   }

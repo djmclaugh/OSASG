@@ -45,9 +45,9 @@ export class BotPageComponent {
       return false;
     }
     if (this.botInfo.owner instanceof String) {
-      return this.botInfo.owner == this.osasgService.getCurrentUserInfo()._id;
+      return this.botInfo.owner == this.osasgService.getCurrentUserInfo().identifier;
     } else {
-      return this.botInfo.owner._id == this.osasgService.getCurrentUserInfo()._id;
+      return this.botInfo.owner._id == this.osasgService.getCurrentUserInfo().identifier;
     }
   }
 

@@ -5,8 +5,7 @@
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "lib": [ "es2015", "dom" ],
-    "rootDir": "app",
-    "outDir": "app_js"
-  }
+    "lib": [ "es2015", "dom" ]
+  },
+  "includes": ["./app"]
 }

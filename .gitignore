@@ -16,5 +16,7 @@ ai/bot_config.json
 ai/js
 public/javascript/osasg_client.js
 client/app_js
+client/app/**/*.js
 client/public/javascript/generated/*.js
 client/public/javascript/generated/*.js.map
+shared/**.js

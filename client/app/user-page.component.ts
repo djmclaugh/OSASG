@@ -45,7 +45,7 @@ export class UserPageComponent {
     if (!this.userInfo || !this.osasgService.getCurrentUserInfo()) {
       return false;
     }
-    return this.userInfo._id == this.osasgService.getCurrentUserInfo()._id;
+    return this.userInfo._id == this.osasgService.getCurrentUserInfo().identifier;
   }
 
   updateUsername(): void {
