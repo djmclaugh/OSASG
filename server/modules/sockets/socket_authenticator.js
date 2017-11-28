@@ -1,57 +1,59 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const ws_1 = require("ws");
 const socket_protocol_1 = require("../../../shared/socket_protocol");
 const player_socket_1 = require("./player_socket");
+// https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes
+// The endpoint is terminating the connection due to a protocol error.
+const PROTOCOL_ERROR = 1002;
+// The server is terminating the connection because it encountered an unexpected condition that
+// prevented it from fulfilling the request.
+const INTERNAL_ERROR = 1011;
+/**
+ * Class that combines the different authentication strategies for WebSockets.
+ * Given a WebSocket to authenticate via the "authenticate" method, it will either return a
+ * PlayerSocket with the appropriate PlayerInfo (via the "onAuthentication" method) or close the the
+ * connection with the socket if it fails to authenticate.
+ */
 class SocketAuthenticator {
-    constructor(httpServer, requestAuthentication, credentialAuthentication) {
+    constructor(requestAuthentication, credentialAuthentication, authenticationTimeout) {
         this.requestAuthentication = requestAuthentication;
         this.credentialAuthentication = credentialAuthentication;
-        this.players = new Map();
-        this.authenticationCredentials = new Map();
-        this.socketServer = new ws_1.Server({
-            server: httpServer
-        });
-        this.socketServer.on("connection", (ws, request) => {
-            this.onConnect(ws, request);
-        });
+        this.authenticationTimeout = authenticationTimeout;
     }
-    onConnect(ws, request) {
-        ws.onmessage = (ev) => {
-            // Only listen to one message.
-            ws.onmessage = null;
-            let message = JSON.parse(ev.data);
-            if (socket_protocol_1.isAuthenticationMessage(message)) {
-                this.authenticationCredentials.set(ws, message);
-            }
-            else {
-                this.onAuthenticationFailed(ws, "Expected first message to be authentication info.");
-            }
-        };
+    /**
+     * This asynchronous method either authenticates the socket and calls "onAuthentication" with the
+     * appropriate PlayerSocket or closes the connection with "ws".
+     */
+    authenticate(ws, request) {
+        if (ws.protocol == socket_protocol_1.CREDENTIALS_AUTHENTICATION_SUBPROTOCOL) {
+            this.authenticateWithCredentials(ws);
+        }
+        else if (ws.protocol == socket_protocol_1.COOKIE_AUTHENTICATION_SUBPROTOCOL) {
+            this.authenticateWithCookie(ws, request);
+        }
+        else {
+            ws.close(PROTOCOL_ERROR, "Unknown subprotocol: " + ws.protocol);
+        }
+    }
+    authenticateWithCookie(ws, request) {
         this.requestAuthentication(request, (error, playerInfo) => {
             if (error) {
                 console.log(error);
-                this.onAuthenticationFailed(ws, error.message);
+                ws.close(INTERNAL_ERROR, error.message);
             }
             else if (playerInfo) {
                 this.onPlayerInfoFound(ws, playerInfo);
             }
             else {
-                this.onRequestAuthenticationFailed(ws);
+                ws.close(INTERNAL_ERROR, "Player info not found. Invalid or expired cookie.");
             }
         });
     }
-    onRequestAuthenticationFailed(ws) {
-        // If the credentials have already been sent while the cookies were being looked at, try to
-        // validate them.
-        if (this.authenticationCredentials.get(ws)) {
-            this.validateAuthenticationCredentials(ws, this.authenticationCredentials.get(ws));
-            return;
-        }
-        // Otherwise, give the player 5 seconds to send them.
+    authenticateWithCredentials(ws) {
+        let seconds = this.authenticationTimeout / 1000;
         let timer = setTimeout(() => {
-            this.onAuthenticationFailed(ws, "Expected authentication info within 5 seconds of connection.");
-        }, 5000);
+            ws.close(PROTOCOL_ERROR, "Expected authentication info within " + seconds + " seconds of connection.");
+        }, this.authenticationTimeout);
         ws.onmessage = (ev) => {
             clearTimeout(timer);
             // Only listen to one message.
@@ -61,7 +63,7 @@ class SocketAuthenticator {
                 this.validateAuthenticationCredentials(ws, message);
             }
             else {
-                this.onAuthenticationFailed(ws, "Expected first message to be authentication info.");
+                ws.close(PROTOCOL_ERROR, "Expected first message to be authentication info.");
             }
         };
     }
@@ -69,36 +71,19 @@ class SocketAuthenticator {
         this.credentialAuthentication(authenticationCredentials, (error, playerInfo) => {
             if (error) {
                 console.log(error);
-                this.onAuthenticationFailed(ws, error.message);
+                ws.close(INTERNAL_ERROR, error.message);
             }
             else if (playerInfo) {
                 this.onPlayerInfoFound(ws, playerInfo);
             }
             else {
-                this.onAuthenticationFailed(ws, "Invalid authentication info.");
+                ws.close(INTERNAL_ERROR, "Invalid authentication info.");
             }
         });
     }
-    onAuthenticationFailed(ws, reason) {
-        this.authenticationCredentials.delete(ws);
-        ws.send(JSON.stringify(reason + " Clossing connection."));
-        ws.close();
-    }
     onPlayerInfoFound(ws, info) {
-        this.authenticationCredentials.delete(ws);
-        this.addNewPlayerSocket(new player_socket_1.PlayerSocket(info, ws));
-    }
-    addNewPlayerSocket(playerSocket) {
-        let playerWithSameID = this.players.get(playerSocket.playerInfo.identifier);
-        if (!playerWithSameID) {
-            playerWithSameID = new Set();
-            this.players.set(playerSocket.playerInfo.identifier, playerWithSameID);
-        }
-        playerWithSameID.add(playerSocket);
-        playerSocket.send(socket_protocol_1.newPlayerInfoMessage(playerSocket.playerInfo));
-        playerSocket.onSubscription((message) => {
-            console.log("Oooo yeah");
-        });
+        ws.send(JSON.stringify(socket_protocol_1.newPlayerInfoMessage(info)));
+        this.onAuthentication(new player_socket_1.PlayerSocket(info, ws));
     }
 }
 exports.SocketAuthenticator = SocketAuthenticator;

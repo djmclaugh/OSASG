@@ -31,22 +31,22 @@ dbStub.Bot.findById = function(id) {
 
 const PORT = 12345;
 
-describe("Socket Server", function() {
+xdescribe("Socket Server", function() {
   var server;
-  
+
   beforeEach(function() {
     server = new SocketServer(PORT);
   });
-  
+
   afterEach(function(done) {
     server.close(done);
   });
-  
+
   it("should create a TCP server and listen on the specified port", function(done) {
     var client = new net.Socket();
     client.connect(PORT, "localhost", done);
   });
-  
+
   it("should notify its listeners when a new connection has been authenticated", function(done) {
     server.onConnection(function(socket) {
       assert.equal(socket.session.username, "username_123");
@@ -80,17 +80,17 @@ describe("Socket Server", function() {
       socket.write(JSON.stringify(message) + "\n");
     });
   });
-  
+
   describe("Parsing", function() {
     var clientSocket;
     var serverSocket;
-    
+
     beforeEach(function(done) {
       server.onConnection(function(socket) {
         serverSocket = socket;
         done();
       });
-      
+
       clientSocket = new net.Socket();
       clientSocket.connect(PORT, "localhost", function() {
         var message = {
@@ -101,7 +101,7 @@ describe("Socket Server", function() {
         clientSocket.write(JSON.stringify(message) + "\n");
       });
     });
-      
+
     it("should be able to parse simple client messages", function(done) {
       var toSend = [
         '{"type":"test", "string":"abc"}\n',
@@ -132,7 +132,7 @@ describe("Socket Server", function() {
       });
       clientSocket.write(toSend[0]);
     });
-    
+
     it("should be able to send simple messages to the client", function(done) {
       var toExpect = [
         '{"string":"abc","type":"test"}\n',
@@ -163,10 +163,10 @@ describe("Socket Server", function() {
       });
       serverSocket.emit("test", toSend[0]);
     });
-  
+
     it("should be able to parse client messages with arrays and objects");
     it("should be able to send messages with arrays and objects to the client");
     it("should detect when it only receives part of a message and wait for the full message to parse it");
-    
+
   });  // end of describe("Parsing")
 });

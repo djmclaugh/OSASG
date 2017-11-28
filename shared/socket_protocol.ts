@@ -22,20 +22,22 @@ export const CREDENTIALS_AUTHENTICATION_SUBPROTOCOL = "credentials_authenticatio
  */
 export const COOKIE_AUTHENTICATION_SUBPROTOCOL = "cookie_authentication";
 
-
+/**
+ * Every socket message will be a JSON string. The JSON object will always have a "type" property
+ * used to described what type of message it is.
+ * Every accepted type is described below.
+ */
 export interface SocketMessage {
   type: string
 };
 
-export const SUBSCRIPTION_TYPE: string = "SUBSCRIPTION";
-export interface SubscriptionSocketMessage extends SocketMessage {
-  state: 0|1
-  channel: "ACTIVE_MATCHES"
-};
-export function isSubscriptionMessage(message: SocketMessage): message is SubscriptionSocketMessage {
-  return message.type == SUBSCRIPTION_TYPE;
-};
-
+/**
+ * AUTHENTICATION: Sent by clients
+ * @param {string} identifier - The ID of the player the client wants to authenticat as.
+ * @param {string} password - The raw, unencrypted, password associated with the player's account.
+ * A client using the "credentials_authentication" subprotocol should send a message of this type as
+ * soon they connect to the server.
+ */
 export const AUTHENTICATION_TYPE: string = "AUTHENTICATION";
 export interface AuthenticationSocketMessage extends SocketMessage {
   identifier: string
@@ -45,6 +47,34 @@ export function isAuthenticationMessage(message: SocketMessage): message is Auth
   return message.type == AUTHENTICATION_TYPE;
 };
 
+/**
+ * ERROR: Sent by server
+ * @param {string} error - A description of the error that happened.
+ * Sent for any non-fatal errors (i.e. Received malformed message, trying to subscribe to
+ * non-existant channel, playing out of turn, etc.)
+ * Fatal errors will instead have the connection terminated with an error code and reason.
+ */
+export const ERROR_TYPE: string = "ERROR";
+export interface ErrorSocketMessage extends SocketMessage {
+  error: string
+};
+export function isMessageMessage(message: SocketMessage): message is ErrorSocketMessage {
+  return message.type == ERROR_TYPE;
+};
+export function newErrorMessage(errorDescription: string): ErrorSocketMessage {
+  return {
+    type: ERROR_TYPE,
+    error: errorDescription
+  };
+}
+
+/**
+ * PLAYER_INFO: Sent by server
+ * @param {PlayerInfo} playerInfo - Basic info about a player
+ * A message of this type is sent to the client as soon as the server authenticates them.
+ * That message is confirmation that the client successfully authenticated as the player contained
+ * in the message.
+ */
 export const PLAYER_INFO_TYPE: string = "PLAYER_INFO";
 export interface PlayerInfoSocketMessage extends SocketMessage {
   playerInfo: PlayerInfo;
@@ -58,3 +88,20 @@ export function newPlayerInfoMessage(playerInfo: PlayerInfo): PlayerInfoSocketMe
     playerInfo: playerInfo
   };
 }
+
+/**
+ * SUBSCRIPTION: Sent by clients
+ * @param {boolean} subscribed - Whether or not the user wants to be subscribed to a particular channel.
+ * @param {string} channel - The channel the user wants to subscribe to (or unsubscribe from).
+ * A client should send a message of this type whenever they want continuous updates about a
+ * particular topic. The client should send another message of this type but with "subscribed" set
+ * to false whenever they no longer wish to receive these updates.
+ */
+export const SUBSCRIPTION_TYPE: string = "SUBSCRIPTION";
+export interface SubscriptionSocketMessage extends SocketMessage {
+  subscribe: boolean
+  channel: "ACTIVE_MATCHES"
+};
+export function isSubscriptionMessage(message: SocketMessage): message is SubscriptionSocketMessage {
+  return message.type == SUBSCRIPTION_TYPE;
+};

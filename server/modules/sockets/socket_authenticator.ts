@@ -1,61 +1,77 @@
-import { Server as SocketServer, ServerOptions } from "ws";
-import { IncomingMessage, Server as HTTPServer } from "http";
+import { IncomingMessage } from "http";
 import { PlayerInfo } from "../../../shared/player_info";
-import { AuthenticationSocketMessage, isAuthenticationMessage, SubscriptionSocketMessage, newPlayerInfoMessage, SocketMessage } from "../../../shared/socket_protocol";
+import {
+  COOKIE_AUTHENTICATION_SUBPROTOCOL,
+  CREDENTIALS_AUTHENTICATION_SUBPROTOCOL,
+  AuthenticationSocketMessage,
+  SocketMessage,
+  isAuthenticationMessage,
+  newPlayerInfoMessage,
+} from "../../../shared/socket_protocol";
 import { PlayerSocket } from "./player_socket";
 
-type PlayerInfoCallback = (error: Error, playerInfo: PlayerInfo) => void;
-type RequestAuthenticator = (request: IncomingMessage, callback: PlayerInfoCallback) => void
-type CredentialAuthenticator =
-    (credentials: AuthenticationSocketMessage, callback: PlayerInfoCallback) => void
+export type PlayerInfoCallback = (error: Error, playerInfo: PlayerInfo) => void;
+export type RequestAuthenticator = (request: IncomingMessage, callback: PlayerInfoCallback) => void;
+export type CredentialAuthenticator =
+    (credentials: AuthenticationSocketMessage, callback: PlayerInfoCallback) => void;
 
+// https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes
+// The endpoint is terminating the connection due to a protocol error.
+const PROTOCOL_ERROR:number = 1002;
+// The server is terminating the connection because it encountered an unexpected condition that
+// prevented it from fulfilling the request.
+const INTERNAL_ERROR:number = 1011;
+
+/**
+ * Class that combines the different authentication strategies for WebSockets.
+ * Given a WebSocket to authenticate via the "authenticate" method, it will either return a
+ * PlayerSocket with the appropriate PlayerInfo (via the "onAuthentication" method) or close the the
+ * connection with the socket if it fails to authenticate.
+ */
 export class SocketAuthenticator {
-  private authenticationCredentials: Map<WebSocket, AuthenticationSocketMessage>;
+  /**
+   * Called whenever a socket successfully authenticates.
+   * Should be set by the owner of this object to receive authenticated users.
+   */
+  public onAuthentication: (playerSocket: PlayerSocket) => void;
 
   constructor(
       private requestAuthentication: RequestAuthenticator,
-      private credentialAuthentication: CredentialAuthenticator) {
-    this.authenticationCredentials = new Map();
-  }
+      private credentialAuthentication: CredentialAuthenticator,
+      private authenticationTimeout: number) {}
 
+  /**
+   * This asynchronous method either authenticates the socket and calls "onAuthentication" with the
+   * appropriate PlayerSocket or closes the connection with "ws".
+   */
   public authenticate(ws: WebSocket, request: IncomingMessage) {
-    //if (ws.protocol == )
+    if (ws.protocol == CREDENTIALS_AUTHENTICATION_SUBPROTOCOL) {
+      this.authenticateWithCredentials(ws);
+    } else if (ws.protocol == COOKIE_AUTHENTICATION_SUBPROTOCOL) {
+      this.authenticateWithCookie(ws, request);
+    } else {
+      ws.close(PROTOCOL_ERROR, "Unknown subprotocol: " + ws.protocol);
+    }
   }
 
-  private onConnect(ws: WebSocket, request: IncomingMessage) {
-    ws.onmessage = (ev: MessageEvent) => {
-      // Only listen to one message.
-      ws.onmessage = null;
-      let message: SocketMessage = JSON.parse(ev.data);
-      if (isAuthenticationMessage(message)) {
-        this.authenticationCredentials.set(ws, message);
-      } else {
-        this.onAuthenticationFailed(ws, "Expected first message to be authentication info.");
-      }
-    }
+  private authenticateWithCookie(ws: WebSocket, request: IncomingMessage) {
     this.requestAuthentication(request, (error: Error, playerInfo: PlayerInfo) => {
       if (error) {
         console.log(error);
-        this.onAuthenticationFailed(ws, error.message);
+        ws.close(INTERNAL_ERROR, error.message);
       } else if (playerInfo) {
         this.onPlayerInfoFound(ws, playerInfo);
       } else {
-        this.onRequestAuthenticationFailed(ws);
+        ws.close(INTERNAL_ERROR, "Player info not found. Invalid or expired cookie.");
       }
     });
   }
 
-  private onRequestAuthenticationFailed(ws: WebSocket) {
-    // If the credentials have already been sent while the cookies were being looked at, try to
-    // validate them.
-    if (this.authenticationCredentials.get(ws)) {
-      this.validateAuthenticationCredentials(ws, this.authenticationCredentials.get(ws));
-      return;
-    }
-    // Otherwise, give the player 5 seconds to send them.
+  private authenticateWithCredentials(ws: WebSocket) {
+    let seconds = this.authenticationTimeout / 1000;
     let timer: NodeJS.Timer = setTimeout(() => {
-      this.onAuthenticationFailed(ws, "Expected authentication info within 5 seconds of connection.");
-    }, 5000);
+      ws.close(PROTOCOL_ERROR, "Expected authentication info within " + seconds + " seconds of connection.");
+    }, this.authenticationTimeout);
     ws.onmessage = (ev: MessageEvent) => {
       clearTimeout(timer);
       // Only listen to one message.
@@ -64,7 +80,7 @@ export class SocketAuthenticator {
       if (isAuthenticationMessage(message)) {
         this.validateAuthenticationCredentials(ws, message);
       } else {
-        this.onAuthenticationFailed(ws, "Expected first message to be authentication info.");
+        ws.close(PROTOCOL_ERROR, "Expected first message to be authentication info.");
       }
     };
   }
@@ -73,37 +89,17 @@ export class SocketAuthenticator {
     this.credentialAuthentication(authenticationCredentials, (error: Error, playerInfo: PlayerInfo) => {
       if (error) {
         console.log(error);
-        this.onAuthenticationFailed(ws, error.message);
+        ws.close(INTERNAL_ERROR, error.message);
       } else if (playerInfo) {
         this.onPlayerInfoFound(ws, playerInfo);
       } else {
-        this.onAuthenticationFailed(ws, "Invalid authentication info.");
+        ws.close(INTERNAL_ERROR, "Invalid authentication info.");
       }
     })
   }
 
-  private onAuthenticationFailed(ws: WebSocket, reason: string) {
-    this.authenticationCredentials.delete(ws);
-    ws.send(JSON.stringify(reason + " Clossing connection."));
-    ws.close();
-  }
-
   private onPlayerInfoFound(ws: WebSocket, info: PlayerInfo) {
-    this.authenticationCredentials.delete(ws);
-    //this.addNewPlayerSocket(new PlayerSocket(info, ws));
+    ws.send(JSON.stringify(newPlayerInfoMessage(info)));
+    this.onAuthentication(new PlayerSocket(info, ws));
   }
-/*
-  private addNewPlayerSocket(playerSocket: PlayerSocket) {
-    let playerWithSameID: Set<PlayerSocket> = this.players.get(playerSocket.playerInfo.identifier);
-    if (!playerWithSameID) {
-      playerWithSameID = new Set();
-      this.players.set(playerSocket.playerInfo.identifier, playerWithSameID);
-    }
-    playerWithSameID.add(playerSocket);
-    playerSocket.send(newPlayerInfoMessage(playerSocket.playerInfo));
-    playerSocket.onSubscription((message: SubscriptionSocketMessage) => {
-      console.log("Oooo yeah");
-    });
-  }
-*/
 }

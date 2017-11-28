@@ -1,5 +1,5 @@
 import { SocketMessage, SubscriptionSocketMessage, isSubscriptionMessage } from "../../../shared/socket_protocol";
-import { PlayerInfo } from "../../../shared/player_info";
+import { PlayerInfo, isBot, isGuest } from "../../../shared/player_info";
 
 type SubscriptionCallback = (message: SubscriptionSocketMessage) => void;
 
@@ -13,8 +13,13 @@ function removeFromList(list: Array<any>, item: any): void {
 }
 
 export class PlayerSocket {
+  private onCloseCallbacks: Array<() => void>;
   private subscriptionsCallbacks: Array<SubscriptionCallback>;
-  constructor(readonly playerInfo:PlayerInfo, readonly socket: WebSocket){
+  public readonly isBot: boolean;
+  public readonly isGuest: boolean;
+  constructor(readonly playerInfo:PlayerInfo, readonly socket: WebSocket) {
+    this.isBot = isBot(playerInfo);
+    this.isGuest = isGuest(playerInfo);
     this.subscriptionsCallbacks = [];
     socket.onmessage = (ev: MessageEvent) => {
       let message: SocketMessage = JSON.parse(ev.data);
@@ -25,8 +30,14 @@ export class PlayerSocket {
       } else {
         throw new Error("Unknown message type: " + message.type);
       }
-    }
+    };
+    socket.onclose = (ev: CloseEvent) => {
+      for (let callback of this.onCloseCallbacks) {
+        callback();
+      }
+    };
   }
+
   public send(message: SocketMessage) {
     this.socket.send(JSON.stringify(message));
   }
@@ -36,5 +47,12 @@ export class PlayerSocket {
   }
   public removeSubscriptionListener(callback: SubscriptionCallback): void {
     removeFromList(this.subscriptionsCallbacks, callback);
+  }
+
+  public onClose(callback: () => void): void {
+    this.onCloseCallbacks.push(callback);
+  }
+  public removeOnCloseListener(callback: () => void): void {
+    removeFromList(this.onCloseCallbacks, callback);
   }
 }

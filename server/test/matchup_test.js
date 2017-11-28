@@ -16,11 +16,11 @@ var defaultSettings = {
   }
 };
 
-describe("Matchups", function() {
+xdescribe("Matchups", function() {
   it("should send an error message if the user plays out of turn", function(done) {
     var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
     var p1SentAValidMove = false;
-    
+
     var p1Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
         // If the match has started, play a move.
@@ -41,14 +41,14 @@ describe("Matchups", function() {
 
     var player1 = new MockPlayer("p1_name", "p1_id", p1Callback);
     var player2 = new MockPlayer("p2_name", "p2_id", null);
-    
+
     match.addPlayer(player1, 1);
     match.addPlayer(player2, 2);
   });
-  
+
   it("should send an error message if the user makes an illegal move", function(done) {
     var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
-    
+
     var p1Callback = function(topic, payload) {
       if (topic == match.MESSAGES.UPDATE && payload.p2 != null) {
         // If the match has started, play a move.
@@ -61,11 +61,11 @@ describe("Matchups", function() {
 
     var player1 = new MockPlayer("p1_name", "p1_id", p1Callback);
     var player2 = new MockPlayer("p2_name", "p2_id", null);
-    
+
     match.addPlayer(player1, 1);
     match.addPlayer(player2, 2);
   });
-  
+
   it("should not allow a user to sit in an occupied seat", function() {
     var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
     match.addPlayer(new MockPlayer("name_1", "id_1"), 1);
@@ -73,10 +73,10 @@ describe("Matchups", function() {
       match.addPlayer(new MockPlayer("name_2", "id_2"), 1);
     }, match.ERRORS.FAILED_TO_JOIN_MATCHUP);
   });
-  
+
  it("should allow a user to reconnect", function(done) {
     var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
-    
+
     var p1ReceivedFirstP2Move = false;
     var p1ReceivedSecondP2Move = false;
 
@@ -125,7 +125,7 @@ describe("Matchups", function() {
     match.addPlayer(player1, 1);
     match.addPlayer(player2_1, 2);
   });
-    
+
   it("should let two users join and play a full game while being spectated", function(done) {
     var match = new Matchup("Tictactoe_0", "Tictactoe", defaultSettings);
 
@@ -228,7 +228,7 @@ describe("Matchups", function() {
     var player1 = new MockPlayer("p1_name", "p1_id", p1Callback);
     var player2 = new MockPlayer("p2_name", "p2_id", p2Callback);
     var spectator = new MockPlayer("spectator_name", "spectator_id", spectatorCallback);
- 
+
     match.addPlayer(spectator, 3);
     match.addPlayer(player1, 1);
     match.addPlayer(player2, 2);
