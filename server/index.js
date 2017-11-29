@@ -65,14 +65,8 @@ app.use(passwordless.acceptToken({successRedirect: "http://" + config.clientURL}
 // Setup router
 app.use(router);
 
-// Setup TCP socket server for bots
-var SocketServer = require("./modules/socket_server");
-var socketServer = new SocketServer(config.botPort);
 
-var ConnectionHandler = require("./modules/connection_handler");
-var connectionHandler = new ConnectionHandler(socketServer);
-connectionHandler.start();
-
+var SocketServer = require("./modules/sockets/socket_server").SocketServer;
 var SocketAuthenticator = require("./modules/sockets/socket_authenticator").SocketAuthenticator;
 let authenticateRequest = function(request, callback) {
   session(request, {}, () => {
@@ -89,7 +83,8 @@ let authenticateRequest = function(request, callback) {
 let authenticateInfo = function(info, callback) {
   callback(null, null);
 };
-let handler = new SocketAuthenticator(http, authenticateRequest, authenticateInfo);
+let authenticator = new SocketAuthenticator(authenticateRequest, authenticateInfo, 5000);
+let socketServer = new SocketServer(http, authenticator);
 
 /*
 app.ws("/", function(ws, req, next, other) {

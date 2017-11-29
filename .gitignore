@@ -19,4 +19,6 @@ client/app_js
 client/app/**/*.js
 client/public/javascript/generated/*.js
 client/public/javascript/generated/*.js.map
+server/modules/sockets/*.js
+server/test/sockets/*.js
 shared/**.js

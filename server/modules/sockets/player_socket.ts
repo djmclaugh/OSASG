@@ -13,7 +13,7 @@ function removeFromList(list: Array<any>, item: any): void {
 }
 
 export class PlayerSocket {
-  private onCloseCallbacks: Array<() => void>;
+  private onCloseCallbacks: Array<() => void> = [];
   private subscriptionsCallbacks: Array<SubscriptionCallback>;
   public readonly isBot: boolean;
   public readonly isGuest: boolean;
@@ -22,13 +22,19 @@ export class PlayerSocket {
     this.isGuest = isGuest(playerInfo);
     this.subscriptionsCallbacks = [];
     socket.onmessage = (ev: MessageEvent) => {
-      let message: SocketMessage = JSON.parse(ev.data);
-      if (isSubscriptionMessage(message)) {
-        for (let callback of this.subscriptionsCallbacks) {
-          callback(message);
+      try {
+        let message: SocketMessage = JSON.parse(ev.data);
+        if (isSubscriptionMessage(message)) {
+          for (let callback of this.subscriptionsCallbacks) {
+            callback(message);
+          }
+        } else {
+          throw new Error("Unknown message type: " + message.type);
         }
-      } else {
-        throw new Error("Unknown message type: " + message.type);
+      } catch(e) {
+        console.log("Error prossesing message for socket '" + this.playerInfo.username + "':");
+        console.log(e);
+        socket.close(1011, e.message);
       }
     };
     socket.onclose = (ev: CloseEvent) => {
@@ -39,7 +45,11 @@ export class PlayerSocket {
   }
 
   public send(message: SocketMessage) {
-    this.socket.send(JSON.stringify(message));
+    if (this.socket.readyState == this.socket.OPEN) {
+      this.socket.send(JSON.stringify(message));
+    } else {
+      console.log("Error: Trying to write to closed socket");
+    }
   }
 
   public onSubscription(callback: SubscriptionCallback): void {

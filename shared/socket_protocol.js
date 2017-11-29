@@ -21,13 +21,6 @@ exports.CREDENTIALS_AUTHENTICATION_SUBPROTOCOL = "credentials_authentication";
  */
 exports.COOKIE_AUTHENTICATION_SUBPROTOCOL = "cookie_authentication";
 ;
-/**
- * AUTHENTICATION: Sent by clients
- * @param {string} identifier - The ID of the player the client wants to authenticat as.
- * @param {string} password - The raw, unencrypted, password associated with the player's account.
- * A client using the "credentials_authentication" subprotocol should send a message of this type as
- * soon they connect to the server.
- */
 exports.AUTHENTICATION_TYPE = "AUTHENTICATION";
 ;
 function isAuthenticationMessage(message) {
@@ -35,13 +28,6 @@ function isAuthenticationMessage(message) {
 }
 exports.isAuthenticationMessage = isAuthenticationMessage;
 ;
-/**
- * ERROR: Sent by server
- * @param {string} error - A description of the error that happened.
- * Sent for any non-fatal errors (i.e. Received malformed message, trying to subscribe to
- * non-existant channel, playing out of turn, etc.)
- * Fatal errors will instead have the connection terminated with an error code and reason.
- */
 exports.ERROR_TYPE = "ERROR";
 ;
 function isMessageMessage(message) {
@@ -56,13 +42,7 @@ function newErrorMessage(errorDescription) {
     };
 }
 exports.newErrorMessage = newErrorMessage;
-/**
- * PLAYER_INFO: Sent by server
- * @param {PlayerInfo} playerInfo - Basic info about a player
- * A message of this type is sent to the client as soon as the server authenticates them.
- * That message is confirmation that the client successfully authenticated as the player contained
- * in the message.
- */
+;
 exports.PLAYER_INFO_TYPE = "PLAYER_INFO";
 ;
 function isPlayerInfoMessage(message) {
@@ -77,15 +57,13 @@ function newPlayerInfoMessage(playerInfo) {
     };
 }
 exports.newPlayerInfoMessage = newPlayerInfoMessage;
-/**
- * SUBSCRIPTION: Sent by clients
- * @param {boolean} subscribed - Whether or not the user wants to be subscribed to a particular channel.
- * @param {string} channel - The channel the user wants to subscribe to (or unsubscribe from).
- * A client should send a message of this type whenever they want continuous updates about a
- * particular topic. The client should send another message of this type but with "subscribed" set
- * to false whenever they no longer wish to receive these updates.
- */
+;
 exports.SUBSCRIPTION_TYPE = "SUBSCRIPTION";
+var Channel;
+(function (Channel) {
+    Channel["ACTIVE_MATCHES"] = "ACTIVE_MATCHES";
+    Channel["PLAYERS_LOOKING_FOR_INVITES"] = "PLAYERS_LOOKING_FOR_INVITES";
+})(Channel = exports.Channel || (exports.Channel = {}));
 ;
 function isSubscriptionMessage(message) {
     return message.type == exports.SUBSCRIPTION_TYPE;

@@ -31,6 +31,7 @@ export interface SocketMessage {
   type: string
 };
 
+export const AUTHENTICATION_TYPE: string = "AUTHENTICATION";
 /**
  * AUTHENTICATION: Sent by clients
  * @param {string} identifier - The ID of the player the client wants to authenticat as.
@@ -38,7 +39,6 @@ export interface SocketMessage {
  * A client using the "credentials_authentication" subprotocol should send a message of this type as
  * soon they connect to the server.
  */
-export const AUTHENTICATION_TYPE: string = "AUTHENTICATION";
 export interface AuthenticationSocketMessage extends SocketMessage {
   identifier: string
   password: string
@@ -47,6 +47,7 @@ export function isAuthenticationMessage(message: SocketMessage): message is Auth
   return message.type == AUTHENTICATION_TYPE;
 };
 
+export const ERROR_TYPE: string = "ERROR";
 /**
  * ERROR: Sent by server
  * @param {string} error - A description of the error that happened.
@@ -54,7 +55,6 @@ export function isAuthenticationMessage(message: SocketMessage): message is Auth
  * non-existant channel, playing out of turn, etc.)
  * Fatal errors will instead have the connection terminated with an error code and reason.
  */
-export const ERROR_TYPE: string = "ERROR";
 export interface ErrorSocketMessage extends SocketMessage {
   error: string
 };
@@ -66,8 +66,9 @@ export function newErrorMessage(errorDescription: string): ErrorSocketMessage {
     type: ERROR_TYPE,
     error: errorDescription
   };
-}
+};
 
+export const PLAYER_INFO_TYPE: string = "PLAYER_INFO";
 /**
  * PLAYER_INFO: Sent by server
  * @param {PlayerInfo} playerInfo - Basic info about a player
@@ -75,7 +76,6 @@ export function newErrorMessage(errorDescription: string): ErrorSocketMessage {
  * That message is confirmation that the client successfully authenticated as the player contained
  * in the message.
  */
-export const PLAYER_INFO_TYPE: string = "PLAYER_INFO";
 export interface PlayerInfoSocketMessage extends SocketMessage {
   playerInfo: PlayerInfo;
 };
@@ -87,8 +87,13 @@ export function newPlayerInfoMessage(playerInfo: PlayerInfo): PlayerInfoSocketMe
     type: PLAYER_INFO_TYPE,
     playerInfo: playerInfo
   };
-}
+};
 
+export const SUBSCRIPTION_TYPE: string = "SUBSCRIPTION";
+export enum Channel {
+  ACTIVE_MATCHES = "ACTIVE_MATCHES",
+  PLAYERS_LOOKING_FOR_INVITES = "PLAYERS_LOOKING_FOR_INVITES",
+}
 /**
  * SUBSCRIPTION: Sent by clients
  * @param {boolean} subscribed - Whether or not the user wants to be subscribed to a particular channel.
@@ -97,10 +102,9 @@ export function newPlayerInfoMessage(playerInfo: PlayerInfo): PlayerInfoSocketMe
  * particular topic. The client should send another message of this type but with "subscribed" set
  * to false whenever they no longer wish to receive these updates.
  */
-export const SUBSCRIPTION_TYPE: string = "SUBSCRIPTION";
 export interface SubscriptionSocketMessage extends SocketMessage {
-  subscribe: boolean
-  channel: "ACTIVE_MATCHES"
+  subscribe: boolean,
+  channel: Channel
 };
 export function isSubscriptionMessage(message: SocketMessage): message is SubscriptionSocketMessage {
   return message.type == SUBSCRIPTION_TYPE;

@@ -1,3 +1,5 @@
+import { Socket } from "net";
+
 export class FakeWebSocket implements WebSocket {
   public binaryType: string;
   public bufferedAmount: number;
@@ -17,6 +19,7 @@ export class FakeWebSocket implements WebSocket {
   public dispatchEvent: any;
 
   private responses: Array<(message: string) => void> = [];
+
   public closeResponse: (code?: number, reason?: string) => void = () => {
     throw new Error("Unexpected socket close");
   };

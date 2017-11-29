@@ -4,7 +4,14 @@ import { Observable, Observer, Subject } from "rxjs/Rx";
 import { Update } from "ts-turnbased";
 
 import { PlayerInfo } from "../../shared/player_info";
-import { PlayerInfoSocketMessage, isPlayerInfoMessage, SocketMessage } from "../../shared/socket_protocol";
+import {
+  COOKIE_AUTHENTICATION_SUBPROTOCOL,
+  SUBSCRIPTION_TYPE,
+  Channel,
+  PlayerInfoSocketMessage,
+  isPlayerInfoMessage,
+  SocketMessage,
+} from "../../shared/socket_protocol";
 
 const config = require("../../config.json");
 
@@ -138,10 +145,9 @@ export class OSASGService {
     var self: OSASGService = this;
     self.get("ping").subscribe(
       response => {
-        self.socket = new WebSocket("ws://" + osasgUrlBase);
+        self.socket = new WebSocket("ws://" + osasgUrlBase, COOKIE_AUTHENTICATION_SUBPROTOCOL);
         self.socket.onopen = function(event) {
           console.log("Socket connection succesfully established.");
-          self.sendMessage("AUTHENTICATION", {data: "wow"});
         }
         self.socket.onmessage = (event) => {
           let message: SocketMessage = JSON.parse(event.data);
@@ -150,7 +156,10 @@ export class OSASGService {
             // It's possible we tried subscribing to active matches before the server fully processed
             // the socket connection. Try again when the server sends the user info.
             if (this.isSubscribedToMatches) {
-              this.sendMessage("api-active-matches", {});
+              this.sendMessage(SUBSCRIPTION_TYPE, {
+                subscribe: true,
+                channel: Channel.ACTIVE_MATCHES
+              });
             }
             if (this.isSubscribedToBots) {
               this.sendMessage("api-active-bots", {});
@@ -166,8 +175,8 @@ export class OSASGService {
           }
         }
         self.socket.onclose = function(event) {
-          console.log("Socket closed. Creating new socket.");
-          //self.createNewSocket();
+          console.log("Socket closed: " + event.reason);
+          setTimeout(() => {self.createNewSocket()}, 5000);
         }
       },
       error => {
