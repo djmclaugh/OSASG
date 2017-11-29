@@ -1,7 +1,8 @@
 import { Server, ServerOptions } from "ws";
 import { IncomingMessage, Server as HTTPServer } from "http";
-import { SocketAuthenticator } from "./socket_authenticator";
 import { PlayerSocket } from "./player_socket";
+import { SocketAuthenticator } from "./socket_authenticator";
+import { SubscriptionManager } from "./subscription_manager";
 import {
   COOKIE_AUTHENTICATION_SUBPROTOCOL,
   CREDENTIALS_AUTHENTICATION_SUBPROTOCOL,
@@ -14,8 +15,8 @@ import {
 export class SocketServer {
   private server: Server;
   private onlineSockets: Map<string, Set<PlayerSocket>> =  new Map();
-  private channels: Map<Channel, Set<PlayerSocket>> = new Map();
   private wantsInvites: Map<string, Set<PlayerSocket>> = new Map();
+  private subsciptionManager: SubscriptionManager = new SubscriptionManager();
 
   constructor(
       httpServer: HTTPServer,
@@ -66,16 +67,7 @@ export class SocketServer {
     this.addPlayer(playerSocket);
     playerSocket.onClose(() => { this.removePlayer(playerSocket)});
     playerSocket.onSubscription((message: SubscriptionSocketMessage) => {
-      let channel: Set<PlayerSocket> = this.channels.get(message.channel);
-      if (message.subscribe) {
-        if (!channel) {
-          channel = new Set();
-          this.channels.set(message.channel, channel);
-        }
-        channel.add(playerSocket);
-      } else {
-        channel.delete(playerSocket);
-      }
+      this.subsciptionManager.updateSubscription(playerSocket, message);
     });
   }
 
@@ -90,14 +82,6 @@ export class SocketServer {
 
   private removePlayer(playerSocket: PlayerSocket) {
     this.onlineSockets.get(playerSocket.playerInfo.identifier).delete(playerSocket);
-    for (let channel of this.channels.values()) {
-      channel.delete(playerSocket);
-    }
-  }
-
-  private broadcastToChannel(channel: Channel, message: SocketMessage) {
-    for (let playerSocket of this.channels.get(channel)) {
-      playerSocket.send(message);
-    }
+    this.subsciptionManager.remove(playerSocket);
   }
 }
