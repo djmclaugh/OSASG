@@ -8,7 +8,7 @@ import {
   CREDENTIALS_AUTHENTICATION_SUBPROTOCOL,
   Channel,
   SocketMessage,
-  SubscriptionSocketMessage,
+  SubscriptionMessage,
   newPlayerInfoMessage,
 } from "../../../shared/socket_protocol";
 
@@ -16,7 +16,9 @@ export class SocketServer {
   private server: Server;
   private onlineSockets: Map<string, Set<PlayerSocket>> =  new Map();
   private wantsInvites: Map<string, Set<PlayerSocket>> = new Map();
-  private subsciptionManager: SubscriptionManager = new SubscriptionManager();
+  public readonly subsciptionManager: SubscriptionManager = new SubscriptionManager();
+  public onNewPlayer: (player: PlayerSocket) => void;
+  public onPlayerClose: (player: PlayerSocket) => void;
 
   constructor(
       httpServer: HTTPServer,
@@ -32,7 +34,7 @@ export class SocketServer {
       this.onConnection(ws, request);
     });
     this.socketAuthenticator.onAuthentication = (playerSocket: PlayerSocket) => {
-      this.onAuthentication(playerSocket);
+      this.addPlayer(playerSocket);
     }
     this.onlineSockets = new Map();
   }
@@ -63,25 +65,25 @@ export class SocketServer {
     this.socketAuthenticator.authenticate(ws, request);
   }
 
-  private onAuthentication(playerSocket: PlayerSocket) {
-    this.addPlayer(playerSocket);
-    playerSocket.onClose(() => { this.removePlayer(playerSocket)});
-    playerSocket.onSubscription((message: SubscriptionSocketMessage) => {
-      this.subsciptionManager.updateSubscription(playerSocket, message);
-    });
-  }
-
   private addPlayer(playerSocket: PlayerSocket) {
+    playerSocket.onClose = () => {
+      this.removePlayer(playerSocket)
+      this.subsciptionManager.removeItem(
+          Channel.AVAILABLE_PLAYERS, playerSocket.playerInfo.identifier);
+    };
+    this.subsciptionManager.add(playerSocket);
     let playerSet: Set<PlayerSocket> = this.onlineSockets.get(playerSocket.playerInfo.identifier);
     if (!playerSet) {
       playerSet = new Set();
       this.onlineSockets.set(playerSocket.playerInfo.identifier, playerSet);
     }
     playerSet.add(playerSocket);
+    this.onNewPlayer(playerSocket);
   }
 
   private removePlayer(playerSocket: PlayerSocket) {
     this.onlineSockets.get(playerSocket.playerInfo.identifier).delete(playerSocket);
     this.subsciptionManager.remove(playerSocket);
+    this.onPlayerClose(playerSocket);
   }
 }

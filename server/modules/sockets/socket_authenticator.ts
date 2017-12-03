@@ -3,7 +3,7 @@ import { PlayerInfo } from "../../../shared/player_info";
 import {
   COOKIE_AUTHENTICATION_SUBPROTOCOL,
   CREDENTIALS_AUTHENTICATION_SUBPROTOCOL,
-  AuthenticationSocketMessage,
+  AuthenticationMessage,
   SocketMessage,
   isAuthenticationMessage,
   newPlayerInfoMessage,
@@ -13,7 +13,7 @@ import { PlayerSocket } from "./player_socket";
 export type PlayerInfoCallback = (error: Error, playerInfo: PlayerInfo) => void;
 export type RequestAuthenticator = (request: IncomingMessage, callback: PlayerInfoCallback) => void;
 export type CredentialAuthenticator =
-    (credentials: AuthenticationSocketMessage, callback: PlayerInfoCallback) => void;
+    (credentials: AuthenticationMessage, callback: PlayerInfoCallback) => void;
 
 // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#Status_codes
 // The endpoint is terminating the connection due to a protocol error.
@@ -85,7 +85,7 @@ export class SocketAuthenticator {
     };
   }
 
-  private validateAuthenticationCredentials(ws: WebSocket, authenticationCredentials: AuthenticationSocketMessage) {
+  private validateAuthenticationCredentials(ws: WebSocket, authenticationCredentials: AuthenticationMessage) {
     this.credentialAuthentication(authenticationCredentials, (error: Error, playerInfo: PlayerInfo) => {
       if (error) {
         console.log(error);

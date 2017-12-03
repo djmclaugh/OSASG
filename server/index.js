@@ -104,6 +104,17 @@ app.ws("/", function(ws, req, next, other) {
 });
 */
 
+const gameManager = require("./matches/game_manager").prototype.getInstance();
+gameManager.onMatchAdded(function(match) {
+  socketServer.subsciptionManager.addItem(match.getInfo());
+});
+self.onMatchRemovedCallbackId = gameManager.onMatchRemoved(function(match) {
+  socketServer.subsciptionManager.addItem(match.identifier);
+});
+self.onMatchUpdatedCallbackId = gameManager.onMatchUpdated(function(match) {
+  socketServer.subsciptionManager.updateItem(match.getInfo());
+});
+
 http.listen(config.port, function(){
   console.log("OSASG started on port " + config.port);
 });

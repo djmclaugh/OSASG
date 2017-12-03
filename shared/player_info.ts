@@ -1,5 +1,6 @@
-export interface PlayerInfo {
-  identifier: string,
+import { Identifiable } from "./identifiable";
+
+export interface PlayerInfo extends Identifiable {
   username: string,
 }
 

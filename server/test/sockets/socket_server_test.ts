@@ -16,7 +16,7 @@ import {
   COOKIE_AUTHENTICATION_SUBPROTOCOL,
   CREDENTIALS_AUTHENTICATION_SUBPROTOCOL,
   PLAYER_INFO_TYPE,
-  AuthenticationSocketMessage,
+  AuthenticationMessage,
   SocketMessage,
   isPlayerInfoMessage,
 } from "../../../shared/socket_protocol";
@@ -24,7 +24,7 @@ import { FakeWebSocket } from "../mock/fake_web_socket";
 import { FakeNetSocket } from "../mock/fake_net_socket";
 
 let defaultCredentialAuthenticator: CredentialAuthenticator =
-    (credentials: AuthenticationSocketMessage, callback: PlayerInfoCallback) => {
+    (credentials: AuthenticationMessage, callback: PlayerInfoCallback) => {
   callback(null, {identifier: "identifier", username: "username"});
 }
 let defaultRequestAuthenticator: RequestAuthenticator =

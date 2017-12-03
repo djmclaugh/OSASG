@@ -15,7 +15,7 @@ import {
   COOKIE_AUTHENTICATION_SUBPROTOCOL,
   CREDENTIALS_AUTHENTICATION_SUBPROTOCOL,
   PLAYER_INFO_TYPE,
-  AuthenticationSocketMessage,
+  AuthenticationMessage,
   SocketMessage,
   isPlayerInfoMessage,
 } from "../../../shared/socket_protocol";
@@ -25,7 +25,7 @@ describe("SocketAuthenticator", () => {
   let defaultAuthenticator: SocketAuthenticator;
   beforeEach(() => {
     let defaultCredentialAuthenticator: CredentialAuthenticator =
-        (credentials: AuthenticationSocketMessage, callback: PlayerInfoCallback) => {
+        (credentials: AuthenticationMessage, callback: PlayerInfoCallback) => {
       if (credentials.identifier == "identifier" && credentials.password == "password") {
         callback(null, {identifier: credentials.identifier, username: "username"});
       } else {
