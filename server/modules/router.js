@@ -1,10 +1,10 @@
 var config = require("../config.json");
 var express = require("express");
 var guest_names = require("./guest_names");
-var gameManager = require("./matches/game_manager").prototype.getInstance();
 var db = require("./db");
 var passwordless = require("passwordless");
 var https = require("https");
+var matchManager;
 
 var router = express.Router();
 
@@ -315,8 +315,8 @@ router.post("/api/create_match", function(req, res) {
       gameSettings: req.body.gameSettings,
       isRated: false
     }
-    var match = gameManager.createNewMatchup(options);
-    res.send(match.id);
+    var match = matchManager.createNewMatch(options);
+    res.send(match.identifier);
   } catch (error) {
     console.log(error);
     res.status(500).send(error.message);
@@ -338,7 +338,7 @@ router.get("/api/server_time", function(req, res) {
 });
 
 router.get("/api/activeMatches", function(req, res) {
-  res.send(gameManager.getMatchesUserCanJoin(req.session.username));
+  res.send(matchManager.getMatchesUserCanJoin(req.session.identifer));
 });
 
 // Sends a login email to the specified address and returns a message describing the action.
@@ -411,7 +411,8 @@ router.post("/sendToken", function(req, res) {
   }
 });
 
-module.exports.getRouter = function(sessionStore) {
+module.exports.getRouter = function(sessionStore, manager) {
+  matchManager = manager;
   guest_names.setStore(sessionStore);
   return router;
 };

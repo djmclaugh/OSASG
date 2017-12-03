@@ -20,5 +20,12 @@ class MatchManager {
         this.onMatchCreated(match);
         return match;
     }
+    getMatchesUserCanJoin(playerIdentifier) {
+        let matches = [];
+        for (let match of this.allMatches.values()) {
+            matches.push(match);
+        }
+        return matches;
+    }
 }
 exports.MatchManager = MatchManager;

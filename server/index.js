@@ -4,8 +4,6 @@ var bodyParser = require("body-parser");
 var express = require("express");
 var app = express();
 var http = require("http").Server(app);
-var Player = require("./modules/matches/player");
-var signature = require("cookie-signature");
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
@@ -21,15 +19,16 @@ var options = {
   rolling: true,
   cookie: {maxAge: 24 * 60 * 60 * 1000}
 }
+const matchManager = new (require("./modules/matches/match_manager").MatchManager)();
 var router;
 if (config.databaseLocation.length > 0) {
   const MongoStore = require('connect-mongo')(session);
   options.store = new MongoStore({ url: "mongodb://" + config.databaseLocation + "/test" });
-  router = require("./modules/router").getRouter(null);
+  router = require("./modules/router").getRouter(null, matchManager);
 } else {
   console.log("Starting OSASG with memory store for sessions. (Should not be used in prod)");
   options.store = new Session.MemoryStore();
-  router = require("./modules/router").getRouter(options.store);
+  router = require("./modules/router").getRouter(options.store, matchManager);
 }
 var session = Session(options);
 app.use(session);
@@ -103,17 +102,7 @@ app.ws("/", function(ws, req, next, other) {
   }
 });
 */
-
-const gameManager = require("./matches/game_manager").prototype.getInstance();
-gameManager.onMatchAdded(function(match) {
-  socketServer.subsciptionManager.addItem(match.getInfo());
-});
-self.onMatchRemovedCallbackId = gameManager.onMatchRemoved(function(match) {
-  socketServer.subsciptionManager.addItem(match.identifier);
-});
-self.onMatchUpdatedCallbackId = gameManager.onMatchUpdated(function(match) {
-  socketServer.subsciptionManager.updateItem(match.getInfo());
-});
+const matchLobby = new (require("./modules/match_lobby").MatchLobby)(socketServer, matchManager);
 
 http.listen(config.port, function(){
   console.log("OSASG started on port " + config.port);

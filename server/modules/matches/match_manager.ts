@@ -22,4 +22,12 @@ export class MatchManager {
     this.onMatchCreated(match);
     return match;
   }
+
+  public getMatchesUserCanJoin(playerIdentifier: string): Array<Match> {
+    let matches: Array<Match> = [];
+     for (let match of this.allMatches.values()) {
+       matches.push(match);
+     }
+     return matches;
+  }
 }
