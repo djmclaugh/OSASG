@@ -3,12 +3,17 @@ import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Response } from "@angular/http";
 import { Observable, Subscription } from "rxjs/Rx";
 
-import { OSASGService, MatchMessage, PlayMessage, UpdateMessage, UserInfo } from "./osasg.service";
+import { OSASGService, UserInfo } from "./osasg.service";
 import { GUI } from "./guis/GUI";
 import { ConnectGUI } from "./guis/connectGUI";
 import { RoshamboGUI } from "./guis/roshamboGUI";
 
+import { MatchInfo, MatchSettings, MatchStatus, MatchSummary } from "../../shared/match_info";
 import { PlayerInfo } from "../../shared/player_info";
+
+import {
+  MatchUpdateMessage,
+} from "../../shared/socket_protocol";
 
 @Component({
   selector: "match-page",
@@ -16,7 +21,7 @@ import { PlayerInfo } from "../../shared/player_info";
 })
 
 export class MatchPageComponent {
-  matchData: UpdateMessage;
+  matchData: MatchInfo;
   game: any;
   gameGUI: GUI;
   subscription: Subscription;
@@ -37,7 +42,7 @@ export class MatchPageComponent {
     this.subscription = this.route.params
         .do(() => this.clearFetchedInfo())
         .switchMap((params: Params) => this.matchObservableFromParams(params))
-        .subscribe((message: MatchMessage) => this.handleMessage(message));
+        .subscribe((message: MatchUpdateMessage) => this.handleMessage(message));
   }
 
   ngOnDestroy() {
@@ -56,49 +61,54 @@ export class MatchPageComponent {
     });
   }
 
-  private matchObservableFromParams(params: Params): Observable<MatchMessage> {
+  private matchObservableFromParams(params: Params): Observable<MatchUpdateMessage> {
     return this.osasgService.getUpdatesForMatch(params["matchID"]);
   }
 
-  private handleMessage(message: MatchMessage) {
-    if (!("settings" in message)) {
-      let playMessage: PlayMessage = <PlayMessage> message;
-      this.matchData.updates.push(playMessage.update);
-      this.matchData.toPlay = playMessage.toPlay;
-      this.gameGUI.addUpdate(playMessage.update);
-    } else {
-      this.matchData = <UpdateMessage> message;
-
-      let playingAs: Set<number> = new Set();
-      let currentUser: PlayerInfo = this.osasgService.getCurrentUserInfo();
-      let myID: string = null;
-      if (currentUser) {
-        if (currentUser.identifier) {
-          myID = currentUser.identifier;
-        } else {
-          myID = currentUser.username;
-        }
-      }
-      for (let i = 0; i < this.matchData.players.length; ++i) {
-        if (this.matchData.players[i] && this.matchData.players[i].identifier == myID) {
-          playingAs.add(i);
-        }
-      }
-
-      let gameName: string = message.matchID.split("_")[0];
-      if (gameName == "roshambo") {
-        this.gameGUI = new RoshamboGUI(
-          this.matchData.settings.gameSettings,
-          this.canvas.nativeElement,
-          playingAs);
+  private onPlayersUpdate(): void {
+    let playingAs: Set<number> = new Set();
+    let currentUser: PlayerInfo = this.osasgService.getCurrentUserInfo();
+    let myID: string = null;
+    if (currentUser) {
+      if (currentUser.identifier) {
+        myID = currentUser.identifier;
       } else {
-        this.gameGUI = new ConnectGUI(
-          gameName,
-          this.matchData.settings.gameSettings,
-          this.canvas.nativeElement,
-          playingAs);
+        myID = currentUser.username;
       }
-      this.gameGUI.setUpdates(this.matchData.updates);
+    }
+    for (let i = 0; i < this.matchData.players.length; ++i) {
+      if (this.matchData.players[i] && this.matchData.players[i].identifier == myID) {
+        playingAs.add(i);
+      }
+    }
+
+    let gameName: string = this.matchData.identifier.split("_")[0];
+    if (gameName == "roshambo") {
+      this.gameGUI = new RoshamboGUI(
+        this.matchData.settings.gameOptions,
+        this.canvas.nativeElement,
+        playingAs);
+    } else {
+      this.gameGUI = new ConnectGUI(
+        gameName,
+        this.matchData.settings.gameOptions,
+        this.canvas.nativeElement,
+        playingAs);
+    }
+    this.gameGUI.setUpdates(this.matchData.updates);
+  }
+
+  private handleMessage(message: MatchUpdateMessage) {
+    if (message.players) {
+      this.matchData.players = message.players;
+      this.onPlayersUpdate();
+    } else if (message.gameUpdate) {
+      this.matchData.updates.push(message.gameUpdate.update);
+      this.matchData.toPlay = message.gameUpdate.toPlay;
+      this.gameGUI.addUpdate(message.gameUpdate.update);
+    } else if (message.matchInfo) {
+      this.matchData = message.matchInfo;
+      this.onPlayersUpdate();
     }
     this.gameGUI.playersToPlay = this.matchData.toPlay;
   }
@@ -108,7 +118,7 @@ export class MatchPageComponent {
   }
 
   onSeatSelect(seat: number): void {
-    this.osasgService.sit(this.matchData.matchID, seat);
+    this.osasgService.sit(this.matchData.identifier, seat);
   }
 
   moveToSubmit(): any {
@@ -126,7 +136,7 @@ export class MatchPageComponent {
         break;
       }
     }
-    this.osasgService.play(this.matchData.matchID, playerToPlay, this.moveToSubmit());
+    this.osasgService.play(this.matchData.identifier, playerToPlay, this.moveToSubmit(), this.matchData.updates.length);
     this.gameGUI.playersToPlay.splice(this.gameGUI.playersToPlay.indexOf(playerToPlay), 1);
     this.gameGUI.onMoveSubmitted();
   }

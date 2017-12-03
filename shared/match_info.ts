@@ -26,3 +26,8 @@ export interface MatchInfo extends Identifiable {
   players: Array<PlayerInfo>,
   updates: Array<Update>
 }
+
+export interface GameUpdate {
+  update: Update,
+  toPlay: Array<number>
+}

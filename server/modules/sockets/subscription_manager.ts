@@ -70,7 +70,7 @@ export class SubscriptionManager {
       let setMessage: SubscriptionUpdateMessage<Identifiable> = {
         type: SUBSCRIPTION_UPDATE_TYPE,
         channel: message.channel,
-        set: Array.from(this.channels.get(message.channel).values())
+        set: Array.from(this.getChannel(message.channel).values())
       };
       playerSocket.send(message);
     } else {

@@ -4,12 +4,24 @@ import { Observable, Observer, Subject } from "rxjs/Rx";
 import { Update } from "ts-turnbased";
 
 import { PlayerInfo } from "../../shared/player_info";
+import { MatchInfo, MatchSettings, MatchStatus, MatchSummary } from "../../shared/match_info";
 import {
   COOKIE_AUTHENTICATION_SUBPROTOCOL,
+  JOIN_MATCH_TYPE,
+  PLAY_TYPE,
+  SPECTATE_MATCH_TYPE,
   SUBSCRIPTION_TYPE,
   Channel,
-  PlayerInfoSocketMessage,
+  JoinMatchMessage,
+  MatchUpdateMessage,
+  PlayMessage,
+  PlayerInfoMessage,
+  SpectateMatchMessage,
+  SubscriptionMessage,
+  SubscriptionUpdateMessage,
+  isMatchUpdateMessage,
   isPlayerInfoMessage,
+  isMatchSummarySubscriptionUpdateMessage,
   SocketMessage,
 } from "../../shared/socket_protocol";
 
@@ -59,51 +71,10 @@ export interface UserPageInfo {
 
 export type ListUpdatAction = "set"|"add"|"remove"|"update";
 
-export interface MatchInfo {
-  matchID: string,
-  p1: PlayerInfo,
-  p2: PlayerInfo,
-  status: string
-}
-
-export interface MatchUpdate {
-  action: ListUpdatAction,
-  matches: Array<MatchInfo>
-}
-
 export interface BotUpdate {
   action: ListUpdatAction,
   bots: Array<ActiveBotInfo>
 }
-
-export type MatchStatus =
-    "NOT_STARTED"
-    |"ONGOING"
-    |"COMPLETED";
-
-export interface PlayMessage {
-  matchID: string,
-  update: Update,
-  timestamp: number,
-  status: MatchStatus,
-  toPlay: Array<number>
-}
-
-export interface UpdateMessage {
-  matchID: string,
-  players: Array<PlayerInfo>,
-  updates: Array<Update>,
-  settings: any,
-  timers: any,
-  status: MatchStatus,
-  toPlay: Array<number>
-}
-
-export interface ErrorMessage {
-  error: string;
-}
-
-export type MatchMessage = PlayMessage|UpdateMessage;
 
 @Injectable()
 export class OSASGService {
@@ -112,33 +83,30 @@ export class OSASGService {
   private userInfo: PlayerInfo = null;
   private errors: Array<Error> = [];
 
-  private matchUpdateObservable: Observable<MatchUpdate>;
-  private matchUpdateSubject: Subject<MatchUpdate>;
+  private matchUpdateObservable: Observable<SubscriptionUpdateMessage<MatchSummary>>;
+  private matchUpdateSubject: Subject<SubscriptionUpdateMessage<MatchSummary>>;
   private botUpdateObservable: Observable<BotUpdate>;
   private botUpdateSubject: Subject<BotUpdate>;
-  private matchSubjects: Map<String, Subject<MatchMessage>>;
+  private matchSubjects: Map<string, Subject<MatchUpdateMessage>>;
   private isSubscribedToMatches: boolean = false;
   private isSubscribedToBots: boolean = false;
 
   constructor (private http: Http) {
     this.createNewSocket();
-    this.matchUpdateSubject = new Subject<MatchUpdate>();
-    this.matchUpdateObservable = Observable.create((observer: Observer<MatchUpdate>) => {
+    this.matchUpdateSubject = new Subject<SubscriptionUpdateMessage<MatchSummary>>();
+    this.matchUpdateObservable = Observable.create((observer: Observer<SubscriptionUpdateMessage<MatchSummary>>) => {
       if (this.userInfo) {
-        this.sendMessage("api-active-matches", {});
+        let subscirptionMessage: SubscriptionMessage = {
+          type: SUBSCRIPTION_TYPE,
+          channel: Channel.ACTIVE_MATCHES,
+          subscribe: true
+        }
+        this.sendMessage(subscirptionMessage);
       }
       this.isSubscribedToMatches = true;
       this.matchUpdateSubject.subscribe(observer);
     });
-    this.botUpdateSubject = new Subject<BotUpdate>();
-    this.botUpdateObservable = Observable.create((observer: Observer<BotUpdate>) => {
-      if (this.userInfo) {
-        this.sendMessage("api-active-bots", {});
-      }
-      this.isSubscribedToBots = true;
-      this.botUpdateSubject.subscribe(observer);
-    });
-    this.matchSubjects = new Map<String, Subject<MatchMessage>>();
+    this.matchSubjects = new Map();
   }
 
   private createNewSocket(): void {
@@ -156,22 +124,31 @@ export class OSASGService {
             // It's possible we tried subscribing to active matches before the server fully processed
             // the socket connection. Try again when the server sends the user info.
             if (this.isSubscribedToMatches) {
-              this.sendMessage(SUBSCRIPTION_TYPE, {
+              let subscriptionMessage: SubscriptionMessage = {
+                type: SUBSCRIPTION_TYPE,
                 subscribe: true,
                 channel: Channel.ACTIVE_MATCHES
-              });
+              }
+              this.sendMessage(subscriptionMessage);
             }
-            if (this.isSubscribedToBots) {
-              this.sendMessage("api-active-bots", {});
-            }
-            this.matchSubjects.forEach((value:any, key:String) => {
-              this.sendMessage("api-join-match", {
-                  matchID: key,
-                  seat: 3
-              });
+            this.matchSubjects.forEach((value: any, key: string) => {
+              let spectateMessage: SpectateMatchMessage = {
+                type: SPECTATE_MATCH_TYPE,
+                matchID: key,
+                spectate: true
+              }
+              this.sendMessage(spectateMessage);
             });
+          } else if (isMatchSummarySubscriptionUpdateMessage(message)) {
+            this.matchUpdateSubject.next(message);
+          } else if (isMatchUpdateMessage(message)) {
+            let subject: Subject<MatchUpdateMessage> = this.matchSubjects.get(message.matchID);
+            if (subject) {
+              subject.next(message);
+            }
           } else {
-            self.handleMessage(message.type, message);
+            console.log("Unknown message of type: " + message.type);
+            console.log(message);
           }
         }
         self.socket.onclose = function(event) {
@@ -185,45 +162,17 @@ export class OSASGService {
     );
   }
 
-  private handleMessage(type: string, data: any): void {
-    console.log("Received: " + type);
-    // console.log(data);
-    switch(type) {
-      case "api-active-matches":
-        this.matchUpdateSubject.next(data);
-        break;
-      case "api-active-bots":
-        this.botUpdateSubject.next(data);
-        break;
-      case "play":
-      case "update":
-        let subject: Subject<MatchMessage> = this.matchSubjects.get(data.matchID);
-        if (subject) {
-          subject.next(data);
-        }
-        break;
-      case "error-message":
-        console.log(data.error);
-        break;
-      default:
-        console.log("Unknown type");
-        console.log(data);
-        break;
-    }
-  }
-
-  sendMessage(type, data): void {
+  sendMessage(message: SocketMessage): void {
     if (this.socket.readyState == this.socket.OPEN) {
-      data.type = type;
-      this.socket.send(JSON.stringify(data));
-      console.log("Sent: " + type);
+      this.socket.send(JSON.stringify(message));
+      console.log("Sent: " + message.type);
     } else {
-      console.log("Could not send '" + type + "'message because the socket is not open.");
+      console.log("Could not send '" + message.type + "'message because the socket is not open.");
       console.log("Current socket status: " + this.socket.readyState);
     }
   }
 
-  getMatchUpdates(): Observable<MatchUpdate> {
+  getMatchUpdates(): Observable<SubscriptionUpdateMessage<MatchSummary>> {
     return this.matchUpdateObservable;
   }
 
@@ -231,14 +180,19 @@ export class OSASGService {
     return this.botUpdateObservable;
   }
 
-  getUpdatesForMatch(matchID: string): Observable<MatchMessage> {
-    return Observable.create((observer: Observer<MatchMessage>) => {
+  getUpdatesForMatch(matchID: string): Observable<MatchUpdateMessage> {
+    return Observable.create((observer: Observer<MatchUpdateMessage>) => {
       if (this.userInfo) {
-        this.sit(matchID, 3);
+        let spectateMessage: SpectateMatchMessage = {
+          type: SPECTATE_MATCH_TYPE,
+          matchID: matchID,
+          spectate: true
+        }
+        this.sendMessage(spectateMessage);
       }
-      let subject: Subject<MatchMessage> = this.matchSubjects.get(matchID);
+      let subject: Subject<MatchUpdateMessage> = this.matchSubjects.get(matchID);
       if (!subject) {
-        subject = new Subject<MatchMessage>();
+        subject = new Subject<MatchUpdateMessage>();
         this.matchSubjects.set(matchID, subject);
       }
       subject.subscribe(observer);
@@ -246,18 +200,22 @@ export class OSASGService {
   }
 
   sit(matchID: string, seat: number): void {
-    this.sendMessage("api-join-match", {
+    let joinMessage: JoinMatchMessage = {
+      type: JOIN_MATCH_TYPE,
       matchID: matchID,
       seat: seat
-    });
+    }
+    this.sendMessage(joinMessage);
   }
 
-  play(matchID: string, player: number, move: any) :void {
-    this.sendMessage("play", {
+  play(matchID: string, player: number, move: any, turnNumber: number) :void {
+    let playMessage: PlayMessage = {
+      type: PLAY_TYPE,
       matchID: matchID,
-      player: player,
-      move: move
-    });
+      playerNumber: player,
+      move: move,
+      turnNumber: turnNumber
+    }
   }
 
   getUserInfo(userID): Observable<UserPageInfo> {

@@ -107,9 +107,13 @@ export class Match {
       identifier: this.identifier,
       players: this.players,
       settings: this.matchSettings,
-      toPlay: Array.from(this.game.getPlayersToPlay()),
+      toPlay: this.toPlay(),
       updates: this.getAllUpdates(playerIdentifier),
       status: this.status
     }
+  }
+
+  public toPlay(): Array<number> {
+    return Array.from(this.game.getPlayersToPlay());
   }
 }

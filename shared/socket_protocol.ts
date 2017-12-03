@@ -1,7 +1,6 @@
 import { Identifiable } from "./identifiable"
-import { MatchInfo } from "./match_info"
+import { GameUpdate, MatchInfo, MatchSummary } from "./match_info"
 import { PlayerInfo } from "./player_info"
-import { Update } from "./update"
 
 /**
  * This file defines the types of messages that will be sent and accepted via a WebSocket connection
@@ -137,6 +136,12 @@ export interface SubscriptionUpdateMessage<T extends Identifiable> extends Socke
   remove?: string,
   update?: T
 }
+export function isSubscriptionUpdateMessage(message: SocketMessage): message is SubscriptionUpdateMessage<any> {
+  return message.type == SUBSCRIPTION_UPDATE_TYPE;
+}
+export function isMatchSummarySubscriptionUpdateMessage(message: SocketMessage): message is SubscriptionUpdateMessage<MatchSummary> {
+  return isSubscriptionUpdateMessage(message) && message.channel == Channel.ACTIVE_MATCHES;
+}
 
 
 export const JOIN_MATCH_TYPE: string = "JOIN_MATCH"
@@ -182,7 +187,7 @@ export interface MatchUpdateMessage extends SocketMessage {
   matchID: string,
   matchInfo?: MatchInfo,
   players?: Array<PlayerInfo>,
-  update?: Update
+  gameUpdate?: GameUpdate
 }
 export function isMatchUpdateMessage(message: SocketMessage): message is MatchUpdateMessage {
   return message.type == MATCH_UPDATE_TYPE;

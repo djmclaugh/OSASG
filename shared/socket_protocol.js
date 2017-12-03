@@ -60,6 +60,14 @@ function isSubscriptionMessage(message) {
 }
 exports.isSubscriptionMessage = isSubscriptionMessage;
 exports.SUBSCRIPTION_UPDATE_TYPE = "SUBSCRIPTION_UPDATE";
+function isSubscriptionUpdateMessage(message) {
+    return message.type == exports.SUBSCRIPTION_UPDATE_TYPE;
+}
+exports.isSubscriptionUpdateMessage = isSubscriptionUpdateMessage;
+function isMatchSummarySubscriptionUpdateMessage(message) {
+    return isSubscriptionUpdateMessage(message) && message.channel == Channel.ACTIVE_MATCHES;
+}
+exports.isMatchSummarySubscriptionUpdateMessage = isMatchSummarySubscriptionUpdateMessage;
 exports.JOIN_MATCH_TYPE = "JOIN_MATCH";
 function isJoinMatchMessage(message) {
     return message.type == exports.JOIN_MATCH_TYPE;

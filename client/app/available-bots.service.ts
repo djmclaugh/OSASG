@@ -45,10 +45,10 @@ export class AvailableBotsService {
   }
 
   inviteBotToMatch(matchID: string, botID: string, seat: number) {
-    this.osasgService.sendMessage("api-invite-player", {
-      matchID: matchID,
-      playerID: botID,
-      seat: seat
-    });
+    //this.osasgService.sendMessage("api-invite-player", {
+    //  matchID: matchID,
+    //  playerID: botID,
+    //  seat: seat
+    //});
   }
 }

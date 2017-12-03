@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 
 import { LobbyService } from "./lobby.service";
-import { MatchInfo } from "./osasg.service";
+import { MatchSummary } from "../../shared/match_info";
 
 @Component({
   selector: "lobby",
@@ -13,7 +13,7 @@ export class LobbyComponent {
 
   constructor (private lobbyService: LobbyService) {}
 
-  getMatches(): Array<MatchInfo> {
+  getMatches(): Array<MatchSummary> {
     return this.lobbyService.activeMatches;
   }
 
