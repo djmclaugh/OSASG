@@ -43,7 +43,9 @@ export class PlayerSocket {
       }
     };
     socket.onclose = (ev: CloseEvent) => {
-      this.onClose();
+      if (this.onClose) {
+        this.onClose();
+      }
     };
   }
 

@@ -72,7 +72,7 @@ export class SubscriptionManager {
         channel: message.channel,
         set: Array.from(this.getChannel(message.channel).values())
       };
-      playerSocket.send(message);
+      playerSocket.send(setMessage);
     } else {
       this.unsubscribe(playerSocket, message.channel);
     }

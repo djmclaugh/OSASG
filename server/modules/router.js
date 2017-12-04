@@ -312,7 +312,7 @@ router.post("/api/create_match", function(req, res) {
   try {
     var options = {
       gameName: req.body.gameName,
-      gameSettings: req.body.gameSettings,
+      gameOptions: req.body.gameOptions,
       isRated: false
     }
     var match = matchManager.createNewMatch(options);

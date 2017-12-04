@@ -84,6 +84,8 @@ export class SocketServer {
   private removePlayer(playerSocket: PlayerSocket) {
     this.onlineSockets.get(playerSocket.playerInfo.identifier).delete(playerSocket);
     this.subsciptionManager.remove(playerSocket);
-    this.onPlayerClose(playerSocket);
+    if (this.onPlayerClose) {
+      this.onPlayerClose(playerSocket);
+    }
   }
 }
