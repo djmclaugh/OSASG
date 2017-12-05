@@ -3,6 +3,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 class ProcessedUpdate {
     constructor(update, players) {
         this.map = new Map();
+        if (update == null) {
+            update = {
+                publicInfo: null
+            };
+        }
         let IDs = new Set();
         for (let player of players) {
             IDs.add(player.identifier);

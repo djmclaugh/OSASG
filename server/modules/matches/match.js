@@ -25,7 +25,7 @@ class Match {
     }
     addPlayer(player, seat = -1) {
         if (this.players[seat]) {
-            throw new Error("Seat " + seat + "already taken");
+            throw new Error("Seat " + seat + " already taken");
         }
         this.players[seat] = player;
         this.onPlayersUpdate(this.players);

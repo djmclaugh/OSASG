@@ -10,6 +10,7 @@ export class AvailableBotsService {
   constructor (private osasgService: OSASGService) {
     this.activeBots = [];
     // TODO(djmclaugh): optimize
+    /*
     osasgService.getBotUpdates().subscribe(botUpdate => {
       switch(botUpdate.action) {
         case "set":
@@ -42,6 +43,7 @@ export class AvailableBotsService {
           console.log("Unexpected action type: " + botUpdate.action);
       }
     });
+    */
   }
 
   inviteBotToMatch(matchID: string, botID: string, seat: number) {

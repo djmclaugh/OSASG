@@ -129,6 +129,7 @@ export class MatchPageComponent {
   }
 
   onMoveSubmit(): void {
+    console.log("should submit move");
     let playerToPlay: number;
     for (let player of this.gameGUI.playersToPlay) {
       if (this.gameGUI.playingAs.has(player)) {

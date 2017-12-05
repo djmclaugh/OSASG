@@ -83,6 +83,9 @@ export class RoshamboGUI extends GUI {
 
   addUpdate(update: Update) {
     let turn: RoshamboTurn = update.publicInfo;
+    if (turn == null) {
+      return;
+    }
     this.points[0] += pointsForPlayerForTurn(0, turn);
     this.points[1] += pointsForPlayerForTurn(1, turn);
     this.playedMoves.push(turn);

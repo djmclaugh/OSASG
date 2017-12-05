@@ -119,6 +119,7 @@ export class OSASGService {
         }
         self.socket.onmessage = (event) => {
           let message: SocketMessage = JSON.parse(event.data);
+          console.log("RECEIVED: " + message.type);
           if (isPlayerInfoMessage(message)) {
             this.userInfo = message.playerInfo;
             // It's possible we tried subscribing to active matches before the server fully processed
@@ -216,6 +217,7 @@ export class OSASGService {
       move: move,
       turnNumber: turnNumber
     }
+    this.sendMessage(playMessage);
   }
 
   getUserInfo(userID): Observable<UserPageInfo> {

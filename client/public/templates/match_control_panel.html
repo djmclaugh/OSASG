@@ -1,17 +1,17 @@
 <h3>{{ title() }}</h3>
 <span *ngIf="matchData">
-<p>P1: 
+<p>P1:
   <span *ngIf="matchData && matchData.players[0]">{{ matchData.players[0].username }}</span>
   <span *ngIf="!matchData || !matchData.players[0]">
-    <button (click)="selectSeat(1)">Play as P1</button>
-    <button *ngFor="let bot of availableBots()" (click)="selectBot(bot.identifier, 1)">{{ bot.username }}</button>
+    <button (click)="selectSeat(0)">Play as P1</button>
+    <button *ngFor="let bot of availableBots()" (click)="selectBot(bot.identifier, 0)">{{ bot.username }}</button>
   </span>
 </p>
-<p>P2: 
+<p>P2:
   <span *ngIf="matchData && matchData.players[1]">{{ matchData.players[1].username }}</span>
   <span *ngIf="!matchData || !matchData.players[1]">
-    <button (click)="selectSeat(2)">Play as P2</button>
-    <button *ngFor="let bot of availableBots()" (click)="selectBot(bot.identifier, 2)">{{ bot.username }}</button>
+    <button (click)="selectSeat(1)">Play as P2</button>
+    <button *ngFor="let bot of availableBots()" (click)="selectBot(bot.identifier, 1)">{{ bot.username }}</button>
   </span>
 </p>
 <span *ngIf="matchData && matchData.players[0] && matchData.players[1]" [ngSwitch]="matchData.status">

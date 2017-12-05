@@ -42,6 +42,9 @@ export class ConnectGUI extends GUI {
 
   addUpdate(update: Update) {
     let move: ConnectMove = update.publicInfo;
+    if (move == null) {
+      return;
+    }
     this.game.playMove(move, this.playedMoves.length % 2);
     this.playedMoves.push(move);
     this.presets = new Array<Coordinate>();

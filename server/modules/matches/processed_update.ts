@@ -4,6 +4,11 @@ import { PlayerInfo } from "../../../shared/player_info";
 export class ProcessedUpdate {
   private map: Map<string, Update> = new Map();
   constructor(update: Update, players: Array<PlayerInfo>) {
+    if (update == null) {
+      update = {
+        publicInfo: null
+      };
+    }
     let IDs: Set<string> = new Set();
     for (let player of players) {
       IDs.add(player.identifier);

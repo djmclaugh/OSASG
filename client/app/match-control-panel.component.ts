@@ -47,6 +47,6 @@ export class MatchControlPanelComponent {
   }
 
   availableBots(): Array<ActiveBotInfo> {
-    return this.availableBotsService.activeBots;
+    return [];
   }
 }

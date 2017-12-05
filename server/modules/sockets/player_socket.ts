@@ -1,4 +1,6 @@
 import {
+  ERROR_TYPE,
+  ErrorMessage,
   SocketMessage,
   JoinMatchMessage,
   PlayMessage,
@@ -39,7 +41,11 @@ export class PlayerSocket {
       } catch(e) {
         console.log("Error prossesing message for socket '" + this.playerInfo.username + "':");
         console.log(e);
-        socket.close(1011, e.message);
+        let errorMessage: ErrorMessage = {
+          type: ERROR_TYPE,
+          error: e.message
+        }
+        this.send(errorMessage);
       }
     };
     socket.onclose = (ev: CloseEvent) => {
