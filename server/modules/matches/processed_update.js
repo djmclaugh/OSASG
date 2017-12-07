@@ -3,11 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 class ProcessedUpdate {
     constructor(update, players) {
         this.map = new Map();
-        if (update == null) {
-            update = {
-                publicInfo: null
-            };
-        }
         let IDs = new Set();
         for (let player of players) {
             IDs.add(player.identifier);
@@ -24,11 +19,17 @@ class ProcessedUpdate {
             }
             let newUpdate = {
                 publicInfo: update.publicInfo,
+                toPlay: update.toPlay,
+                winners: update.winners,
                 privateInfo: newPrivateInfo,
             };
             this.map.set(identifier, newUpdate);
         }
-        this.map.set("", { publicInfo: update.publicInfo });
+        this.map.set("", {
+            publicInfo: update.publicInfo,
+            toPlay: update.toPlay,
+            winners: update.winners,
+        });
     }
     updateForPlayer(identifier) {
         if (this.map.has(identifier)) {

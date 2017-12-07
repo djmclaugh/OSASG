@@ -2,13 +2,8 @@ import { Update } from "ts-turnbased";
 import { PlayerInfo } from "../../../shared/player_info";
 
 export class ProcessedUpdate {
-  private map: Map<string, Update> = new Map();
-  constructor(update: Update, players: Array<PlayerInfo>) {
-    if (update == null) {
-      update = {
-        publicInfo: null
-      };
-    }
+  private map: Map<string, Update<any, any>> = new Map();
+  constructor(update: Update<any, any>, players: Array<PlayerInfo>) {
     let IDs: Set<string> = new Set();
     for (let player of players) {
       IDs.add(player.identifier);
@@ -23,16 +18,22 @@ export class ProcessedUpdate {
           }
         }
       }
-      let newUpdate: Update = {
+      let newUpdate: Update<any, any> = {
         publicInfo: update.publicInfo,
+        toPlay: update.toPlay,
+        winners: update.winners,
         privateInfo: newPrivateInfo,
       };
       this.map.set(identifier, newUpdate);
     }
-    this.map.set("", { publicInfo: update.publicInfo });
+    this.map.set("", {
+      publicInfo: update.publicInfo,
+      toPlay: update.toPlay,
+      winners: update.winners,
+    });
   }
 
-  updateForPlayer(identifier: string): Update {
+  updateForPlayer(identifier: string): Update<any, any> {
     if (this.map.has(identifier)) {
       return this.map.get(identifier);
     } else {

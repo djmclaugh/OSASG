@@ -73,7 +73,7 @@ class Match {
     endIfOver() {
         if (this.game.getPlayersToPlay().size == 0) {
             match_info_1.MatchStatus.COMPLETED;
-            this.onMatchEnd(this.game.getWinners());
+            this.onMatchEnd(this.game.getLatestUpdate().winners);
         }
     }
     matchSummary() {

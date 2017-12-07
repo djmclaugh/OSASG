@@ -12,11 +12,11 @@ function newRandomSeed(): string {
 export class Match {
   private seed: string;
   private status: MatchStatus = MatchStatus.NOT_STARTED;
-  private game: Game;
+  private game: Game<any, any, any, any>;
   private players: Array<PlayerInfo>;
   public onPlayersUpdate: (update: Array<PlayerInfo>) => void;
   public onGameUpdate: (update: ProcessedUpdate) => void;
-  public onMatchEnd: (winners: Set<number>) => void;
+  public onMatchEnd: (winners: Array<number>) => void;
 
   constructor(readonly identifier: string, readonly matchSettings: MatchSettings) {
     this.game = newGame(matchSettings.gameName, matchSettings.gameOptions);
@@ -84,7 +84,7 @@ export class Match {
   private endIfOver(): void {
     if (this.game.getPlayersToPlay().size == 0) {
       MatchStatus.COMPLETED;
-      this.onMatchEnd(this.game.getWinners());
+      this.onMatchEnd(this.game.getLatestUpdate().winners);
     }
   }
 
@@ -96,8 +96,8 @@ export class Match {
     }
   }
 
-  private getAllUpdates(playerIdentifier: string): Array<Update> {
-    return this.game.getAllUpdates().map((value: Update) => {
+  private getAllUpdates(playerIdentifier: string): Array<Update<any, any>> {
+    return this.game.getAllUpdates().map((value: Update<any, any>) => {
       return (new ProcessedUpdate(value, this.players)).updateForPlayer(playerIdentifier);
     });
   }

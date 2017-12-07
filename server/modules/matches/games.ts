@@ -2,7 +2,7 @@ import { Game } from "ts-turnbased";
 import { Connect, connect6Options, tictactoeOptions } from "ts-turnbased-connect";
 import { NormalFormGame, roshamboPayoffTensor} from "ts-turnbased-normalform";
 
-export function newGame(gameName: string, gameSettings: any): Game {
+export function newGame(gameName: string, gameSettings: any): Game<any, any, any, any> {
   if (gameName == "Tictactoe") {
     return new Connect(tictactoeOptions());
   } else if (gameName == "Connect6") {
