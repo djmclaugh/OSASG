@@ -7,7 +7,7 @@ export interface MousePosition {
 
 export abstract class GUI {
   needsRedraw: boolean;
-  playersToPlay: Array<number>;
+  playersToPlay: Array<number> = [];
 
   constructor(public canvas: HTMLCanvasElement, public playingAs: Set<number>) {
     this.canvas = canvas;
@@ -56,8 +56,10 @@ export abstract class GUI {
   // Does nothing by defualt, but can be overrriden to do some clean up
   public onMoveSubmitted(): void {}
 
-  abstract setUpdates(events: Array<Update>): void;
-  abstract addUpdate(event: Update): void;
+  public abstract setUpdates(updates: Array<Update<any, any>>): void
+  public addUpdate(update: Update<any, any>): void {
+    this.playersToPlay = update.toPlay.concat();
+  }
 
   abstract onMouseMove(p: MousePosition): void;
   abstract onMouseClick(p: MousePosition): void;

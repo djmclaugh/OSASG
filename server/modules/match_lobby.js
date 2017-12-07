@@ -70,12 +70,8 @@ class MatchLobby {
                 type: socket_protocol_1.MATCH_UPDATE_TYPE,
                 matchID: match.identifier,
             };
-            updateMessage.gameUpdate = {
-                update: null,
-                toPlay: match.toPlay(),
-            };
             for (let socket of this.getSpectators(match.identifier)) {
-                updateMessage.gameUpdate.update = update.updateForPlayer(socket.playerInfo.identifier);
+                updateMessage.gameUpdate = update.updateForPlayer(socket.playerInfo.identifier);
                 socket.send(updateMessage);
             }
         };

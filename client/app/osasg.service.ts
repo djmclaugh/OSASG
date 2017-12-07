@@ -4,7 +4,7 @@ import { Observable, Observer, Subject } from "rxjs/Rx";
 import { Update } from "ts-turnbased";
 
 import { PlayerInfo } from "../../shared/player_info";
-import { MatchInfo, MatchSettings, MatchStatus, MatchSummary } from "../../shared/match_info";
+import { MatchInfo, MatchSettings, MatchSummary } from "../../shared/match_info";
 import {
   COOKIE_AUTHENTICATION_SUBPROTOCOL,
   JOIN_MATCH_TYPE,

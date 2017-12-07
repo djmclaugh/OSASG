@@ -1,5 +1,5 @@
 import { Game, Update } from "ts-turnbased";
-import { MatchInfo, MatchSettings, MatchStatus, MatchSummary } from "../../../shared/match_info";
+import { MatchInfo, MatchSettings, MatchSummary } from "../../../shared/match_info";
 import { PlayerInfo } from "../../../shared/player_info";
 import { areEqual } from "../../../shared/identifiable";
 import { newGame } from "./games";
@@ -11,7 +11,6 @@ function newRandomSeed(): string {
 
 export class Match {
   private seed: string;
-  private status: MatchStatus = MatchStatus.NOT_STARTED;
   private game: Game<any, any, any, any>;
   private players: Array<PlayerInfo>;
   public onPlayersUpdate: (update: Array<PlayerInfo>) => void;
@@ -73,7 +72,6 @@ export class Match {
         return;
       }
     }
-    this.status = MatchStatus.ONGOING;
     this.seed = newRandomSeed();
     this.game.start(this.seed);
     this.onGameUpdate(new ProcessedUpdate(this.game.getLatestUpdate(), this.players));
@@ -83,7 +81,6 @@ export class Match {
 
   private endIfOver(): void {
     if (this.game.getPlayersToPlay().size == 0) {
-      MatchStatus.COMPLETED;
       this.onMatchEnd(this.game.getLatestUpdate().winners);
     }
   }
@@ -107,13 +104,7 @@ export class Match {
       identifier: this.identifier,
       players: this.players,
       settings: this.matchSettings,
-      toPlay: this.toPlay(),
       updates: this.getAllUpdates(playerIdentifier),
-      status: this.status
     }
-  }
-
-  public toPlay(): Array<number> {
-    return Array.from(this.game.getPlayersToPlay());
   }
 }

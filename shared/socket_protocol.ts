@@ -1,6 +1,7 @@
 import { Identifiable } from "./identifiable"
-import { GameUpdate, MatchInfo, MatchSummary } from "./match_info"
+import { MatchInfo, MatchSummary } from "./match_info"
 import { PlayerInfo } from "./player_info"
+import { Update } from "./update"
 
 /**
  * This file defines the types of messages that will be sent and accepted via a WebSocket connection
@@ -187,7 +188,7 @@ export interface MatchUpdateMessage extends SocketMessage {
   matchID: string,
   matchInfo?: MatchInfo,
   players?: Array<PlayerInfo>,
-  gameUpdate?: GameUpdate
+  gameUpdate?: Update
 }
 export function isMatchUpdateMessage(message: SocketMessage): message is MatchUpdateMessage {
   return message.type == MATCH_UPDATE_TYPE;
@@ -212,19 +213,3 @@ export interface PlayMessage extends SocketMessage {
 export function isPlayMessage(message: SocketMessage): message is PlayMessage {
   return message.type == PLAY_TYPE;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//

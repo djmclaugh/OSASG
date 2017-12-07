@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const match_info_1 = require("../../../shared/match_info");
 const identifiable_1 = require("../../../shared/identifiable");
 const games_1 = require("./games");
 const processed_update_1 = require("./processed_update");
@@ -11,7 +10,6 @@ class Match {
     constructor(identifier, matchSettings) {
         this.identifier = identifier;
         this.matchSettings = matchSettings;
-        this.status = match_info_1.MatchStatus.NOT_STARTED;
         this.game = games_1.newGame(matchSettings.gameName, matchSettings.gameOptions);
         this.players = [null, null];
     }
@@ -63,7 +61,6 @@ class Match {
                 return;
             }
         }
-        this.status = match_info_1.MatchStatus.ONGOING;
         this.seed = newRandomSeed();
         this.game.start(this.seed);
         this.onGameUpdate(new processed_update_1.ProcessedUpdate(this.game.getLatestUpdate(), this.players));
@@ -72,7 +69,6 @@ class Match {
     }
     endIfOver() {
         if (this.game.getPlayersToPlay().size == 0) {
-            match_info_1.MatchStatus.COMPLETED;
             this.onMatchEnd(this.game.getLatestUpdate().winners);
         }
     }
@@ -93,13 +89,8 @@ class Match {
             identifier: this.identifier,
             players: this.players,
             settings: this.matchSettings,
-            toPlay: this.toPlay(),
             updates: this.getAllUpdates(playerIdentifier),
-            status: this.status
         };
-    }
-    toPlay() {
-        return Array.from(this.game.getPlayersToPlay());
     }
 }
 exports.Match = Match;

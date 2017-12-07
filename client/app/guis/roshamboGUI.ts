@@ -1,10 +1,10 @@
-import { Update } from "ts-turnbased";
+import { PublicUpdate } from "ts-turnbased";
 import { NormalFormGame, NormalFormOptions, roshamboPayoffTensor } from "ts-turnbased-normalform";
 
 import { GUI, MousePosition } from "./GUI";
 
-type RoshamboMove = 0|1|2;
-type RoshamboTurn = [RoshamboMove, RoshamboMove];
+type RoshamboMove = number;
+type RoshamboTurn = Array<RoshamboMove>;
 
 function nameForMove(move: RoshamboMove): string {
   switch(move) {
@@ -69,19 +69,19 @@ export class RoshamboGUI extends GUI {
     this.needsRedraw = true;
   }
 
-  setUpdates(updates: Array<Update>) {
+  setUpdates(updates: Array<PublicUpdate<Array<number>>>) {
     this.playedMoves = [];
     this.preset = null;
     this.mouseTarget = null;
     this.needsRedraw = true;
     this.points = [0, 0];
-    // Ignore the empty "game start" event;
-    for (let i: number = 1; i < updates.length; ++i) {
-      this.addUpdate(updates[i]);
+    for (let update of updates) {
+      this.addUpdate(update);
     }
   }
 
-  addUpdate(update: Update) {
+  addUpdate(update: PublicUpdate<Array<number>>) {
+    super.addUpdate(update);
     let turn: RoshamboTurn = update.publicInfo;
     if (turn == null) {
       return;

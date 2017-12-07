@@ -1,4 +1,6 @@
 export interface Update {
   publicInfo: any
-  privateInfo?: ReadonlyArray<any>
+  toPlay: Array<number>
+  winners?: Array<number>
+  privateInfo?: Array<any>
 }

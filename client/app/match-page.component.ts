@@ -8,7 +8,7 @@ import { GUI } from "./guis/GUI";
 import { ConnectGUI } from "./guis/connectGUI";
 import { RoshamboGUI } from "./guis/roshamboGUI";
 
-import { MatchInfo, MatchSettings, MatchStatus, MatchSummary } from "../../shared/match_info";
+import { MatchInfo, MatchSettings, MatchSummary } from "../../shared/match_info";
 import { PlayerInfo } from "../../shared/player_info";
 
 import {
@@ -103,14 +103,12 @@ export class MatchPageComponent {
       this.matchData.players = message.players;
       this.onPlayersUpdate();
     } else if (message.gameUpdate) {
-      this.matchData.updates.push(message.gameUpdate.update);
-      this.matchData.toPlay = message.gameUpdate.toPlay;
-      this.gameGUI.addUpdate(message.gameUpdate.update);
+      this.matchData.updates.push(message.gameUpdate);
+      this.gameGUI.addUpdate(message.gameUpdate);
     } else if (message.matchInfo) {
       this.matchData = message.matchInfo;
       this.onPlayersUpdate();
     }
-    this.gameGUI.playersToPlay = this.matchData.toPlay;
   }
 
   clearFetchedInfo() {

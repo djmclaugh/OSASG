@@ -1,4 +1,4 @@
-import { Update } from "ts-turnbased";
+import { PublicUpdate } from "ts-turnbased";
 import { Connect, ConnectOptions, Coordinate, ConnectMove, connect6Options, sanitizeOptions, tictactoeOptions } from "ts-turnbased-connect";
 
 import { getGoBoardImage, BLACK_STONE, WHITE_STONE, BLACK_STONE_LM, BLACK_STONE_WL, WHITE_STONE_LM, WHITE_STONE_WL } from "./assets";
@@ -27,20 +27,20 @@ export class ConnectGUI extends GUI {
     this.presets = new Array<Coordinate>();
   }
 
-  setUpdates(updates: Array<Update>) {
-    // Ignore the empty "game start" event;
+  setUpdates(updates: Array<PublicUpdate<ConnectMove>>) {
     this.playedMoves = new Array<ConnectMove>();
     this.game = new Connect(this.options);
     this.game.start();
-    for (let i: number = 1; i < updates.length; ++i) {
-      this.addUpdate(updates[i]);
+    for (let update of updates) {
+      this.addUpdate(update);
     }
     this.presets = new Array<Coordinate>();
     this.mouseTarget = null;
     this.needsRedraw = true;
   }
 
-  addUpdate(update: Update) {
+  addUpdate(update: PublicUpdate<ConnectMove>) {
+    super.addUpdate(update);
     let move: ConnectMove = update.publicInfo;
     if (move == null) {
       return;
