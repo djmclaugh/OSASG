@@ -2,8 +2,16 @@ var config = require("./config.json");
 var path = require("path");
 var bodyParser = require("body-parser");
 var express = require("express");
+var matchManager = new (require("./modules/matches/match_manager").MatchManager)();
 var app = express();
 var http = require("http").Server(app);
+var db =  require("./modules/db");
+
+if (config.mongoURI.length > 0) {
+  db.connectToDatabase(config.mongoURI);
+} else {
+  console.log("Starting server without a database. Some features will be unavailable");
+}
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
@@ -19,11 +27,10 @@ var options = {
   rolling: true,
   cookie: {maxAge: 24 * 60 * 60 * 1000}
 }
-const matchManager = new (require("./modules/matches/match_manager").MatchManager)();
 var router;
-if (config.databaseLocation.length > 0) {
-  const MongoStore = require('connect-mongo')(session);
-  options.store = new MongoStore({ url: "mongodb://" + config.databaseLocation + "/test" });
+if (config.mongoURI.length > 0) {
+  const MongoStore = require('connect-mongo')(Session);
+  options.store = new MongoStore({ mongooseConnection: db.connection });
   router = require("./modules/router").getRouter(null, matchManager);
 } else {
   console.log("Starting OSASG with memory store for sessions. (Should not be used in prod)");
@@ -49,8 +56,8 @@ var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
   console.log(email);
   callback();
 };
-if (config.passwordlessStoreLocation.length > 0) {
-  passwordless.init(new PasswordlessMongoStore(config.passwordlessStoreLocation));
+if (config.mongoURI.length > 0) {
+  passwordless.init(new PasswordlessMongoStore(config.mongoURI));
 } else {
   console.log("Starting OSASG with memory store for passwordless. (Should not be used in prod)");
   var MemoryStore = require("passwordless-memorystore");
@@ -63,7 +70,6 @@ app.use(passwordless.acceptToken({successRedirect: "http://" + config.clientURL}
 
 // Setup router
 app.use(router);
-
 
 var SocketServer = require("./modules/sockets/socket_server").SocketServer;
 var SocketAuthenticator = require("./modules/sockets/socket_authenticator").SocketAuthenticator;
@@ -80,7 +86,6 @@ let authenticateRequest = function(request, callback) {
   });
 };
 
-let db = require("./modules/db");
 let authenticateInfo = function(info, callback) {
   if (config.databaseLocation.length == 0) {
     callback(null, {
@@ -107,23 +112,6 @@ let authenticateInfo = function(info, callback) {
 let authenticator = new SocketAuthenticator(authenticateRequest, authenticateInfo, 5000);
 let socketServer = new SocketServer(http, authenticator);
 
-/*
-app.ws("/", function(ws, req, next, other) {
-  // Wrap in a try/catch because otherwise errors get dropped for some reason.
-  // TODO(djmclaugh): find root cause and actualy fix.
-  try {
-    var message = {};
-    message.type = "user-info";
-    message.username = req.session.username;
-    message._id = req.session.user ? req.session.user.id : null;
-    connectionHandler._addPlayer(new Player(ws, message.username, message._id));
-    ws.send(JSON.stringify(message));
-  } catch (e) {
-    console.log("ERROR IN index.js' 'app.ws(\"/\"...'.");
-    console.log(e);
-  }
-});
-*/
 const matchLobby = new (require("./modules/match_lobby").MatchLobby)(socketServer, matchManager);
 
 http.listen(config.port, function(){

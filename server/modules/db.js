@@ -271,14 +271,19 @@ matchSchema.statics.getMatchesForPlayer = function(identifier, callback) {
 exports.Match = mongoose.model(matchModelName, matchSchema);
 
 mongoose.Promise = global.Promise;
-if (config.databaseLocation.length > 0) {
-  mongoose.connect('mongodb://localhost/test', function(err) {
-      if (err) {
-        console.log(err);
-      } else {
-        console.log("Connection to mongo DB successful");
-      }
+
+exports.connectToDatabase = function (URI, username, password) {
+  if (mongoose.connection.readyState != 0) {
+    console.log("Already connected to a database");
+  }
+  mongoose.connect(URI, { useMongoClient: true }, (error) => {
+    if (error) {
+      console.log("Failed to connect to mongo database");
+      console.log(error);
+    } else {
+      console.log("Successfully connected to mongo database");
+    }
   });
-} else {
-  console.log("No database location provided. (Should not be used in prod)");
 }
+
+exports.connection = mongoose.connection;
