@@ -56,12 +56,6 @@ export class MatchLobby {
       }
       match.play(player.playerInfo, message.move, message.playerNumber, message.turnNumber);
       player.send(message);
-      // Auto-spectate the match.
-      player.onSpectateMatch({
-        type: SPECTATE_MATCH_TYPE,
-        matchID: message.matchID,
-        spectate: true
-      })
     };
 
     player.onJoinMatch = (message: JoinMatchMessage) => {
@@ -70,6 +64,12 @@ export class MatchLobby {
         throw new Error("Match " + message.matchID + " is not active.");
       }
       match.addPlayer(player.playerInfo, message.seat);
+      // Auto-spectate the match.
+      player.onSpectateMatch({
+        type: SPECTATE_MATCH_TYPE,
+        matchID: message.matchID,
+        spectate: true
+      });
     };
   }
 
