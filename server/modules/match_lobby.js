@@ -43,6 +43,12 @@ class MatchLobby {
             }
             match.play(player.playerInfo, message.move, message.playerNumber, message.turnNumber);
             player.send(message);
+            // Auto-spectate the match.
+            player.onSpectateMatch({
+                type: socket_protocol_1.SPECTATE_MATCH_TYPE,
+                matchID: message.matchID,
+                spectate: true
+            });
         };
         player.onJoinMatch = (message) => {
             let match = this.matchManager.getMatch(message.matchID);
