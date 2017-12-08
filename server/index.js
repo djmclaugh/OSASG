@@ -79,10 +79,29 @@ let authenticateRequest = function(request, callback) {
     }
   });
 };
+
+let db = require("./modules/db");
 let authenticateInfo = function(info, callback) {
-  callback(null, {
-    identifier: info.identifier,
-    username: info.identifier + "[bot]"
+  if (config.databaseLocation.length == 0) {
+    callback(null, {
+      identifier: info.identifier,
+      username: info.identifier + "[bot]",
+    });
+    return;
+  }
+  db.Bot.findById(info.identifier).select("+password").exec(function(error, bot) {
+    if (error) {
+      callback(error, null);
+    } else if (!bot) {
+      callback(null, null);
+    } else if (!info.password || bot.password != info.password) {
+      callback(new Error("Wrong password"), null);
+    } else {
+      callback(null, {
+        identifier: info.identifier,
+        username: bot.username
+      });
+    }
   });
 };
 let authenticator = new SocketAuthenticator(authenticateRequest, authenticateInfo, 5000);
