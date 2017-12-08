@@ -3,10 +3,11 @@ import { Router, ActivatedRoute, Params } from '@angular/router';
 import { Response } from "@angular/http";
 import { Observable } from "rxjs/Rx";
 
-import { OSASGService, ActiveBotInfo } from "./osasg.service";
-import { AvailableBotsService } from "./available-bots.service";
+import { OSASGService } from "./osasg.service";
+import { AvailablePlayersService } from "./available-players.service";
 
-import { MatchInfo } from "../../shared/match_info";
+import { MatchInfo, MatchSummary } from "../../shared/match_info";
+import { PreferenceProfile } from "../../shared/preference_profile";
 import { MatchUpdateMessage } from "../../shared/socket_protocol";
 
 @Component({
@@ -28,7 +29,7 @@ export class MatchControlPanelComponent {
   @Output() onSeatSelect = new EventEmitter<number>();
   @Output() onMoveSubmit = new EventEmitter<void>();
 
-  constructor (private availableBotsService: AvailableBotsService) {}
+  constructor (private availablePlayersService: AvailablePlayersService) {}
 
   title(): string {
     return this.matchData ? this.matchData.identifier : "Match not found";
@@ -38,15 +39,22 @@ export class MatchControlPanelComponent {
     this.onSeatSelect.emit(seat);
   }
 
-  selectBot(botID: string, seat: number): void {
-    this.availableBotsService.inviteBotToMatch(this.matchData.identifier, botID, seat);
+  invitePlayer(playerID: string, seat: number): void {
+    let summary: MatchSummary = {
+      identifier: this.matchData.identifier,
+      players: this.matchData.players,
+      settings: this.matchData.settings
+    }
+    this.availablePlayersService.invitePlayerToMatch(summary, playerID, seat);
   }
 
   submitMove(): void {
     this.onMoveSubmit.emit();
   }
 
-  availableBots(): Array<ActiveBotInfo> {
-    return [];
+  availablePlayers(): Array<PreferenceProfile> {
+    return this.availablePlayersService.availablePlayers.filter(profile => {
+      return profile.canPlay.indexOf(this.matchData.settings.gameName) != -1;
+    });
   }
 }

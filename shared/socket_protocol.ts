@@ -156,17 +156,19 @@ export function isSubscriptionUpdateMessage(message: SocketMessage): message is 
 export function isMatchSummarySubscriptionUpdateMessage(message: SocketMessage): message is SubscriptionUpdateMessage<MatchSummary> {
   return isSubscriptionUpdateMessage(message) && message.channel == Channel.ACTIVE_MATCHES;
 }
+export function isAvailablePlayersSubscriptionUpdateMessage(message: SocketMessage): message is SubscriptionUpdateMessage<PreferenceProfile> {
+  return isSubscriptionUpdateMessage(message) && message.channel == Channel.AVAILABLE_PLAYERS;
+}
 
 export const INVITE_TYPE: string = "INVITE"
 /**
  * INVITE: Sent by client and server
- * @param {string} matchID - The identifier for the match to join.
+ * @param {MatchSummary} matchSummary - Info about the match to join.
  * @param {string} sender - User sending the invite.
  * @param {string} receiver - User receiving the invite.
  * @param {number} seat - The desired seat. If no seat is provided, no preferences.
  */
 export interface InviteMessage extends SocketMessage {
-  matchID: string,
   matchSummary: MatchSummary
   sender: string,
   receiver: string,

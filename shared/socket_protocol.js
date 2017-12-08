@@ -77,6 +77,10 @@ function isMatchSummarySubscriptionUpdateMessage(message) {
     return isSubscriptionUpdateMessage(message) && message.channel == Channel.ACTIVE_MATCHES;
 }
 exports.isMatchSummarySubscriptionUpdateMessage = isMatchSummarySubscriptionUpdateMessage;
+function isAvailablePlayersSubscriptionUpdateMessage(message) {
+    return isSubscriptionUpdateMessage(message) && message.channel == Channel.AVAILABLE_PLAYERS;
+}
+exports.isAvailablePlayersSubscriptionUpdateMessage = isAvailablePlayersSubscriptionUpdateMessage;
 exports.INVITE_TYPE = "INVITE";
 function isInviteMessage(message) {
     return message.type == exports.INVITE_TYPE;

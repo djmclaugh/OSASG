@@ -18,12 +18,13 @@ var RandomBot = /** @class */ (function (_super) {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     RandomBot.prototype.listOfGames = function () {
-        return ["Tictactoe", "Connect6", "Connect"];
+        return ["Tictactoe", "Connect6", "Connect", "Roshambo"];
     };
     RandomBot.prototype.wantToJoin = function (matchSettings) {
         if (matchSettings.settings.gameName == "Tictactoe"
             || matchSettings.settings.gameName == "Connect6"
-            || matchSettings.settings.gameName == "Connect") {
+            || matchSettings.settings.gameName == "Connect"
+            || matchSettings.settings.gameName == "Roshambo") {
             return true;
         }
         console.log("Unexpected game: " + matchSettings.settings.gameName);
@@ -39,6 +40,9 @@ var RandomBot = /** @class */ (function (_super) {
         }
         else if (match.settings.gameName == "Connect") {
             return this.getConnectMove(match.updates, ts_turnbased_connect_1.sanitizeOptions(match.settings.gameOptions));
+        }
+        else if (match.settings.gameName == "Roshambo") {
+            return Math.floor(Math.random() * 3);
         }
         throw Error("Don't know how to play: " + match.settings.gameName);
     };

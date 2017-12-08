@@ -5,6 +5,7 @@ import { Update } from "ts-turnbased";
 
 import { PlayerInfo } from "../../shared/player_info";
 import { MatchInfo, MatchSettings, MatchSummary } from "../../shared/match_info";
+import { PreferenceProfile } from "../../shared/preference_profile";
 import {
   COOKIE_AUTHENTICATION_SUBPROTOCOL,
   JOIN_MATCH_TYPE,
@@ -19,6 +20,7 @@ import {
   SpectateMatchMessage,
   SubscriptionMessage,
   SubscriptionUpdateMessage,
+  isAvailablePlayersSubscriptionUpdateMessage,
   isMatchUpdateMessage,
   isPlayerInfoMessage,
   isMatchSummarySubscriptionUpdateMessage,
@@ -45,11 +47,6 @@ export interface UserInfo {
   email: string
 }
 
-export interface PlayerInfo {
-  username: string,
-  identifier: string
-}
-
 export interface BotInfo {
   username: string,
   _id: string,
@@ -58,22 +55,9 @@ export interface BotInfo {
   owner: string|UserInfo
 }
 
-export interface ActiveBotInfo {
-  gameList: Array<string>,
-  username: string,
-  identifier: string
-}
-
 export interface UserPageInfo {
   user: UserInfo,
   bots: Array<BotInfo>
-}
-
-export type ListUpdatAction = "set"|"add"|"remove"|"update";
-
-export interface BotUpdate {
-  action: ListUpdatAction,
-  bots: Array<ActiveBotInfo>
 }
 
 @Injectable()
@@ -85,26 +69,29 @@ export class OSASGService {
 
   private matchUpdateObservable: Observable<SubscriptionUpdateMessage<MatchSummary>>;
   private matchUpdateSubject: Subject<SubscriptionUpdateMessage<MatchSummary>>;
-  private botUpdateObservable: Observable<BotUpdate>;
-  private botUpdateSubject: Subject<BotUpdate>;
+  private availablePlayersUpdateObservable: Observable<SubscriptionUpdateMessage<PreferenceProfile>>;
+  private availablePlayersUpdateSubject: Subject<SubscriptionUpdateMessage<PreferenceProfile>>;
   private matchSubjects: Map<string, Subject<MatchUpdateMessage>>;
   private isSubscribedToMatches: boolean = false;
-  private isSubscribedToBots: boolean = false;
+  private isSubscribedToAvailablePlayers: boolean = false;
 
   constructor (private http: Http) {
     this.createNewSocket();
-    this.matchUpdateSubject = new Subject<SubscriptionUpdateMessage<MatchSummary>>();
+    this.matchUpdateSubject = new Subject();
     this.matchUpdateObservable = Observable.create((observer: Observer<SubscriptionUpdateMessage<MatchSummary>>) => {
       if (this.userInfo) {
-        let subscirptionMessage: SubscriptionMessage = {
-          type: SUBSCRIPTION_TYPE,
-          channel: Channel.ACTIVE_MATCHES,
-          subscribe: true
-        }
-        this.sendMessage(subscirptionMessage);
+        this.subscribeToChannel(Channel.ACTIVE_MATCHES);
       }
       this.isSubscribedToMatches = true;
       this.matchUpdateSubject.subscribe(observer);
+    });
+    this.availablePlayersUpdateSubject = new Subject();
+    this.availablePlayersUpdateObservable = Observable.create((observer: Observer<SubscriptionUpdateMessage<PreferenceProfile>>) => {
+      if (this.userInfo) {
+        this.subscribeToChannel(Channel.AVAILABLE_PLAYERS);
+      }
+      this.isSubscribedToAvailablePlayers = true;
+      this.availablePlayersUpdateSubject.subscribe(observer);
     });
     this.matchSubjects = new Map();
   }
@@ -125,12 +112,10 @@ export class OSASGService {
             // It's possible we tried subscribing to active matches before the server fully processed
             // the socket connection. Try again when the server sends the user info.
             if (this.isSubscribedToMatches) {
-              let subscriptionMessage: SubscriptionMessage = {
-                type: SUBSCRIPTION_TYPE,
-                subscribe: true,
-                channel: Channel.ACTIVE_MATCHES
-              }
-              this.sendMessage(subscriptionMessage);
+              this.subscribeToChannel(Channel.ACTIVE_MATCHES);
+            }
+            if (this.isSubscribedToAvailablePlayers) {
+              this.subscribeToChannel(Channel.AVAILABLE_PLAYERS);
             }
             this.matchSubjects.forEach((value: any, key: string) => {
               let spectateMessage: SpectateMatchMessage = {
@@ -142,6 +127,8 @@ export class OSASGService {
             });
           } else if (isMatchSummarySubscriptionUpdateMessage(message)) {
             this.matchUpdateSubject.next(message);
+          } else if (isAvailablePlayersSubscriptionUpdateMessage(message)) {
+            this.availablePlayersUpdateSubject.next(message);
           } else if (isMatchUpdateMessage(message)) {
             let subject: Subject<MatchUpdateMessage> = this.matchSubjects.get(message.matchID);
             if (subject) {
@@ -173,12 +160,21 @@ export class OSASGService {
     }
   }
 
+  private subscribeToChannel(channel: Channel): void {
+    let subscriptionMessage: SubscriptionMessage = {
+      type: SUBSCRIPTION_TYPE,
+      channel: channel,
+      subscribe: true,
+    }
+    this.sendMessage(subscriptionMessage);
+  }
+
   getMatchUpdates(): Observable<SubscriptionUpdateMessage<MatchSummary>> {
     return this.matchUpdateObservable;
   }
 
-  getBotUpdates(): Observable<BotUpdate> {
-    return this.botUpdateObservable;
+  getAvailablePlayersUpdates(): Observable<SubscriptionUpdateMessage<PreferenceProfile>> {
+    return this.availablePlayersUpdateObservable;
   }
 
   getUpdatesForMatch(matchID: string): Observable<MatchUpdateMessage> {

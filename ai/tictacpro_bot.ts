@@ -186,7 +186,7 @@ export class TictacproBot extends Bot {
       return update.publicInfo;
     });
     let coordinates: Array<Coordinate> = [];
-    for (let move of movesSoFar.slice(1)) {
+    for (let move of movesSoFar) {
       coordinates.push(Array.isArray(move) ? move[0] : move);
     }
     let board: TictactoeBoard = TictactoeBoard.fromMoves(coordinates);

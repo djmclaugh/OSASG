@@ -57,6 +57,17 @@ class MatchLobby {
                 spectate: true
             });
         };
+        player.onInvite = (message) => {
+            let match = this.matchManager.getMatch(message.matchSummary.identifier);
+            if (!match) {
+                throw new Error("Match " + message.matchSummary.identifier + " is not active.");
+            }
+            message.matchSummary = match.matchSummary();
+            let sockets = this.server.getSocketsForUser(message.receiver);
+            for (let socket of sockets) {
+                socket.send(message);
+            }
+        };
     }
     onNewMatch(match) {
         this.server.subsciptionManager.addItem(socket_protocol_1.Channel.ACTIVE_MATCHES, match.matchSummary());

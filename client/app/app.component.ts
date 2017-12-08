@@ -3,14 +3,14 @@ import { Router } from '@angular/router';
 
 import './rxjs-operators';
 
-import { AvailableBotsService } from "./available-bots.service";
+import { AvailablePlayersService } from "./available-players.service";
 import { LobbyService } from "./lobby.service";
 import { OSASGService } from "./osasg.service";
 
 @Component({
   selector: "osasg-client",
   templateUrl: "/templates/app_root.html",
-  providers: [OSASGService, LobbyService, AvailableBotsService]
+  providers: [OSASGService, LobbyService, AvailablePlayersService]
 })
 export class AppComponent implements OnInit {
   username: string = null;

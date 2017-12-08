@@ -38,11 +38,13 @@ var Bot = /** @class */ (function () {
     };
     Bot.prototype.onMessage = function (message) {
         if (socket_protocol_1.isPlayerInfoMessage(message)) {
-            // Successfully authenticated. Make your self available for invites.
+            this.username = message.playerInfo.username;
+            // Successfully authenticated. Make yourself available for invites.
             var preferencesMessage = {
                 type: socket_protocol_1.PREFERENCES_TYPE,
                 profile: {
                     identifier: this.identifier,
+                    username: this.username,
                     canPlay: this.listOfGames()
                 }
             };
@@ -66,7 +68,7 @@ var Bot = /** @class */ (function () {
         if (this.wantToJoin(message.matchSummary)) {
             var joinMessage = {
                 type: socket_protocol_1.JOIN_MATCH_TYPE,
-                matchID: message.matchID,
+                matchID: message.matchSummary.identifier,
                 seat: message.seat
             };
             this.send(joinMessage);

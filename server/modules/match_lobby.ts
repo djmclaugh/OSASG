@@ -9,6 +9,7 @@ import {
   MATCH_UPDATE_TYPE,
   SPECTATE_MATCH_TYPE,
   Channel,
+  InviteMessage,
   JoinMatchMessage,
   MatchUpdateMessage,
   PlayMessage,
@@ -70,6 +71,18 @@ export class MatchLobby {
         matchID: message.matchID,
         spectate: true
       });
+    };
+
+    player.onInvite = (message: InviteMessage) => {
+      let match: Match = this.matchManager.getMatch(message.matchSummary.identifier);
+      if (!match) {
+        throw new Error("Match " + message.matchSummary.identifier + " is not active.");
+      }
+      message.matchSummary = match.matchSummary();
+      let sockets: Set<PlayerSocket> = this.server.getSocketsForUser(message.receiver);
+      for (let socket of sockets) {
+        socket.send(message);
+      }
     };
   }
 

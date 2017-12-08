@@ -5,12 +5,13 @@ import { MatchInfo, MatchSummary } from "../shared/match_info";
 
 export class RandomBot extends Bot {
   protected listOfGames(): Array<string> {
-    return ["Tictactoe", "Connect6", "Connect"];
+    return ["Tictactoe", "Connect6", "Connect", "Roshambo"];
   }
   protected wantToJoin(matchSettings: MatchInfo): boolean {
     if (matchSettings.settings.gameName == "Tictactoe"
         || matchSettings.settings.gameName == "Connect6"
-        || matchSettings.settings.gameName == "Connect") {
+        || matchSettings.settings.gameName == "Connect"
+        || matchSettings.settings.gameName == "Roshambo") {
       return true;
     }
     console.log("Unexpected game: " + matchSettings.settings.gameName);
@@ -25,6 +26,8 @@ export class RandomBot extends Bot {
       return this.getConnectMove(match.updates, sanitizeOptions(connect6Options()));
     } else if (match.settings.gameName == "Connect") {
       return this.getConnectMove(match.updates, sanitizeOptions(match.settings.gameOptions));
+    } else if (match.settings.gameName == "Roshambo") {
+      return Math.floor(Math.random() * 3);
     }
     throw Error("Don't know how to play: " + match.settings.gameName);
   }

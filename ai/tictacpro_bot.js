@@ -196,8 +196,8 @@ var TictacproBot = /** @class */ (function (_super) {
             return update.publicInfo;
         });
         var coordinates = [];
-        for (var _i = 0, _a = movesSoFar.slice(1); _i < _a.length; _i++) {
-            var move = _a[_i];
+        for (var _i = 0, movesSoFar_1 = movesSoFar; _i < movesSoFar_1.length; _i++) {
+            var move = movesSoFar_1[_i];
             coordinates.push(Array.isArray(move) ? move[0] : move);
         }
         var board = TictactoeBoard.fromMoves(coordinates);

@@ -2,11 +2,13 @@ import {
   ERROR_TYPE,
   ErrorMessage,
   SocketMessage,
+  InviteMessage,
   JoinMatchMessage,
   PlayMessage,
   PreferencesMessage,
   SpectateMatchMessage,
   SubscriptionMessage,
+  isInviteMessage,
   isJoinMatchMessage,
   isPlayMessage,
   isPreferencesMessage,
@@ -17,6 +19,7 @@ import { PlayerInfo, isBot, isGuest } from "../../../shared/player_info";
 
 export class PlayerSocket {
   public onClose:() => void;
+  public onInvite: (message: InviteMessage) => void;
   public onPreferences: (message: PreferencesMessage) => void;
   public onSubscription: (message: SubscriptionMessage) => void;
   public onJoinMatch: (message: JoinMatchMessage) => void;
@@ -30,7 +33,10 @@ export class PlayerSocket {
     socket.onmessage = (ev: MessageEvent) => {
       try {
         let message: SocketMessage = JSON.parse(ev.data);
-        if (isJoinMatchMessage(message)) {
+        if (isInviteMessage(message)) {
+          message.sender = this.playerInfo.identifier;
+          this.onInvite(message);
+        } else if (isJoinMatchMessage(message)) {
           this.onJoinMatch(message);
         } else if (isPlayMessage(message)) {
           this.onPlay(message);

@@ -93,4 +93,9 @@ export class SocketServer {
       this.onPlayerClose(playerSocket);
     }
   }
+
+  public getSocketsForUser(identifier: string): Set<PlayerSocket> {
+    let sockets: Set<PlayerSocket> = this.onlineSockets.get(identifier);
+    return sockets ? sockets : new Set();
+  }
 }
