@@ -4,10 +4,12 @@ import {
   SocketMessage,
   JoinMatchMessage,
   PlayMessage,
+  PreferencesMessage,
   SpectateMatchMessage,
   SubscriptionMessage,
   isJoinMatchMessage,
   isPlayMessage,
+  isPreferencesMessage,
   isSpectateMatchMessage,
   isSubscriptionMessage
 } from "../../../shared/socket_protocol";
@@ -15,6 +17,7 @@ import { PlayerInfo, isBot, isGuest } from "../../../shared/player_info";
 
 export class PlayerSocket {
   public onClose:() => void;
+  public onPreferences: (message: PreferencesMessage) => void;
   public onSubscription: (message: SubscriptionMessage) => void;
   public onJoinMatch: (message: JoinMatchMessage) => void;
   public onPlay: (message: PlayMessage) => void;
@@ -31,6 +34,8 @@ export class PlayerSocket {
           this.onJoinMatch(message);
         } else if (isPlayMessage(message)) {
           this.onPlay(message);
+        } else if (isPreferencesMessage(message)) {
+          this.onPreferences(message);
         } else if (isSpectateMatchMessage(message)) {
           this.onSpectateMatch(message);
         } else if (isSubscriptionMessage(message)) {
@@ -39,7 +44,7 @@ export class PlayerSocket {
           throw new Error("Unexpected message type: " + message.type);
         }
       } catch(e) {
-        console.log("Error prossesing message for socket '" + this.playerInfo.username + "':");
+        console.log("Error processing message for socket '" + this.playerInfo.username + "':");
         console.log(e);
         let errorMessage: ErrorMessage = {
           type: ERROR_TYPE,

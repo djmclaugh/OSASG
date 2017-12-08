@@ -13,8 +13,8 @@ config.json
 ai/bot_config.json
 
 # Generated files
-ai/js
 public/javascript/osasg_client.js
+ai/**/.js
 client/app_js
 client/app/**/*.js
 client/public/javascript/generated/*.js

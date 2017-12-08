@@ -37,6 +37,10 @@ function newErrorMessage(errorDescription) {
     };
 }
 exports.newErrorMessage = newErrorMessage;
+function isErrorMessage(message) {
+    return message.type == exports.ERROR_TYPE;
+}
+exports.isErrorMessage = isErrorMessage;
 exports.PLAYER_INFO_TYPE = "PLAYER_INFO";
 function isPlayerInfoMessage(message) {
     return message.type == exports.PLAYER_INFO_TYPE;
@@ -49,6 +53,11 @@ function newPlayerInfoMessage(playerInfo) {
     };
 }
 exports.newPlayerInfoMessage = newPlayerInfoMessage;
+exports.PREFERENCES_TYPE = "PREFERENCES";
+function isPreferencesMessage(message) {
+    return message.type == exports.PREFERENCES_TYPE;
+}
+exports.isPreferencesMessage = isPreferencesMessage;
 exports.SUBSCRIPTION_TYPE = "SUBSCRIPTION";
 var Channel;
 (function (Channel) {
@@ -68,6 +77,11 @@ function isMatchSummarySubscriptionUpdateMessage(message) {
     return isSubscriptionUpdateMessage(message) && message.channel == Channel.ACTIVE_MATCHES;
 }
 exports.isMatchSummarySubscriptionUpdateMessage = isMatchSummarySubscriptionUpdateMessage;
+exports.INVITE_TYPE = "INVITE";
+function isInviteMessage(message) {
+    return message.type == exports.INVITE_TYPE;
+}
+exports.isInviteMessage = isInviteMessage;
 exports.JOIN_MATCH_TYPE = "JOIN_MATCH";
 function isJoinMatchMessage(message) {
     return message.type == exports.JOIN_MATCH_TYPE;

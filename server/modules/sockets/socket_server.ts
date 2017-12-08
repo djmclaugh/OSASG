@@ -7,6 +7,7 @@ import {
   COOKIE_AUTHENTICATION_SUBPROTOCOL,
   CREDENTIALS_AUTHENTICATION_SUBPROTOCOL,
   Channel,
+  PreferencesMessage,
   SocketMessage,
   SubscriptionMessage,
   newPlayerInfoMessage,
@@ -70,6 +71,10 @@ export class SocketServer {
       this.removePlayer(playerSocket)
       this.subsciptionManager.removeItem(
           Channel.AVAILABLE_PLAYERS, playerSocket.playerInfo.identifier);
+    };
+    playerSocket.onPreferences = (message: PreferencesMessage) => {
+      message.profile.identifier = playerSocket.playerInfo.identifier;
+      this.subsciptionManager.addItem(Channel.AVAILABLE_PLAYERS, message.profile);
     };
     this.subsciptionManager.add(playerSocket);
     let playerSet: Set<PlayerSocket> = this.onlineSockets.get(playerSocket.playerInfo.identifier);

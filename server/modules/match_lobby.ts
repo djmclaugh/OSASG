@@ -7,6 +7,7 @@ import { SocketServer } from "./sockets/socket_server";
 import { PlayerInfo } from "../../shared/player_info";
 import {
   MATCH_UPDATE_TYPE,
+  SPECTATE_MATCH_TYPE,
   Channel,
   JoinMatchMessage,
   MatchUpdateMessage,
@@ -55,6 +56,12 @@ export class MatchLobby {
       }
       match.play(player.playerInfo, message.move, message.playerNumber, message.turnNumber);
       player.send(message);
+      // Auto-spectate the match.
+      player.onSpectateMatch({
+        type: SPECTATE_MATCH_TYPE,
+        matchID: message.matchID,
+        spectate: true
+      })
     };
 
     player.onJoinMatch = (message: JoinMatchMessage) => {

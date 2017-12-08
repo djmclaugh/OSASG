@@ -2,7 +2,6 @@ import { PlayerSocket } from "./player_socket";
 import {
   SUBSCRIPTION_UPDATE_TYPE,
   Channel,
-  PlayerPreferenceProfile,
   SocketMessage,
   SubscriptionUpdateMessage,
   SubscriptionMessage,

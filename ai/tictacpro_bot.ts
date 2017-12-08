@@ -1,6 +1,7 @@
-import { Bot, MatchInfo } from "./bot";
+import { Bot } from "./bot";
 import { Update } from "ts-turnbased";
 import { Coordinate, ConnectMove, ConnectOptions, connect6Options, tictactoeOptions, sanitizeOptions } from "ts-turnbased-connect";
+import { MatchInfo, MatchSummary } from "../shared/match_info";
 
 // Each move is a number from 0 to 8 indicating which cell the player is taking:
 // 0 | 1 | 2
@@ -162,18 +163,22 @@ class TictactoeBoard {
 }
 
 export class TictacproBot extends Bot {
+  protected listOfGames(): Array<string> {
+    return ["Tictactoe"];
+  }
+
   protected wantToJoin(matchSettings: MatchInfo): boolean {
-    if (matchSettings.gameName == "Tictactoe") {
+    if (matchSettings.settings.gameName == "Tictactoe") {
       return true;
     }
     return false;
   }
 
   protected getMove(match: MatchInfo): any {
-    if (match.gameName == "Tictactoe") {
+    if (match.settings.gameName == "Tictactoe") {
       return this.getTictactoeMove(match.updates);
     }
-    throw Error("Don't know how to play: " + match.gameName);
+    throw Error("Don't know how to play: " + match.settings.gameName);
   }
 
   private getTictactoeMove(updatesSoFar: Array<Update>): ConnectMove {

@@ -1,28 +1,32 @@
-import { Bot, MatchInfo } from "./bot";
+import { Bot } from "./bot";
 import { Update } from "ts-turnbased";
 import { Coordinate, ConnectMove, ConnectOptions, connect6Options, tictactoeOptions, sanitizeOptions } from "ts-turnbased-connect";
+import { MatchInfo, MatchSummary } from "../shared/match_info";
 
 export class RandomBot extends Bot {
+  protected listOfGames(): Array<string> {
+    return ["Tictactoe", "Connect6", "Connect"];
+  }
   protected wantToJoin(matchSettings: MatchInfo): boolean {
-    if (matchSettings.gameName == "Tictactoe"
-        || matchSettings.gameName == "Connect6"
-        || matchSettings.gameName == "Connect") {
+    if (matchSettings.settings.gameName == "Tictactoe"
+        || matchSettings.settings.gameName == "Connect6"
+        || matchSettings.settings.gameName == "Connect") {
       return true;
     }
-    console.log("Unexpected game: " + matchSettings.gameName);
+    console.log("Unexpected game: " + matchSettings.settings.gameName);
     console.log("Random bot should be able to play any game, please update.");
     return false;
   }
 
   protected getMove(match: MatchInfo): any {
-    if (match.gameName == "Tictactoe") {
+    if (match.settings.gameName == "Tictactoe") {
       return this.getConnectMove(match.updates, sanitizeOptions(tictactoeOptions()));
-    } else if (match.gameName == "Connect6") {
+    } else if (match.settings.gameName == "Connect6") {
       return this.getConnectMove(match.updates, sanitizeOptions(connect6Options()));
-    } else if (match.gameName == "Connect") {
-      return this.getConnectMove(match.updates, sanitizeOptions(match.settings.gameSettings));
+    } else if (match.settings.gameName == "Connect") {
+      return this.getConnectMove(match.updates, sanitizeOptions(match.settings.gameOptions));
     }
-    throw Error("Don't know how to play: " + match.gameName);
+    throw Error("Don't know how to play: " + match.settings.gameName);
   }
 
   // --- Connect helper methods ---

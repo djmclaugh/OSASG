@@ -1,6 +1,7 @@
 import { Identifiable } from "./identifiable"
 import { MatchInfo, MatchSummary } from "./match_info"
 import { PlayerInfo } from "./player_info"
+import { PreferenceProfile } from "./preference_profile"
 import { Update } from "./update"
 
 /**
@@ -72,6 +73,9 @@ export function newErrorMessage(errorDescription: string): ErrorMessage {
     error: errorDescription
   };
 }
+export function isErrorMessage(message: SocketMessage): message is ErrorMessage {
+  return message.type == ERROR_TYPE;
+}
 
 
 export const PLAYER_INFO_TYPE: string = "PLAYER_INFO";
@@ -95,14 +99,23 @@ export function newPlayerInfoMessage(playerInfo: PlayerInfo): PlayerInfoMessage 
   };
 }
 
+export const PREFERENCES_TYPE: string = "PREFERENCES";
+/**
+ * PREFERENCES: Sent by clients
+ * @param {PreferenceProfile} profile - Object containing which games the play likes to play.
+ * A client should send a message of this type if they would like to receiv invites to play matches.
+ */
+export interface PreferencesMessage extends SocketMessage {
+  profile: PreferenceProfile
+}
+export function isPreferencesMessage(message: SocketMessage): message is PreferencesMessage {
+  return message.type == PREFERENCES_TYPE;
+}
 
 export const SUBSCRIPTION_TYPE: string = "SUBSCRIPTION";
-export interface PlayerPreferenceProfile extends PlayerInfo {
-  preferences: any;
-}
 export enum Channel {
   ACTIVE_MATCHES = "ACTIVE_MATCHES", // MatchInfo
-  AVAILABLE_PLAYERS = "AVAILABLE_PLAYERS", // PlayerPreferenceProfile
+  AVAILABLE_PLAYERS = "AVAILABLE_PLAYERS", // PreferenceProfile
 }
 /**
  * SUBSCRIPTION: Sent by clients
@@ -144,6 +157,24 @@ export function isMatchSummarySubscriptionUpdateMessage(message: SocketMessage):
   return isSubscriptionUpdateMessage(message) && message.channel == Channel.ACTIVE_MATCHES;
 }
 
+export const INVITE_TYPE: string = "INVITE"
+/**
+ * INVITE: Sent by client and server
+ * @param {string} matchID - The identifier for the match to join.
+ * @param {string} sender - User sending the invite.
+ * @param {string} receiver - User receiving the invite.
+ * @param {number} seat - The desired seat. If no seat is provided, no preferences.
+ */
+export interface InviteMessage extends SocketMessage {
+  matchID: string,
+  matchSummary: MatchSummary
+  sender: string,
+  receiver: string,
+  seat?: number
+}
+export function isInviteMessage(message: SocketMessage): message is InviteMessage {
+  return message.type == INVITE_TYPE;
+}
 
 export const JOIN_MATCH_TYPE: string = "JOIN_MATCH"
 /**

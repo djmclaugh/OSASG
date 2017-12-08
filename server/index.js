@@ -80,7 +80,10 @@ let authenticateRequest = function(request, callback) {
   });
 };
 let authenticateInfo = function(info, callback) {
-  callback(null, null);
+  callback(null, {
+    identifier: info.identifier,
+    username: info.identifier + "[bot]"
+  });
 };
 let authenticator = new SocketAuthenticator(authenticateRequest, authenticateInfo, 5000);
 let socketServer = new SocketServer(http, authenticator);
