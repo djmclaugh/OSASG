@@ -18,7 +18,6 @@ export class LobbyService {
       if (matchUpdate.add) {
         this.activeMatches = this.activeMatches.concat(matchUpdate.add);
       } else if (matchUpdate.remove) {
-        console.log("removing: " + matchUpdate.remove);
         this.activeMatches = this.activeMatches.filter(matchInfo => {
           if (matchUpdate.remove == matchInfo.identifier) {
             return false;
