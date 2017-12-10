@@ -41,7 +41,6 @@ var session = Session(options);
 app.use(session);
 
 // Setup passwordless
-var PasswordlessMongoStore = require("passwordless-mongostore-bcrypt-node");
 var passwordless = require("passwordless");
 
 var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
@@ -56,13 +55,9 @@ var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
   console.log(email);
   callback();
 };
-if (config.mongoURI.length > 0) {
-  passwordless.init(new PasswordlessMongoStore(config.mongoURI));
-} else {
-  console.log("Starting OSASG with memory store for passwordless. (Should not be used in prod)");
-  var MemoryStore = require("passwordless-memorystore");
-  passwordless.init(new MemoryStore());
-}
+console.log("Starting OSASG with memory store for passwordless. (Should not be used in prod)");
+var MemoryStore = require("passwordless-memorystore");
+passwordless.init(new MemoryStore());
 passwordless.addDelivery(emailDelivery);
 
 app.use(passwordless.sessionSupport());
@@ -87,7 +82,7 @@ let authenticateRequest = function(request, callback) {
 };
 
 let authenticateInfo = function(info, callback) {
-  if (config.databaseLocation.length == 0) {
+  if (config.mongoURI.length == 0) {
     callback(null, {
       identifier: info.identifier,
       username: info.identifier + "[bot]",

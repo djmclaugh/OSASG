@@ -24,7 +24,7 @@ import {
   isPlayerInfoMessage,
 } from "../shared/socket_protocol";
 
-let config: any = require("../config.json");
+let config: any = require("./config.json");
 
 export abstract class Bot {
   private socket: WebSocket;
@@ -40,7 +40,7 @@ export abstract class Bot {
   }
 
   start() {
-    this.socket = new WebSocket("ws://localhost:8000", CREDENTIALS_AUTHENTICATION_SUBPROTOCOL);
+    this.socket = new WebSocket("ws://" + config.serverURL, CREDENTIALS_AUTHENTICATION_SUBPROTOCOL);
     this.socket.onopen = () => {
       console.log("Socket connected");
       let authMessage: AuthenticationMessage = {

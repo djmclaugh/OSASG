@@ -76,6 +76,7 @@ router.get("/ping", function(req, res) {
 //   message: message
 // }
 router.post("/send_login_email", function(req, res) {
+  console.log("sending login email");
   var response = {};
   if (typeof req.body.user != "string") {
     response.message = "No valid email provided";

@@ -1,4 +1,3 @@
-var config = require("../config.json");
 var path = require("path");
 var express = require("express");
 var app = express();
@@ -9,6 +8,6 @@ app.get("**", function(req, res) {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-http.listen(config.clientPort, function(){
-  console.log("OSASG client started at " + config.clientURL);
+http.listen(8002, function() {
+  console.log("OSASG client started on port 8002");
 });
