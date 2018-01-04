@@ -70,7 +70,7 @@ var SocketServer = require("./modules/sockets/socket_server").SocketServer;
 var SocketAuthenticator = require("./modules/sockets/socket_authenticator").SocketAuthenticator;
 let authenticateRequest = function(request, callback) {
   session(request, {}, () => {
-    if (request.session) {
+    if (request.session.identifier) {
       callback(null, {
         identifier: request.session.identifier,
         username: request.session.username
