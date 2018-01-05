@@ -2,21 +2,19 @@ import * as WebSocket from "ws";
 
 import { PlayerInfo } from "../shared/player_info";
 import { MatchInfo, MatchSummary } from "../shared/match_info";
+import { Update } from "../shared/update";
 import {
   AUTHENTICATION_TYPE,
   CREDENTIALS_AUTHENTICATION_SUBPROTOCOL,
   JOIN_MATCH_TYPE,
   PLAY_TYPE,
   PREFERENCES_TYPE,
-  SPECTATE_MATCH_TYPE,
   AuthenticationMessage,
-  Channel,
   InviteMessage,
   JoinMatchMessage,
   MatchUpdateMessage,
   PlayMessage,
   PreferencesMessage,
-  SpectateMatchMessage,
   SocketMessage,
   isErrorMessage,
   isInviteMessage,
@@ -107,6 +105,7 @@ export abstract class Bot {
   }
 
   private onUpdate(message: MatchUpdateMessage) {
+    // Each update is either a "full update", a change of players, or a sigle game event.
     if (message.matchInfo) {
       this.matches.set(message.matchID, message.matchInfo);
     } else if (message.players) {
@@ -117,22 +116,19 @@ export abstract class Bot {
     this.processMatch(message.matchID);
   }
 
-  private onPlay(message: any) {
-    let match: MatchInfo = this.matches[message.matchID];
-    match.updates.push(message.update);
-    //match.toPlay = message.toPlay;
-    //match.winners = message.winners;
-    //this.processMatch(match);
-  }
-
   private processMatch(matchID: string): void {
     let currentInfo: MatchInfo = this.matches.get(matchID);
     if (currentInfo.updates.length == 0) {
+      // Match hasn't started yet, nothing to do.
       return;
-    } else if (currentInfo.updates[currentInfo.updates.length - 1].winners != null) {
+    }
+    let latestUpdate: Update = currentInfo.updates[currentInfo.updates.length - 1];
+    if (latestUpdate.winners != null) {
+      // Match is over, the bot can forget about it.
       this.matches.delete(matchID);
       return;
     }
+    // Figure out which players we are in this match
     let playingAs: Set<number> = new Set();
     for (let i: number = 0; i < currentInfo.players.length; ++i) {
       let player: PlayerInfo = currentInfo.players[i];
@@ -140,11 +136,8 @@ export abstract class Bot {
         playingAs.add(i);
       }
     }
-    if (playingAs.size == 0) {
-      this.matches.delete(matchID);
-      return;
-    }
-    for (let p of currentInfo.updates[currentInfo.updates.length - 1].toPlay) {
+    // For each player that needs to play this turn, submit a move.
+    for (let p of latestUpdate.toPlay) {
       if (playingAs.has(p)) {
         let playMessage: PlayMessage = {
           type: PLAY_TYPE,
@@ -158,5 +151,6 @@ export abstract class Bot {
     }
   }
 
+  // Delegate finding moves to subclasses.
   protected abstract getMove(match: MatchInfo, asPlayer: number): any;
 }
