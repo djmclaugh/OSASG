@@ -40,29 +40,6 @@ if (config.mongoURI.length > 0) {
 var session = Session(options);
 app.use(session);
 
-// Setup passwordless
-var passwordless = require("passwordless");
-
-var emailDelivery = function(tokenToSend, uidToSend, recipient, callback) {
-  var email = {
-      text: "You can now access your account by following this link:\n" +
-            config.serverURL + ":" + config.port + "?token=" + tokenToSend + "&uid=" +
-            encodeURIComponent(uidToSend),
-  };
-  // TODO(djmclaugh): This was added so that I can get the link when email delivery failed.
-  // This should be removed once I figure out a better email delivery system.
-  console.log("Trying to send the following email:");
-  console.log(email);
-  callback();
-};
-console.log("Starting OSASG with memory store for passwordless. (Should not be used in prod)");
-var MemoryStore = require("passwordless-memorystore");
-passwordless.init(new MemoryStore());
-passwordless.addDelivery(emailDelivery);
-
-app.use(passwordless.sessionSupport());
-app.use(passwordless.acceptToken({successRedirect: "http://" + config.clientURL}));
-
 // Setup router
 app.use(router);
 

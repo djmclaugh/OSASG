@@ -1,12 +1,15 @@
 <h2>Log In</h2>
-<p>To log in, simply enter your email address and you'll receive a link to your existing or newly created account.</p>
+<p>If you already have an account, log in with your credentials. Otherwise, log in with your desired username and password to create a new account.</p>
+<p>Note: This website is still under construction and the passwords are stored in plain text for now. This means that I and any potential hackers can access them.</p>
 <form (ngSubmit)="onSubmit()">
   <p>
-    <label for="email-field">Email: </label>
-    <input id="email-field" type="email" name="email" [disabled]="submitting || successMessage" [(ngModel)]="email">
+    <label for="username-field">Username: </label>
+    <input id="username-field" type="text" name="username" [disabled]="submitting || successMessage" [(ngModel)]="username"><br>
+    <label for="password-field">Password: </label>
+    <input id="password-field" type="password" name="password" [disabled]="submitting || successMessage" [(ngModel)]="password">
   </p>
-  <p><button type="submit" [disabled]="submitting || email.length == 0 || successMessage">Log in</button></p>
-  <p [hidden]="!submitting"><strong>Sending email...</strong></p>
+  <p><button type="submit" [disabled]="submitting || username.length == 0 || successMessage">Log in</button></p>
+  <p [hidden]="!submitting"><strong>Verifying credentials...</strong></p>
   <p [hidden]="!successMessage"><strong>{{ successMessage }}</strong></p>
   <p class="error" [hidden]="!errorMessage">{{ errorMessage }}</p>
 </form>

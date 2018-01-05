@@ -31,7 +31,7 @@ const config = require("../../config.json");
 
 const osasgUrlBase: string = config.serverURL + ":" + config.port + "/";
 const httpOptions: RequestOptionsArgs = {withCredentials: true};
-const requestEmailEndpoint: string = "send_login_email";
+const loginEndpoint: string = "login";
 const fetchUsersEndpoint: string = "api/users";
 const fetchBotsEndpoint: string = "api/bots";
 const createBotEndpoint: string = "api/bots/create_bot";
@@ -94,6 +94,12 @@ export class OSASGService {
       this.availablePlayersUpdateSubject.subscribe(observer);
     });
     this.matchSubjects = new Map();
+  }
+
+  public onSignIn(): void {
+    this.socket.onclose = null;
+    this.socket.close();
+    this.createNewSocket();
   }
 
   private createNewSocket(): void {
@@ -265,9 +271,9 @@ export class OSASGService {
     return !this.userInfo || this.userInfo.identifier.indexOf("guest-") == 0;
   }
 
-  requestEmail(address: string): Promise<string> {
+  login(username: string, password: string): Promise<string> {
     return new Promise((resolve, reject) => {
-      this.post(requestEmailEndpoint, {user: address})
+      this.post(loginEndpoint, {username: username, password: password})
           .map(response => response.json())
           .subscribe(
               response => {
@@ -300,7 +306,7 @@ export class OSASGService {
       this.get(logoutEndpoint)
           .subscribe(
               response => {
-                this.socket.close();
+                this.onSignIn();
                 resolve(true);
               },
               error => {

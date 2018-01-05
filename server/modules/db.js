@@ -18,61 +18,50 @@ exports.Session = mongoose.model(sessionModelName, SessionSchema);
 
 // --- Users ---
 var userSchema = Schema({
-  username: {type: String, unique: true},
-  email: {type: String, unique: true, lowercase: true, select: false}
+  username: {
+    type: String,
+    unique: true,
+    validate: {
+      isAsync: true,
+      validator: function(v, cb) {
+        var usernameRegex = /[a-zA-Z0-9_\-]{3,20}/;
+        var msg = "'" + v + "'' is not a valid username."
+            + " Usernames must satisfy the following regex: "+ usernameRegex;
+        cb(usernameRegex.test(v), msg);
+      },
+    }
+  },
+  password: {type: String, select: false}
 });
 
 
 // Statics
 // callback - function(error, user)
-userSchema.statics.getOrCreateWithEmail = function (email, callback) {
+userSchema.statics.getOrCreateWithUsername = function (username, password, callback) {
   var self = this;
-  email = email.toLowerCase();
-
-  var baseUsername = "";
 
   // Pass the user to the callback if it exists.
   // If the user doesn't exist, create a new one and pass it to the callback
   var onLookup = function(error, user) {
-    if (user || error) {
-      callback(error, user);
-    } else {
-      // If the user doesn't already exist, try creating a username based on the email.
-      baseUsername = email.split("@")[0];
-      baseUsername = baseUsername.replace(/[^a-zA-Z0-9_\-]/g, "");
-      self.findOne({username: baseUsername}, onSameNameLookup);
-    }
-  };
-
-  // Used to keep track of what suffixes we've tried so far.
-  var suffixValue = 0;
-
-  // Makes sure the username is available.
-  // If the username was taken, change the suffix and try again.
-  // Otherwise, just pass along the error or the user to the callback.
-  var onSameNameLookup = function(error, user) {
-    if (!error && !user) {
-      // If we didn't encounter any errors and didn't find any other users with that user name, we'll use that username.
-      var userData = {
-        username: baseUsername,
-        email: email
-      };
-      if (suffixValue > 0) {
-        userData.username += "_" + suffixValue;
-      }
-      self.create(userData, callback);
-    } else if (error) {
-      // If we encountered an error, simply pass it to the callback.
+    if (error) {
       callback(error, null);
+    } else if (user) {
+      if (!user.password || user.password == password) {
+        callback(null, user);
+      } else {
+        callback(new Error("Wrong password"), null);
+      }
     } else {
-      // If we found a user with the desired username, try again with another one.
-      ++suffixValue;
-      self.findOne({username: baseUsername + "_" + suffixValue}, onSameNameLookup);
+      // If the user doesn't already exist, creat it.
+      var userData = {
+        username: username,
+        password: password
+      };
+      self.create(userData, callback);
     }
   }
-
-  self.findOne({email: email}, onLookup);
-};
+  self.findOne({username: username}).select("+password").exec(onLookup);
+}
 
 // Methods
 // callback - function(error, user)
