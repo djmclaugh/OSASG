@@ -1,6 +1,6 @@
 import * as express from "express";
 import { Router, Request, Response } from "express";
-import * as guest_names from "./guest_names";
+import { getGuestName, setStore } from "./guest_names";
 import { BotModel, UserDocument, UserModel } from "./db";
 import { MatchManager } from "./matches/match_manager";
 
@@ -40,7 +40,7 @@ function fetchUserInformation(req, res, next) {
     req.session.user = null;
     req.session.isGuest = true;
     if (!req.session.username || !req.session.username.includes("[guest]")) {
-      guest_names.getGuestName(function(username) {
+      getGuestName(function(username) {
         req.session.username = username;
         var date = new Date();
         req.session.identifier = "guest-" + Math.floor(Math.random() * 1000) + "-" + date.getTime();
@@ -304,6 +304,6 @@ router.get("/api/activeMatches", function(req, res) {
 
 module.exports.getRouter = function(sessionStore, manager) {
   matchManager = manager;
-  guest_names.setStore(sessionStore);
+  setStore(sessionStore);
   return router;
 };
