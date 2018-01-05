@@ -19,6 +19,7 @@ client/app_js
 client/app/**/*.js
 client/public/javascript/generated/*.js
 client/public/javascript/generated/*.js.map
+server/modules/*.js
 server/modules/matches/*.js
 server/modules/sockets/*.js
 server/test/mock/*.js
