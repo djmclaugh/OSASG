@@ -50,7 +50,7 @@ export interface User {
   password?: string,
 };
 export interface UserDocument extends User, Document {
-  changeUsername: (newUsername: string, callback: (err: Error, user: UserDocument) => void) => void
+  changeUsername(newUsername: string, callback: (err: Error, user: UserDocument) => void): void
 };
 userSchema.methods.changeUsername = function(
     newUsername: string,
@@ -88,11 +88,11 @@ interface IUserModel extends Model<UserDocument> {
    * If the user doesn't exist, a new user is created with the provied username and password. That
    * new user is then passed to the callback.
    */
-  getOrCreateWithUsername: (
+  getOrCreateWithUsername(
     username: string,
     password: string,
     callback: (error: Error, user: UserDocument) => void
-  ) => void
+  ): void
 }
 userSchema.statics.getOrCreateWithUsername = function (
     username: string, password: string, callback: (error: Error, user: UserDocument) => void) {
@@ -137,12 +137,12 @@ var botSchema: Schema = new Schema({
 export interface Bot {
   username: string,
   password: string,
-  description: string
-  owner: string|User
+  description: string,
+  owner: string|UserDocument
 }
 export interface BotDocument extends Bot, Document {
-  changeUsername: (newUsername: string, callback: (err: Error, bot: BotDocument) => void) => void,
-  generateNewPassword: (callback: (err: Error, bot: BotDocument) => void) => void
+  changeUsername(newUsername: string, callback: (err: Error, bot: BotDocument) => void): void,
+  generateNewPassword(callback: (err: Error, bot: BotDocument) => void): void
 };
 botSchema.methods.changeUsername = function(newUsername, callback) {
   let thisBot: BotDocument = this;
@@ -175,7 +175,7 @@ botSchema.methods.generateNewPassword = function(callback) {
 };
 
 interface IBotModel extends Model<BotDocument> {
-  createBotForUser: (user: User, callback: (error: Error, bot: BotDocument) => void) => void
+  createBotForUser(user: User, callback: (error: Error, bot: BotDocument) => void): void
 }
 botSchema.statics.createBotForUser = function (user: User, callback) {
   let thisModel: IBotModel = this;
