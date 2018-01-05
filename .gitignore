@@ -23,4 +23,4 @@ server/modules/matches/*.js
 server/modules/sockets/*.js
 server/test/mock/*.js
 server/test/sockets/*.js
-shared/**.js
+shared/**/*.js
