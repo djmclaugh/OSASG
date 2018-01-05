@@ -20,6 +20,7 @@
   "dependencies": {
     "@types/chai": "^4.0.5",
     "@types/mocha": "^2.2.44",
+    "@types/mongoose": "^4.7.32",
     "@types/ws": "^3.2.0",
     "body-parser": "^1.15.0",
     "chai": "^4.1.2",

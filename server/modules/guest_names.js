@@ -1,5 +1,5 @@
 var path = require("path");
-var Sessions = require("./db").Session;
+var SessionModel = require("./db").SessionModel;
 var fs = require('fs');
 var names_location = path.join(__dirname, '../guest_names.txt');
 var sessionStore = null;
@@ -29,7 +29,7 @@ function getAvailablesGuestNames(callback) {
   };
 
   if (!sessionStore) {
-    Sessions.find({}, onFetchAll);
+    SessionModel.find({}, onFetchAll);
   } else {
     sessionStore.all(onFetchAll);
   }

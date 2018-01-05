@@ -22,7 +22,7 @@ router.use(function(req, res, next) {
 
 function fetchUserInformation(req, res, next) {
   if (req.session.userID) {
-    db.User.findById(req.session.userID, function(error, user) {
+    db.UserModel.findById(req.session.userID, function(error, user) {
       if (error) {
         console.log(error);
         req.session.user = null;
@@ -65,7 +65,7 @@ router.get("/ping", function(req, res) {
 });
 
 router.post("/login", function(req, res, next) {
-  db.User.getOrCreateWithUsername(req.body.username, req.body.password, function(error, user) {
+  db.UserModel.getOrCreateWithUsername(req.body.username, req.body.password, function(error, user) {
     if (error) {
       res.status(500).send({message: error.message});
     } else {
@@ -110,7 +110,7 @@ router.post("/api/bots/create_bot", function(req, res) {
   if (!req.session.user) {
     res.status(403).send("you must be logged in to create a bot.");
   } else {
-    db.Bot.createBotForUser(req.session.user, function(error, bot) {
+    db.BotModel.createBotForUser(req.session.user, function(error, bot) {
       if (error) {
         res.status(500).send(error.message);
       } else {
@@ -127,7 +127,7 @@ router.get("/api/bots", function(req, res) {
   if (!req.session.user) {
     res.status(403).send("you must be logged in to request your bots.");
   } else {
-    db.Bot.find({owner: req.session.user}, function(error, bots) {
+    db.BotModel.find({owner: req.session.user}, function(error, bots) {
       if (error) {
         res.status(500).send(error.message);
       } else {
@@ -144,7 +144,7 @@ router.get("/api/bots", function(req, res) {
 //     desiredUsername: The desired username.
 // }
 router.post("/api/bots/:botId/change_username", function(req, res) {
-  db.Bot.findById(req.params.botId)
+  db.BotModel.findById(req.params.botId)
       .populate("owner")
       .exec(function(error, bot) {
         if (error) {
@@ -168,7 +168,7 @@ router.post("/api/bots/:botId/change_username", function(req, res) {
 // If the owner of the bot is the one making the request, the response will include the password.
 // Will send a 500 response if this fails for any reason.
 router.get("/api/bots/:botId", function(req, res) {
-  db.Bot.findById(req.params.botId)
+  db.BotModel.findById(req.params.botId)
       // We select the password because there is no way of knowing before fetching the bot if it
       // belongs to the user making the request. We need to delete this field if the bot doesn't
       // belong to the currently logged in user.
@@ -202,7 +202,7 @@ router.get("/api/users/:userId", function(req, res) {
       res.status(404).send("User not found.");
     } else {
       response.user = user;
-      db.Bot.find({owner: user})
+      db.BotModel.find({owner: user})
           .select("-description -owner")
           .exec(onBotsFind);
     }
@@ -217,7 +217,7 @@ router.get("/api/users/:userId", function(req, res) {
     }
   }
 
-  db.User.findById(req.params.userId).exec(onUserFind);
+  db.UserModel.findById(req.params.userId).exec(onUserFind);
 });
 
 // Change the description of the bot.
@@ -227,7 +227,7 @@ router.get("/api/users/:userId", function(req, res) {
 //     desiredDescription: The desired description.
 // }
 router.post("/api/bots/:botId/change_description", function(req, res) {
-  db.Bot.findById(req.params.botId)
+  db.BotModel.findById(req.params.botId)
       .populate("owner")
       .exec(function(error, bot) {
         if (error) {
@@ -252,7 +252,7 @@ router.post("/api/bots/:botId/change_description", function(req, res) {
 // Will send a 500 response if this fails for any other reason.
 // body - {}
 router.post("/api/bots/:botId/change_password", function(req, res) {
-  db.Bot.findById(req.params.botId)
+  db.BotModel.findById(req.params.botId)
       .select("+password")
       .populate("owner")
       .exec(function(error, bot) {
@@ -288,13 +288,7 @@ router.post("/api/create_match", function(req, res) {
 });
 
 router.get("/api/matches/player/:playerId", function(req, res) {
-  db.Match.getMatchesForPlayer(req.params.playerId, function(error, matches) {
-    if (error) {
-      res.status(500).send(error.message);
-    } else {
-      res.send(matches);
-    }
-  });
+  res.status(404).send("Not yet implemented");
 });
 
 router.get("/api/server_time", function(req, res) {
