@@ -1,0 +1,4 @@
+{
+  "clientPort": 8002,
+  "serverURL": "localhost:8000"
+}

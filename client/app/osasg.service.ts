@@ -27,9 +27,9 @@ import {
   SocketMessage,
 } from "../../shared/socket_protocol";
 
-const config = require("../../config.json");
+const config = require("../config.json");
 
-const osasgUrlBase: string = config.serverURL + ":" + config.port + "/";
+const osasgUrlBase: string = config.serverURL + "/";
 const httpOptions: RequestOptionsArgs = {withCredentials: true};
 const requestEmailEndpoint: string = "send_login_email";
 const fetchUsersEndpoint: string = "api/users";
