@@ -68,6 +68,11 @@ export class PlayerSocket {
         this.onClose();
       }
     };
+    socket.onerror = (ev: ErrorEvent) => {
+      console.log("Error encountered for socket '" + this.playerInfo.username + "':");
+      console.log(ev.message);
+      socket.close();
+    };
   }
 
   public send(message: SocketMessage): boolean {
