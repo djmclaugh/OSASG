@@ -3,8 +3,7 @@
     "target": "es6",
     "module": "commonjs",
     "moduleResolution": "node",
-    "lib": [ "es2016", "dom" ],
-    "types": ["node"]
+    "lib": [ "es2016", "dom" ]
   },
   "include": [
     "./modules",

@@ -76,7 +76,15 @@ export class SocketAuthenticator {
       clearTimeout(timer);
       // Only listen to one message.
       ws.onmessage = null;
-      let message: SocketMessage = JSON.parse(ev.data);
+      let message: SocketMessage;
+      try {
+        message = JSON.parse(ev.data);
+      } catch(e) {
+        console.log("Error parsing authentication message as JSON:");
+        console.log(ev.data);
+        ws.close(PROTOCOL_ERROR, "Expected first message to be authentication info (as a JSON string).")
+        return;
+      }
       if (isAuthenticationMessage(message)) {
         this.validateAuthenticationCredentials(ws, message);
       } else {

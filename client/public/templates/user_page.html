@@ -15,14 +15,6 @@
     </p>
     <p class="error" [hidden]="!usernameChangeError">{{ usernameChangeError }}</p>
   </form>
-  <form (ngSubmit)="updateEmail()">
-    <p>
-      <label for="email-field">Change Email: </label>
-      <input id="email-field" type="email" name="email" [(ngModel)]="tempEmail">
-      <button type="submit" [disabled]="tempEmail.length == 0 || updatingEmail">Update</button>
-    </p>
-    <p class="error" [hidden]="!emailChangeError">{{ emailChangeError }}</p>
-  </form>
 </span>
 <h2>Bots</h2>
 <p>
@@ -30,5 +22,5 @@
     <a [routerLink]="['/bots', bot._id]">{{ bot.username }}</a>
   </span>
 </p>
-<p><button [disabled]="creatingBot" (click)="createNewBot()">Add New Bot</button></p>
+<p *ngIf="isSelf()"><button [disabled]="creatingBot" (click)="createNewBot()">Add New Bot</button></p>
 <p class="error" [hidden]="!botCreateError">{{ botCreateError }}</p>

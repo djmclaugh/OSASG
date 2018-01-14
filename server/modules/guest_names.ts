@@ -1,11 +1,12 @@
-var path = require("path");
-var Sessions = require("./db").Session;
-var fs = require('fs');
-var names_location = path.join(__dirname, '../guest_names.txt');
-var sessionStore = null;
+import * as fs from 'fs';
+import * as path from "path";
+import { SessionModel } from "./db";
 
-function getAvailablesGuestNames(callback) {
-  var lines = fs.readFileSync(names_location).toString().split("\r\n");
+let namesLocation: string = path.join(__dirname, '../guest_names.txt');
+let sessionStore = null;
+
+function getAvailablesGuestNames(callback): void {
+  var lines = fs.readFileSync(namesLocation).toString().split("\r\n");
   if (lines.length == 1) {
     lines = lines[0].split("\n");
   }
@@ -14,7 +15,7 @@ function getAvailablesGuestNames(callback) {
     names.push(lines[i] + "[guest]");
   }
 
-  onFetchAll = function(error, sessions) {
+  let onFetchAll = function(error, sessions) {
     if (error) {
       callback(error, null);
       return;
@@ -29,13 +30,13 @@ function getAvailablesGuestNames(callback) {
   };
 
   if (!sessionStore) {
-    Sessions.find({}, onFetchAll);
+    SessionModel.find({}, onFetchAll);
   } else {
     sessionStore.all(onFetchAll);
   }
 }
 
-exports.getGuestName = function(callback) {
+export function getGuestName(callback: (name: string) => void): void {
   getAvailablesGuestNames(function(error, names) {
     if (error) {
       throw error;
@@ -50,6 +51,6 @@ exports.getGuestName = function(callback) {
   });
 };
 
-exports.setStore = function(store) {
+export function setStore(store): void {
   sessionStore = store;
 }

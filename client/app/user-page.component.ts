@@ -18,10 +18,6 @@ export class UserPageComponent {
   usernameChangeError: string = null;
   updatingUsername: boolean = false;
 
-  tempEmail: string = "";
-  emailChangeError: string = null;
-  updatingEmail: boolean = false;
-
   botCreateError: string = null;
   creatingBot: boolean = false;
 
@@ -40,7 +36,7 @@ export class UserPageComponent {
         .subscribe((user: UserPageInfo) => this.handleFetchedUser(user));
   }
 
-  // Returns true if and only if this is the details page for the currently logged ing user.
+  // Returns true if and only if this is the details page for the currently logged in user.
   isSelf(): boolean {
     if (!this.userInfo || !this.osasgService.getCurrentUserInfo()) {
       return false;
@@ -62,10 +58,6 @@ export class UserPageComponent {
               this.usernameChangeError = errorResponse.text();
               this.updatingUsername = false;
             });
-  }
-
-  updateEmail(): void {
-    this.emailChangeError = "Changing associated email has not been implemented yet.";
   }
 
   createNewBot(): void {
@@ -103,10 +95,6 @@ export class UserPageComponent {
     this.tempUsername = "";
     this.usernameChangeError = null;
     this.updatingUsername = false;
-
-    this.tempEmail = "";
-    this.emailChangeError = null;
-    this.updatingEmail = false;
   }
 
   private userObservableFromParams(params: Params): Observable<UserPageInfo> {

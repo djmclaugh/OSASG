@@ -41,6 +41,8 @@ export class PlayerSocket {
         } else if (isPlayMessage(message)) {
           this.onPlay(message);
         } else if (isPreferencesMessage(message)) {
+          message.profile.identifier = this.playerInfo.identifier;
+          message.profile.username = this.playerInfo.username;
           this.onPreferences(message);
         } else if (isSpectateMatchMessage(message)) {
           this.onSpectateMatch(message);
@@ -51,6 +53,8 @@ export class PlayerSocket {
         }
       } catch(e) {
         console.log("Error processing message for socket '" + this.playerInfo.username + "':");
+        console.log(ev.data);
+        console.log("Error: ");
         console.log(e);
         let errorMessage: ErrorMessage = {
           type: ERROR_TYPE,

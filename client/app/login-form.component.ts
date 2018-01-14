@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 import { Observable } from 'rxjs/Observable';
 
 import { OSASGService } from "./osasg.service";
@@ -8,23 +9,26 @@ import { OSASGService } from "./osasg.service";
   templateUrl: "/templates/login_form.html",
 })
 export class LoginFormComponent {
-  email: string = "";
+  username: string = "";
+  password: string = "";
   submitting: Boolean = false;
   successMessage: string = null;
   errorMessage: string = null;
 
-  constructor (private osasgService: OSASGService) {}
+  constructor (private osasgService: OSASGService, private router: Router) {}
 
   onSubmit(): void {
     if (this.submitting) {
       return;
     }
     this.submitting = true;
-    this.osasgService.requestEmail(this.email)
+    this.osasgService.login(this.username, this.password)
         .then(message => {
           this.successMessage = message;
           this.errorMessage = null;
           this.submitting = false;
+          this.osasgService.onSignIn();
+          this.router.navigateByUrl("");
         })
         .catch(error => this.handleError(error));
   }
