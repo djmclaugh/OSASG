@@ -11,10 +11,13 @@ client/node_modules
 # Config files
 config.json
 ai/bot_config.json
+ai/config.json
+client/config.json
+server/config.json
 
 # Generated files
 public/javascript/osasg_client.js
-ai/**/.js
+ai/**/*.js
 client/app_js
 client/app/**/*.js
 client/public/javascript/generated/*.js

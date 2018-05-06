@@ -37,10 +37,15 @@ export abstract class Bot {
     this.matches = new Map<string, MatchInfo>();
   }
 
+  log(message: string) {
+    let name: string = this.username ? this.username : this.identifier;
+    console.log(name + " ~ " + message);
+  }
+
   start() {
     this.socket = new WebSocket("ws://" + config.serverURL, CREDENTIALS_AUTHENTICATION_SUBPROTOCOL);
     this.socket.onopen = () => {
-      console.log("Socket connected");
+      this.log("Socket connected");
       let authMessage: AuthenticationMessage = {
         type: AUTHENTICATION_TYPE,
         identifier: this.identifier,
@@ -49,14 +54,14 @@ export abstract class Bot {
       this.send(authMessage);
     };
     this.socket.onclose = (event: any) => {
-      console.log("Socket closed: " + event.reason);
+      this.log("Socket closed: " + event.reason);
     };
     this.socket.onerror = (err: Error) => {
-      console.log("Error: " + err.message);
+      this.log("Error: " + err.message);
     };
     this.socket.onmessage = (event: any) => {
       let message: SocketMessage = JSON.parse(event.data);
-      console.log("Received: " + message.type);
+      this.log("Received: " + message.type);
       this.onMessage(message);
     };
   }
@@ -83,10 +88,10 @@ export abstract class Bot {
     } else if (isMatchUpdateMessage(message)) {
       this.onUpdate(message);
     } else if (isErrorMessage(message)) {
-      console.log("Error: " + message.error);
+      this.log("Error: " + message.error);
     } else {
-      console.log("Received message of unknown type:");
-      console.log(message);
+      this.log("Received message of unknown type:");
+      this.log(JSON.stringify(message));
     }
   }
 

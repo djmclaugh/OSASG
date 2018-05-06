@@ -3,16 +3,15 @@ import { RandomBot } from "./random_bot"
 import { SimpleBot } from "./simple_bot"
 import { TictacproBot } from "./tictacpro_bot"
 
-let config = require("./config.json");
+let bots = require("./config.json").bots;
 
-let randomBot: Bot = new RandomBot(config.randomBot.identifier, config.randomBot.password);
+let randomBot: Bot = new RandomBot(bots.random.identifier, bots.random.password);
 randomBot.start();
 
-let simpleBot: Bot = new SimpleBot(config.simpleBot.identifier, config.simpleBot.password);
+let simpleBot: Bot = new SimpleBot(bots.simple.identifier, bots.simple.password);
 simpleBot.start();
 
-let tictacproBot: Bot =
-    new TictacproBot(config.tictacpro.identifier, config.tictacpro.password);
+let tictacproBot: Bot = new TictacproBot(bots.tictacpro.identifier, bots.tictacpro.password);
 tictacproBot.start();
 
 console.log("Bots started");

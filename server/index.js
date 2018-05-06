@@ -66,7 +66,7 @@ let authenticateInfo = function(info, callback) {
     });
     return;
   }
-  db.Bot.findById(info.identifier).select("+password").exec(function(error, bot) {
+  db.BotModel.findById(info.identifier).select("+password").exec(function(error, bot) {
     if (error) {
       callback(error, null);
     } else if (!bot) {
