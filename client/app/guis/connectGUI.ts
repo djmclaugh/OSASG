@@ -83,20 +83,20 @@ export class ConnectGUI extends GUI {
   }
 
   getMove(): ConnectMove {
-    if (this.hasEnoughPresets()) {
+    if (this.hasEnoughPresetsForMove()) {
       return this.presets;
     }
     return null;
   }
 
-  hasEnoughPresets(): boolean {
+  hasEnoughPresetsForMove(): boolean {
     if (this.playedMoves.length == 0) {
       return this.presets.length == this.options.q;
     }
     let spacesLeft: number = this.options.boardWidth * this.options.boardHeight;
     spacesLeft -= (this.playedMoves.length - 1) * this.options.p;
     spacesLeft -= this.options.q;
-    return this.presets.length == Math.min(this.options.p, spacesLeft);
+    return this.presets.length == Math.max(1, Math.min(this.options.p, spacesLeft));
   }
 
   draw(): void {
@@ -203,7 +203,7 @@ export class ConnectGUI extends GUI {
     if (!this.isValidCoordinate(c) || this.isOccupiedCoordinate(c)) {
       c = null;
     }
-    if (c && this.indexInPresets(c) == -1 && this.hasEnoughPresets()) {
+    if (c && this.indexInPresets(c) == -1 && this.hasEnoughPresetsForMove()) {
       c = null;
     }
     return c;
