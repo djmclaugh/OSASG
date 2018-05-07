@@ -17,5 +17,8 @@
 <p *ngIf="!matchData || !matchData.players[0] || !matchData.players[0]">
   Waiting for more players to join
 </p>
-<p><button [disabled]="!hasMoveToSubmit" (click)="submitMove()">Submit Move</button></p>
+<p>
+  <button *ngIf="winners() == null" [disabled]="!hasMoveToSubmit" (click)="submitMove()">Submit Move</button>
+  <strong *ngIf="winners() != null">{{winnersString()}}</strong>
+</p>
 </span>
