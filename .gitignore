@@ -22,6 +22,7 @@ client/app_js
 client/app/**/*.js
 client/public/javascript/generated/*.js
 client/public/javascript/generated/*.js.map
+server/index.js
 server/modules/*.js
 server/modules/matches/*.js
 server/modules/sockets/*.js
