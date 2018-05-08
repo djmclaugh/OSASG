@@ -114,7 +114,7 @@ describe("SocketAuthenticator", () => {
         done();
       };
       defaultAuthenticator.authenticate(fakeSocket, null);
-    }).timeout(45);
+    }).timeout(50);
 
     it("Should send the socket a player info message when the correct credentials are given", (done: MochaDone) => {
       let mockSocket: FakeWebSocket = new FakeWebSocket();
