@@ -41,7 +41,7 @@ describe("SocketAuthenticator", () => {
       }
     }
     defaultAuthenticator =
-        new SocketAuthenticator(defaultRequestAuthenticator, defaultCredentialAuthenticator, 30);
+        new SocketAuthenticator(defaultRequestAuthenticator, defaultCredentialAuthenticator, 25);
   });
 
   it("Should close the connection if the socket uses an invalid subprotocol", (done: MochaDone) => {
@@ -106,15 +106,15 @@ describe("SocketAuthenticator", () => {
     });
 
     it("Should close the connection if the socket takes too long to send credentials", (done: MochaDone) => {
-      let mockSocket: FakeWebSocket = new FakeWebSocket();
-      mockSocket.protocol = CREDENTIALS_AUTHENTICATION_SUBPROTOCOL;
-      mockSocket.closeResponse = (code: number, reason: string) => {
+      let fakeSocket: FakeWebSocket = new FakeWebSocket();
+      fakeSocket.protocol = CREDENTIALS_AUTHENTICATION_SUBPROTOCOL;
+      fakeSocket.closeResponse = (code: number, reason: string) => {
         assert.equal(code, 1002);
-        assert.equal(reason, "Expected authentication info within 0.03 seconds of connection.");
+        assert.equal(reason, "Expected authentication info within 0.025 seconds of connection.");
         done();
       };
-      defaultAuthenticator.authenticate(mockSocket, null);
-    }).timeout(40);
+      defaultAuthenticator.authenticate(fakeSocket, null);
+    }).timeout(45);
 
     it("Should send the socket a player info message when the correct credentials are given", (done: MochaDone) => {
       let mockSocket: FakeWebSocket = new FakeWebSocket();
