@@ -43,7 +43,10 @@ function fetchUserInformation(req, res, next) {
       getGuestName(function(username) {
         req.session.username = username;
         var date = new Date();
-        req.session.identifier = "guest-" + Math.floor(Math.random() * 1000) + "-" + date.getTime();
+        // The username is unique at the time of creation.
+        // Therefore, if we concatenate the username with the current time, we will get a forever
+        // unique identifier.
+        req.session.identifier = "guest-" + username + "-" + date.getTime();
 	      if (req.session.username == null) {
 	        req.session.username = req.session.identifier;
 	      }
