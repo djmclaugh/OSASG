@@ -1,24 +1,18 @@
 <h3>{{ title() }}</h3>
 <span *ngIf="matchData">
-<p>P1:
-  <span *ngIf="matchData && matchData.players[0]">{{ matchData.players[0].username }}</span>
-  <span *ngIf="!matchData || !matchData.players[0]">
-    <button (click)="selectSeat(0)">Play as P1</button>
-    <button *ngFor="let profile of availablePlayers()" (click)="invitePlayer(profile.identifier, 0)">{{ profile.username }}</button>
-  </span>
-</p>
-<p>P2:
-  <span *ngIf="matchData && matchData.players[1]">{{ matchData.players[1].username }}</span>
-  <span *ngIf="!matchData || !matchData.players[1]">
-    <button (click)="selectSeat(1)">Play as P2</button>
-    <button *ngFor="let profile of availablePlayers()" (click)="invitePlayer(profile.identifier, 1)">{{ profile.username }}</button>
-  </span>
-</p>
-<p *ngIf="!matchData || !matchData.players[0] || !matchData.players[0]">
-  Waiting for more players to join
-</p>
-<p>
-  <button *ngIf="winners() == null" [disabled]="!hasMoveToSubmit" (click)="submitMove()">Submit Move</button>
-  <strong *ngIf="winners() != null">{{winnersString()}}</strong>
-</p>
+  <p *ngFor="let player of matchData.players; let i = index">
+    P{{ i + 1 }}:
+    <span *ngIf="matchData.players[i]">{{ matchData.players[i].username }}</span>
+    <span *ngIf="!matchData.players[i]">
+      <button (click)="selectSeat(i)">Play as P{{ i + 1 }}</button>
+      <button *ngFor="let profile of availablePlayers()" (click)="invitePlayer(profile.identifier, i)">{{ profile.username }}</button>
+    </span>
+  </p>
+  <p *ngIf="isWaitingForPlayers()">
+    Waiting for more players to join
+  </p>
+  <p>
+    <button *ngIf="winners() == null" [disabled]="!hasMoveToSubmit" (click)="submitMove()">Submit Move</button>
+    <strong *ngIf="winners() != null">{{winnersString()}}</strong>
+  </p>
 </span>

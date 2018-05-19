@@ -82,6 +82,15 @@ export class MatchControlPanelComponent {
     this.onMoveSubmit.emit();
   }
 
+  isWaitingForPlayers(): boolean {
+    for (let player of this.matchData.players) {
+      if (!player) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   availablePlayers(): Array<PreferenceProfile> {
     return this.availablePlayersService.availablePlayers.filter(profile => {
       return profile.canPlay.indexOf(this.matchData.settings.gameName) != -1;
