@@ -19,7 +19,10 @@ export class Match {
 
   constructor(readonly identifier: string, readonly matchSettings: MatchSettings) {
     this.game = newGame(matchSettings.gameName, matchSettings.gameOptions);
-    this.players = [null, null];
+    this.players = [];
+    for (let i = 0; i < this.game.numberOfPlayers; ++i) {
+      this.players.push(null);
+    }
   }
 
   public isCurrentlyPlaying(player: PlayerInfo): boolean {

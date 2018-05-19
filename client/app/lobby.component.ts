@@ -20,4 +20,12 @@ export class LobbyComponent {
   joinMatch(matchID: string): void {
     window.open("/match/" + matchID);
   }
+
+  matchPlayers(match: MatchSummary): string {
+    let players: Array<string> = [];
+    for (let player of match.players) {
+      players.push(player ? player.username : "[empty]");
+    }
+    return players.join(" - ");
+  }
 }

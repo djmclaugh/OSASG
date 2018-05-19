@@ -1,5 +1,5 @@
 <h2>Active Matches</h2>
 <p *ngFor="let matchInfo of getMatches()">
-  {{ matchInfo.players[0] ? matchInfo.players[0].username : "[empty]" }} vs. {{ matchInfo.players[1] ? matchInfo.players[1].username : "[empty]" }} - <a [routerLink]="['/match', matchInfo.identifier]">{{ matchInfo.identifier }}</a>
+  {{ matchPlayers(matchInfo) }} : <a [routerLink]="['/match', matchInfo.identifier]">{{ matchInfo.identifier }}</a>
 </p>
 <create-match-form></create-match-form>
