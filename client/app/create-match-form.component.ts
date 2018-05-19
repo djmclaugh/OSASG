@@ -2,6 +2,10 @@ import { Component } from '@angular/core';
 
 import { OSASGService } from "./osasg.service";
 
+import { ConnectOptions } from "ts-turnbased-connect";
+import { NormalFormOptions } from "ts-turnbased-normalform";
+import { OhHellOptions, ScoringVariant } from "ts-turnbased-ohhell";
+
 @Component({
   selector: "create-match-form",
   templateUrl: "/templates/create_match_form.html"
@@ -14,7 +18,8 @@ export class CreateMatchFormComponent {
     "Connect",
     "Connect6",
     "Tictactoe",
-    "Roshambo"
+    "Roshambo",
+    "OhHell"
   ];
   submitted = false;
 
@@ -31,6 +36,11 @@ export class CreateMatchFormComponent {
 
   // Roshambo options
   roshamboNumberOfRounds: number = 10;
+
+  // Oh Hell options
+  ohHellNumberOfPlayers: number = 4;
+  ohHellPossibleScoringVariants: Array<ScoringVariant> = [ "BASIC", "EXACT" ];
+  ohHellScoringVariant: ScoringVariant = this.ohHellPossibleScoringVariants[0];
 
   constructor (private osasgService: OSASGService) {}
 
@@ -57,6 +67,8 @@ export class CreateMatchFormComponent {
         return this.getConnectOptions();
       case "Roshambo":
         return this.getRoshamboOptions();
+      case "OhHell":
+        return this.getOhHellOptions();
     }
     throw new Error("Unknown game type: " + this.selectedGame);
   }
@@ -68,19 +80,26 @@ export class CreateMatchFormComponent {
     };
   }
 
-  getConnectOptions(): any {
+  getConnectOptions(): ConnectOptions {
     return {
       boardWidth: this.connectWidth,
       boardHeight: this.connectHeight,
       k: this.connectK,
       p: this.connectP,
       q: this.connectQ
-    }
+    };
   }
 
   getRoshamboOptions(): any {
     return {
       numRounds: this.roshamboNumberOfRounds
-    }
+    };
+  }
+
+  getOhHellOptions(): OhHellOptions {
+    return {
+      numberOfPlayers: this.ohHellNumberOfPlayers,
+      scoringVariant: this.ohHellScoringVariant
+    };
   }
 }

@@ -27,5 +27,13 @@
     <label for="numRounds">Number of rounds:</label>
     <input type="number" [(ngModel)]="roshamboNumberOfRounds" id="numRounds" min="1" max="99">
   </p>
+  <p *ngIf="selectedGame == 'OhHell'">
+    <label for="numPlayers">Number of players:</label>
+    <input type="number" [(ngModel)]="ohHellNumberOfPlayers" id="numPlayers" min="3" max="5">
+    <label for="scoringVariant">Scoring Variant:</label>
+    <select [(ngModel)]="ohHellScoringVariant" id="scoringVariant">
+      <option [ngValue]="i" *ngFor="let i of ohHellPossibleScoringVariants">{{ i }}</option>
+    </select>
+  </p>
   <p><button (click)="onSubmit()">Create New Match</button></p>
 </div>
