@@ -163,9 +163,16 @@ export class OhHellGUI extends GUI {
     }
 
     if (update.publicInfo.newHandInfo !== undefined) {
-      this.hands = update.privateInfo.map((hand: Array<Card>) => {
-        return hand ?  sortedHand(hand) : nullArrayOfSize(update.publicInfo.newHandInfo.handSize);
-      });
+      if (update.privateInfo) {
+        this.hands = update.privateInfo.map((hand: Array<Card>) => {
+          return hand ?  sortedHand(hand) : nullArrayOfSize(update.publicInfo.newHandInfo.handSize);
+        });
+      } else {
+        this.hands = [];
+        for (let i = 0; i < this.options.numberOfPlayers; ++i) {
+          this.hands.push(nullArrayOfSize(update.publicInfo.newHandInfo.handSize));
+        }
+      }
       this.revealedCard = update.publicInfo.newHandInfo.revealedCard;
       this.trickStarter = this.nextPlayer(update.publicInfo.newHandInfo.dealer);
       this.bidPhase = true;
