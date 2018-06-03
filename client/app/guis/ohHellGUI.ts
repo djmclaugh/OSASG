@@ -100,11 +100,12 @@ export class OhHellGUI extends GUI {
   tricksTaken: Array<number> = null;
   revealedCard: Card;
   trickStarter: number;
+  lastTrickStarter: number;
   currentTrick: Array<Card> = null;
+  lastTrick: Array<Card> = null;
   options: OhHellOptions;
   bidPhase: boolean;
   toPlay: number;
-  previousTrickStarter: number;
 
   clickableCards: Array<ClickableCard> = [];
   clickableBids: Array<ClickableNumber> = [];
@@ -137,7 +138,6 @@ export class OhHellGUI extends GUI {
 
     this.bidPhase = false;
 
-    this.previousTrickStarter = this.trickStarter;
     if (update.publicInfo.cardPlayed !== undefined) {
       if (this.hands[this.toPlay][0] === null) {
         this.hands[this.toPlay].pop();
@@ -145,16 +145,16 @@ export class OhHellGUI extends GUI {
         let index: number = indexOfCard(this.hands[this.toPlay], update.publicInfo.cardPlayed);
         this.hands[this.toPlay].splice(index, 1);
       }
-      if (this.currentTrick.length == this.options.numberOfPlayers) {
-        this.currentTrick = [];
-      }
       this.currentTrick.push(update.publicInfo.cardPlayed);
       this.toPlay = this.nextPlayer(this.toPlay);
     }
 
     if (update.publicInfo.trickWinner !== undefined) {
+      this.lastTrick = this.currentTrick;
+      this.lastTrickStarter = this.trickStarter;
       this.trickStarter = update.publicInfo.trickWinner;
       this.tricksTaken[update.publicInfo.trickWinner] += 1;
+      this.currentTrick = [];
       this.toPlay = this.trickStarter;
     }
 
@@ -261,6 +261,11 @@ export class OhHellGUI extends GUI {
     context.fillRect(400, 400, 100, 100);
     context.fill();
 
+    context.beginPath();
+    context.fillStyle = "#CCFFCC";
+    context.fillRect(0, 0, 150, 150);
+    context.fill();
+
 
     if (this.updates.length == 0) {
       // Draw waiting for players screen
@@ -271,6 +276,7 @@ export class OhHellGUI extends GUI {
       this.drawRevealedCard(context);
       this.drawDetails(context);
       this.drawBidOptions(context);
+      this.drawLastTrick(context);
     }
   }
 
@@ -280,19 +286,19 @@ export class OhHellGUI extends GUI {
     context.strokeStyle = "black";
     context.beginPath();
     if (player == 0) {
-      let height: number = 500 - 20 - CARD_HEIGHT - 10;
+      let height: number = 500 - 20 - CARD_HEIGHT - 20;
       context.moveTo(250, height);
       context.lineTo(250, height - 10);
     } else if (player == 1) {
-      let width: number = 20 + CARD_WIDTH + 10;
+      let width: number = 20 + CARD_WIDTH + 15;
       context.moveTo(width, 250);
       context.lineTo(width + 10, 250);
     } else if (player == 2) {
-      let height: number = 20 + CARD_HEIGHT + 10;
+      let height: number = 20 + CARD_HEIGHT + 20;
       context.moveTo(250, height);
       context.lineTo(250, height + 10);
     } else if (player == 3) {
-      let width: number = 500 -20 - CARD_WIDTH - 10;
+      let width: number = 500 -20 - CARD_WIDTH - 15;
       context.moveTo(width, 250);
       context.lineTo(width - 10, 250);
     }
@@ -335,10 +341,23 @@ export class OhHellGUI extends GUI {
   drawTrick(context: CanvasRenderingContext2D): void {
     if (this.currentTrick) {
       for (let i = 0; i < this.currentTrick.length; ++i) {
-        let position: Position = this.positionForCard(-1, i);
+        let position: Position = this.positionForCard(-1, (this.trickStarter + i) % this.options.numberOfPlayers);
         let card: Card = this.currentTrick[i];
         this.drawCard(card, position.x, position.y, context);
       }
+    }
+  }
+
+  drawLastTrick(context: CanvasRenderingContext2D): void {
+    if (this.lastTrick) {
+      context.save();
+      context.scale(0.7, 0.7);
+      for (let i = 0; i < this.lastTrick.length; ++i) {
+        let position: Position = this.positionForCard(-1, (this.lastTrickStarter + i) % this.options.numberOfPlayers);
+        let card: Card = this.lastTrick[i];
+        this.drawCard(card, position.x - 110, position.y - 120, context);
+      }
+      context.restore();
     }
   }
 
@@ -392,7 +411,7 @@ export class OhHellGUI extends GUI {
   // hand == -1 means the card is in the current trick
   positionForCard(hand: number, index: number): {x: number, y: number} {
     if (hand == -1) {
-      let player = (this.previousTrickStarter + index) % this.options.numberOfPlayers;
+      let player = index;
       if (player == 0) {
         return {
           x: 250.5 - (CARD_WIDTH / 2),
@@ -416,28 +435,28 @@ export class OhHellGUI extends GUI {
       }
     } else {
       let offset: number = index - ((this.hands[hand].length - 1) / 2)
-      let range: number = 220 / this.hands[hand].length
+      let range: number = 270 / (this.hands[hand].length + 2);
       if (hand == 0) {
         return {
-          x: (250.5 - (CARD_WIDTH / 2)) + (offset * range),
-          y: 480 - CARD_HEIGHT,
+          x: (230 - (CARD_WIDTH / 2)) + (offset * range),
+          y: 470 - CARD_HEIGHT,
         }
       } else if (hand == 1) {
-        range += 80 / this.hands[hand].length;
+        range += 50 / (this.hands[hand].length + 2);
         return {
           x: 20,
-          y: (290 - (CARD_HEIGHT / 2)) + (offset * range),
+          y: (150 + 175 - (CARD_HEIGHT / 2)) + (offset * range),
         }
       } else if (hand == 2) {
         return {
-          x: (250.5 - (CARD_WIDTH / 2)) + (offset * range),
+          x: (284 - (CARD_WIDTH / 2)) + (offset * range),
           y: 20,
         }
       } else if (hand == 3) {
-        range += 80 / this.hands[hand].length;
+        range += 50 / (this.hands[hand].length + 2);
         return {
           x: 480 - CARD_WIDTH,
-          y: (210 - (CARD_HEIGHT / 2)) + (offset * range),
+          y: (200 - (CARD_HEIGHT / 2)) + (offset * range),
         }
       }
     }
@@ -466,7 +485,7 @@ export class OhHellGUI extends GUI {
     context.fillStyle = "#FFFFFF";
     context.beginPath();
 
-    context.rect(110, 420, 280, 70);
+    context.rect(110, 250 - 35, 280, 70);
 
     context.fill();
     context.stroke();
@@ -479,7 +498,7 @@ export class OhHellGUI extends GUI {
       context.beginPath();
       let position: Position = {
         x: (250 - (NUMBER_DIMENSIONS / 2)) + (offset * range),
-        y: 490 - 10 - (NUMBER_DIMENSIONS)
+        y: 250 + 35 - 10 - (NUMBER_DIMENSIONS)
       }
       context.rect(position.x, position.y, NUMBER_DIMENSIONS, NUMBER_DIMENSIONS);
       context.fill();
@@ -496,7 +515,7 @@ export class OhHellGUI extends GUI {
     context.fillStyle = "#000000";
     context.textAlign = "center";
     context.textBaseline = "top";
-    context.fillText("Choose bid for player " + (currentPlayer + 1), 250, 430);
+    context.fillText("Choose bid for player " + (currentPlayer + 1), 250, 250 - 20);
     context.restore();
   }
 

@@ -117,8 +117,8 @@ WHITE_STONE_WL.src = _c.toDataURL();
 
 // Card Back
 _c = document.createElement("canvas");
-_c.height = 100;
-_c.width = 70;
+_c.height = 80;
+_c.width = 56;
 _ctx = _c.getContext("2d");
 _ctx.fillStyle = "#888888";
 _ctx.lineWidth = 3;
@@ -133,8 +133,8 @@ CARD_BACK.src = _c.toDataURL();
 
 // Card Front
 _c = document.createElement("canvas");
-_c.height = 100;
-_c.width = 70;
+_c.height = 80;
+_c.width = 56;
 _ctx = _c.getContext("2d");
 _ctx.fillStyle = "#FFFFFF";
 _ctx.lineWidth = 3;
@@ -166,28 +166,28 @@ DIAMONDS.src = "assets/cards/diamonds.svg";
 
 export function cardImage(text: string, suit: HTMLImageElement): HTMLImageElement {
   let c = document.createElement("canvas");
-  c.height = 100;
-  c.width = 70;
+  c.height = CARD_FRONT.height;
+  c.width = CARD_FRONT.width;
   let ctx = c.getContext("2d");
-  ctx.font = "14px Consolas";
+  ctx.font = "12px Consolas";
   ctx.fillStyle = "#000000";
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   ctx.drawImage(CARD_FRONT, 0, 0);
-  ctx.drawImage(suit, 6, 18, 12, 12);
+  ctx.drawImage(suit, 6, 16, 12, 12);
   ctx.fillText(text, 6 + (12 / 2), 2);
 
   ctx.font = "bold 18px Consolas";
   ctx.textBaseline = "bottom";
-  ctx.drawImage(suit, 35 - 10, 60 - 11, 20, 20);
-  ctx.fillText(text, 35, 60 - 9);
+  ctx.drawImage(suit, (c.width - 20) / 2, 50 - 11, 20, 20);
+  ctx.fillText(text, c.width / 2, 50 - 9);
 
-  ctx.translate(70, 100);
+  ctx.translate(c.width, c.height);
   ctx.rotate(Math.PI);
 
-  ctx.font = "14px Consolas";
+  ctx.font = "12px Consolas";
   ctx.textBaseline = "top";
-  ctx.drawImage(suit, 6, 18, 12, 12);
+  ctx.drawImage(suit, 6, 16, 12, 12);
   ctx.fillText(text, 6 + (12 / 2), 2);
 
   ctx.fill();
