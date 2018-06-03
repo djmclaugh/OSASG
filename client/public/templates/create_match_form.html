@@ -29,11 +29,13 @@
   </p>
   <p *ngIf="selectedGame == 'OhHell'">
     <label for="numPlayers">Number of players:</label>
-    <input type="number" [(ngModel)]="ohHellNumberOfPlayers" id="numPlayers" min="3" max="5">
+    <input type="number" [(ngModel)]="ohHellNumberOfPlayers" id="numPlayers" min="3" max="4">
     <label for="scoringVariant">Scoring Variant:</label>
     <select [(ngModel)]="ohHellScoringVariant" id="scoringVariant">
       <option [ngValue]="i" *ngFor="let i of ohHellPossibleScoringVariants">{{ i }}</option>
     </select>
+    <label for="maxHandSize">Maximum hand size:</label>
+    <input type="number" [(ngModel)]="ohHellMaxHandSize" id="maxHandSize" min="1" max="17">
   </p>
   <p><button (click)="onSubmit()">Create New Match</button></p>
 </div>

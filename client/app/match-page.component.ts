@@ -7,6 +7,7 @@ import { OSASGService, UserInfo } from "./osasg.service";
 import { GUI } from "./guis/GUI";
 import { ConnectGUI } from "./guis/connectGUI";
 import { RoshamboGUI } from "./guis/roshamboGUI";
+import { OhHellGUI } from "./guis/ohHellGUI";
 
 import { MatchInfo, MatchSettings, MatchSummary } from "../../shared/match_info";
 import { PlayerInfo } from "../../shared/player_info";
@@ -87,13 +88,23 @@ export class MatchPageComponent {
       this.gameGUI = new RoshamboGUI(
         this.matchData.settings.gameOptions,
         this.canvas.nativeElement,
-        playingAs);
-    } else {
+        playingAs
+      );
+    } else if (gameName == "ohhell") {
+      this.gameGUI = new OhHellGUI(
+        this.matchData.settings.gameOptions,
+        this.canvas.nativeElement,
+        playingAs
+      );
+    } else if (gameName == "connect" || gameName == "connect6" || gameName == "tictactoe") {
       this.gameGUI = new ConnectGUI(
         gameName,
         this.matchData.settings.gameOptions,
         this.canvas.nativeElement,
-        playingAs);
+        playingAs
+      );
+    } else {
+      throw new Error("Unknown game: " + gameName);
     }
     this.gameGUI.setUpdates(this.matchData.updates);
   }

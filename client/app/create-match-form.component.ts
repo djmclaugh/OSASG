@@ -39,6 +39,7 @@ export class CreateMatchFormComponent {
 
   // Oh Hell options
   ohHellNumberOfPlayers: number = 4;
+  ohHellMaxHandSize: number = 10;
   ohHellPossibleScoringVariants: Array<ScoringVariant> = [ "BASIC", "EXACT" ];
   ohHellScoringVariant: ScoringVariant = this.ohHellPossibleScoringVariants[0];
 
@@ -99,7 +100,8 @@ export class CreateMatchFormComponent {
   getOhHellOptions(): OhHellOptions {
     return {
       numberOfPlayers: this.ohHellNumberOfPlayers,
-      scoringVariant: this.ohHellScoringVariant
+      scoringVariant: this.ohHellScoringVariant,
+      maxHandSize: this.ohHellMaxHandSize
     };
   }
 }
