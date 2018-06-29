@@ -106,7 +106,7 @@ export class OSASGService {
     var self: OSASGService = this;
     self.get("ping").subscribe(
       response => {
-        self.socket = new WebSocket("ws://" + osasgUrlBase, COOKIE_AUTHENTICATION_SUBPROTOCOL);
+        self.socket = new WebSocket("wss://" + osasgUrlBase, COOKIE_AUTHENTICATION_SUBPROTOCOL);
         self.socket.onopen = function(event) {
           console.log("Socket connection succesfully established.");
         }
@@ -316,11 +316,11 @@ export class OSASGService {
   }
 
   private get(endpoint: string): Observable<Response> {
-    return this.http.get("http://" + osasgUrlBase + endpoint, httpOptions);
+    return this.http.get("https://" + osasgUrlBase + endpoint, httpOptions);
   }
 
   private post(endpoint: string, body: any): Observable<Response> {
-    return this.http.post("http://" + osasgUrlBase + endpoint, body, httpOptions);
+    return this.http.post("https://" + osasgUrlBase + endpoint, body, httpOptions);
   }
 
   private handleError(response: Response | any): Error {

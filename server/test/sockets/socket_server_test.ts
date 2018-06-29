@@ -1,7 +1,8 @@
 import { SocketServer } from "../../modules/sockets/socket_server";
 
 import { assert } from "chai";
-import { IncomingMessage, Server, IncomingHttpHeaders } from "http";
+import { IncomingMessage, IncomingHttpHeaders } from "http";
+import { Server } from "https";
 import "mocha";
 import { PlayerSocket } from "../../modules/sockets/player_socket";
 import {

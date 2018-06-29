@@ -5,15 +5,23 @@ import * as BodyParser from "body-parser";
 import * as Express from "express";
 import * as ExpressSession from "express-session";
 import * as HTTP from "http";
+import * as HTTPS from "https";
+import * as fs from "fs";
 
 import { MatchManager } from "./modules/matches/match_manager";
 import { SocketServer } from "./modules/sockets/socket_server";
 import { PlayerInfoCallback, SocketAuthenticator } from "./modules/sockets/socket_authenticator";
 import * as DB from "./modules/db";
 
+var credentials = {
+  key: fs.readFileSync(config.certs + "/privkey.pem"),
+  cert: fs.readFileSync(config.certs + "/cert.pem"),
+  ca: fs.readFileSync(config.certs + "/chain.pem")
+};
+
 let matchManager: MatchManager = new MatchManager();
 let app: Express.Application = Express();
-let HTTPServer: HTTP.Server = new HTTP.Server(app);
+let HTTPSServer: any = HTTPS.createServer(credentials, app);
 
 if (config.mongoURI.length > 0) {
   DB.connectToDatabase(config.mongoURI);
@@ -98,10 +106,10 @@ let authenticateInfo = function(info, callback) {
 };
 let authenticator: SocketAuthenticator =
     new SocketAuthenticator(authenticateRequest, authenticateInfo, 5000);
-let socketServer: SocketServer = new SocketServer(HTTPServer, authenticator);
+let socketServer: SocketServer = new SocketServer(HTTPSServer, authenticator);
 
 const matchLobby = new (require("./modules/match_lobby").MatchLobby)(socketServer, matchManager);
 
-HTTPServer.listen(config.port, function(){
+HTTPSServer.listen(config.port, function(){
   console.log("OSASG started on port " + config.port);
 });

@@ -15,6 +15,9 @@ ai/config.json
 client/config.json
 server/config.json
 
+# Any certificates
+*.pem
+
 # Generated files
 public/javascript/osasg_client.js
 ai/**/*.js

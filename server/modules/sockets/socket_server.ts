@@ -1,5 +1,6 @@
 import { Server, ServerOptions } from "ws";
-import { IncomingMessage, Server as HTTPServer } from "http";
+import { IncomingMessage } from "http";
+import { Server as HTTPSServer } from "https";
 import { PlayerSocket } from "./player_socket";
 import { SocketAuthenticator } from "./socket_authenticator";
 import { SubscriptionManager } from "./subscription_manager";
@@ -22,10 +23,10 @@ export class SocketServer {
   public onPlayerClose: (player: PlayerSocket) => void;
 
   constructor(
-      httpServer: HTTPServer,
+      httpsServer: HTTPSServer,
       private socketAuthenticator: SocketAuthenticator) {
     let serverOptions: ServerOptions = {
-      server: httpServer,
+      server: httpsServer,
       handleProtocols: (protocols: Array<string>, request: IncomingMessage) => {
         return this.selectSubprotocol(protocols);
       }
