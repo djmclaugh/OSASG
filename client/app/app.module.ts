@@ -4,6 +4,7 @@ import { FormsModule }   from '@angular/forms';
 import { HttpModule } from '@angular/http';
 import { RouterModule, Routes } from '@angular/router';
 
+import { AboutComponent } from "./about.component";
 import { AppComponent } from "./app.component";
 import { BotPageComponent } from "./bot-page.component";
 import { CreateMatchFormComponent } from "./create-match-form.component";
@@ -17,6 +18,7 @@ import { UserPageComponent } from "./user-page.component";
 
 const appRoutes: Routes = [
   { path: "", component: LobbyComponent },
+  { path: "about", component: AboutComponent },
   { path: "users/:userID", component: UserPageComponent },
   { path: "bots/:botID", component: BotPageComponent },
   { path: "match/:matchID", component: MatchPageComponent },
@@ -33,6 +35,7 @@ const appRoutes: Routes = [
   ],
   bootstrap: [AppComponent],
   declarations: [
+    AboutComponent,
     AppComponent,
     BotPageComponent,
     CreateMatchFormComponent,

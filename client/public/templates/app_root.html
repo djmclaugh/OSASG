@@ -3,6 +3,7 @@
   <a routerLink="/">Home</a>
   <a *ngIf="!isGuest()" [routerLink]="['/users', getIdentifier()]">Settings</a>
   <a *ngIf="isGuest()" routerLink="/login">Log in</a>
+  <a routerLink="/about">About</a>
 </p>
 <p class="error" *ngFor="let error of errors">{{ error }}</p>
 <p [hidden]="isGuest()">Currently logged in as {{ getUsername() }} <button (click)="logout()">Log out</button></p>
