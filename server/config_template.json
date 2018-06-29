@@ -1,10 +1,6 @@
 {
-  "port": The port that your app is listening to,
-  "botPort": The port that the bots should connect to,
-  "clientPort": The port on which the clent is served,
-  "serverURL": URL for the server,
-  "clientURL": URL that serves the client,
-  "mongoURI": location of a mongo database to use,
-  "secret": secret string used to encode cookies,
-  "recaptchaURL": recaptcha url
+  "port": 8000,
+  "mongoURI": "",
+  "secret": "",
+  "certs": "" 
 }

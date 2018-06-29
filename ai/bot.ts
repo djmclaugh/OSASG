@@ -43,7 +43,7 @@ export abstract class Bot {
   }
 
   start() {
-    this.socket = new WebSocket("wss://" + config.serverURL, CREDENTIALS_AUTHENTICATION_SUBPROTOCOL);
+    this.socket = new WebSocket(config.serverURL, CREDENTIALS_AUTHENTICATION_SUBPROTOCOL);
     this.socket.onopen = () => {
       this.log("Socket connected");
       let authMessage: AuthenticationMessage = {

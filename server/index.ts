@@ -13,15 +13,22 @@ import { SocketServer } from "./modules/sockets/socket_server";
 import { PlayerInfoCallback, SocketAuthenticator } from "./modules/sockets/socket_authenticator";
 import * as DB from "./modules/db";
 
-var credentials = {
-  key: fs.readFileSync(config.certs + "/privkey.pem"),
-  cert: fs.readFileSync(config.certs + "/cert.pem"),
-  ca: fs.readFileSync(config.certs + "/chain.pem")
-};
+let app: Express.Application = Express();
+
+let webServer: HTTP.Server|HTTPS.Server;
+if (config.certs && config.certs.length > 0) {
+  var credentials = {
+    key: fs.readFileSync(config.certs + "/privkey.pem"),
+    cert: fs.readFileSync(config.certs + "/cert.pem"),
+    ca: fs.readFileSync(config.certs + "/chain.pem")
+  };
+  webServer = HTTPS.createServer(credentials, app);
+} else {
+  console.log("No SSL certificates specified. Starting http server instead of https");
+  webServer = HTTP.createServer(app);
+}
 
 let matchManager: MatchManager = new MatchManager();
-let app: Express.Application = Express();
-let HTTPSServer: any = HTTPS.createServer(credentials, app);
 
 if (config.mongoURI.length > 0) {
   DB.connectToDatabase(config.mongoURI);
@@ -106,10 +113,10 @@ let authenticateInfo = function(info, callback) {
 };
 let authenticator: SocketAuthenticator =
     new SocketAuthenticator(authenticateRequest, authenticateInfo, 5000);
-let socketServer: SocketServer = new SocketServer(HTTPSServer, authenticator);
+let socketServer: SocketServer = new SocketServer(webServer, authenticator);
 
 const matchLobby = new (require("./modules/match_lobby").MatchLobby)(socketServer, matchManager);
 
-HTTPSServer.listen(config.port, function(){
+webServer.listen(config.port, function(){
   console.log("OSASG started on port " + config.port);
 });

@@ -1,4 +1,6 @@
 {
   "clientPort": 8002,
-  "serverURL": "localhost:8000"
+  "serverHostname": "localhost:8000",
+  "serverUsesSSL": "false",
+  "certs": ""
 }

@@ -28,9 +28,13 @@ import {
 } from "../../shared/socket_protocol";
 
 const config = require("../config.json");
+const hypertextTransferProtocol: string = config.serverUsesSSL ? "https://" : "http://";
+const webSocketProtocol: string = config.serverUsesSSL ? "wss://" : "ws://"
+const osasgUrlBase: string = hypertextTransferProtocol + config.serverHostname + "/";
+const osasgWebSocketBase: string = webSocketProtocol + config.serverHostname + "/";
 
-const osasgUrlBase: string = config.serverURL + "/";
 const httpOptions: RequestOptionsArgs = {withCredentials: true};
+
 const loginEndpoint: string = "login";
 const fetchUsersEndpoint: string = "api/users";
 const fetchBotsEndpoint: string = "api/bots";
@@ -106,7 +110,7 @@ export class OSASGService {
     var self: OSASGService = this;
     self.get("ping").subscribe(
       response => {
-        self.socket = new WebSocket("wss://" + osasgUrlBase, COOKIE_AUTHENTICATION_SUBPROTOCOL);
+        self.socket = new WebSocket(osasgWebSocketBase, COOKIE_AUTHENTICATION_SUBPROTOCOL);
         self.socket.onopen = function(event) {
           console.log("Socket connection succesfully established.");
         }
@@ -115,8 +119,8 @@ export class OSASGService {
           console.log("RECEIVED: " + message.type);
           if (isPlayerInfoMessage(message)) {
             this.userInfo = message.playerInfo;
-            // It's possible we tried subscribing to active matches before the server fully processed
-            // the socket connection. Try again when the server sends the user info.
+            // It's possible we tried subscribing to active matches before the server fully
+            // processed the socket connection. Try again when the server sends the user info.
             if (this.isSubscribedToMatches) {
               this.subscribeToChannel(Channel.ACTIVE_MATCHES);
             }
@@ -316,11 +320,11 @@ export class OSASGService {
   }
 
   private get(endpoint: string): Observable<Response> {
-    return this.http.get("https://" + osasgUrlBase + endpoint, httpOptions);
+    return this.http.get(osasgUrlBase + endpoint, httpOptions);
   }
 
   private post(endpoint: string, body: any): Observable<Response> {
-    return this.http.post("https://" + osasgUrlBase + endpoint, body, httpOptions);
+    return this.http.post(osasgUrlBase + endpoint, body, httpOptions);
   }
 
   private handleError(response: Response | any): Error {
