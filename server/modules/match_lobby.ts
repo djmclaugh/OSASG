@@ -31,23 +31,25 @@ export class MatchLobby {
     }
   }
 
+  private updateSpectator(player: PlayerSocket, matchID: string, spectate: boolean) {
+    let spectatorSet: Set<PlayerSocket> = this.getSpectators(matchID);
+    if (spectate) {
+      spectatorSet.add(player);
+      let match: Match = this.matchManager.getMatch(matchID);
+      let updateMessage: MatchUpdateMessage = {
+        type: MATCH_UPDATE_TYPE,
+        matchID: match.identifier,
+        matchInfo: match.matchInfoForPlayer(player.playerInfo.identifier),
+      }
+      player.send(updateMessage);
+    } else {
+      spectatorSet.delete(player);
+    }
+  }
+
   private onNewPlayer(player: PlayerSocket) {
     player.onSpectateMatch = (message: SpectateMatchMessage) => {
-      let spectatorSet: Set<PlayerSocket> = this.getSpectators(message.matchID);
-      if (spectatorSet) {
-        if (message.spectate) {
-          spectatorSet.add(player);
-          let match: Match = this.matchManager.getMatch(message.matchID);
-          let updateMessage: MatchUpdateMessage = {
-            type: MATCH_UPDATE_TYPE,
-            matchID: match.identifier,
-            matchInfo: match.matchInfoForPlayer(player.playerInfo.identifier),
-          }
-          player.send(updateMessage);
-        } else {
-          spectatorSet.delete(player);
-        }
-      }
+      this.updateSpectator(player, message.matchID, message.spectate);
     };
 
     player.onPlay = (message: PlayMessage) => {
@@ -64,13 +66,8 @@ export class MatchLobby {
       if (!match) {
         throw new Error("Match " + message.matchID + " is not active.");
       }
+      this.updateSpectator(player, message.matchID, true);
       match.addPlayer(player.playerInfo, message.seat);
-      // Auto-spectate the match.
-      player.onSpectateMatch({
-        type: SPECTATE_MATCH_TYPE,
-        matchID: message.matchID,
-        spectate: true
-      });
     };
 
     player.onInvite = (message: InviteMessage) => {

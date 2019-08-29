@@ -19,6 +19,7 @@ import {
   isErrorMessage,
   isInviteMessage,
   isMatchUpdateMessage,
+  isPlayMessage,
   isPlayerInfoMessage,
 } from "../shared/socket_protocol";
 
@@ -89,6 +90,8 @@ export abstract class Bot {
       this.onUpdate(message);
     } else if (isErrorMessage(message)) {
       this.log("Error: " + message.error);
+    } else if (isPlayMessage(message)) {
+      // NO-OP, this is just a confirmation message.
     } else {
       this.log("Received message of unknown type:");
       this.log(JSON.stringify(message));
