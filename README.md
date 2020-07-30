@@ -1,6 +1,8 @@
 # Open Source Abstract Strategy Games #
 ### Status ###
-Back burner, currently usuable, but no plans to continue developement
+Abandoned work in progress.
+Currently usuable (demo instance can be found [here](https://djmclaugh.com/osasg)), but there are no plans to continue developement.
+
 
 ### What is this? ###
 A website with many ~~abstract stratagy~~ turn based games available.
